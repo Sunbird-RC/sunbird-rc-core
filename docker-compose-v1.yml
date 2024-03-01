@@ -80,7 +80,7 @@ services:
       - did_generate_url=${DID_GENERATE_URL-http://identity:3332/did/generate}
       - did_resolve_url=${DID_RESOLVE_URL-http://identity:3332/did/resolve}
       - signature_enabled=${SIGNATURE_ENABLED-false}
-      - signature_provider=${SIGNATURE_PROVIDER-dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl}
+      - signature_provider=${SIGNATURE_PROVIDER-dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
       - signature_v2_health_check_url=${SIGNATURE_V2_HEALTH_CHECK_URL-http://credential:3000/health}
       - signature_v2_issue_url=${SIGNATURE_V2_ISSUE_URL-http://credential:3000/credentials/issue}
       - signature_v2_get_url=${SIGNATURE_V2_GET_URL-http://credential:3000/credentials/{id}}
@@ -110,7 +110,7 @@ services:
       - logging.level.root=INFO
       - enable_external_templates=true
       - async_enabled=${ASYNC_ENABLED-false}
-      - authentication_enabled=${AUTHENTICATION_ENABLED-false}
+      - authentication_enabled=${AUTHENTICATION_ENABLED-true}
       - kafka_bootstrap_address=kafka:9092
       - webhook_enabled=false
       - webhook_url=http://localhost:5001/api/v1/callback
@@ -188,101 +188,35 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-  vault:
-    image: vault:1.13.3
-    restart: always
-    volumes:
-      - ./vault.json:/vault/config/vault.json
-      - ./vault-data:/vault/file
+  certificate-signer:
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
-      - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_API_ADDR=${VAULT_API_ADDR}
-      - VAULT_ADDRESS=${VAULT_ADDRESS}
-    cap_add:
-      - IPC_LOCK
-    command: vault server -config=/vault/config/vault.json
+      - PORT=8079
+      - TIME_ZONE=Asia/Kolkata
     ports:
-      - 8200:8200
+      - '8079:8079'
+    volumes:
+      - ./imports:/etc/signer
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8079/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  certificate-api:
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-api:${RELEASE_VERSION}
+    environment:
+      - PORT=8078
+    ports:
+      - '8078:8078'
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1",
+          'CMD-SHELL',
+          'wget -nv -t1 --spider http://localhost:8078/health || exit 1',
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-  identity:
-    image: ghcr.io/sunbird-rc/sunbird-rc-identity-service:${RELEASE_VERSION}
-    ports:
-      - "3332:3332"
-    depends_on:
-      vault:
-        condition: service_healthy
-      db:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/registry
-      - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_TOKEN=${VAULT_TOKEN}
-      - VAULT_BASE_URL=${VAULT_BASE_URL}
-      - VAULT_ROOT_PATH=${VAULT_ROOT_PATH}
-      - VAULT_TIMEOUT=${VAULT_TIMEOUT}
-      - VAULT_PROXY=${VAULT_PROXY}
-      - SIGNING_ALGORITHM=${SIGNING_ALGORITHM}
-      - JWKS_URI=${JWKS_URI}
-      - ENABLE_AUTH=${ENABLE_AUTH}
-      - WEB_DID_BASE_URL=${WEB_DID_BASE_URL}
-    healthcheck:
-      test:
-        [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  credential-schema:
-    image: ghcr.io/sunbird-rc/sunbird-rc-credential-schema:${RELEASE_VERSION}
-    ports:
-      - "3333:3333"
-    depends_on:
-      db:
-        condition: service_healthy
-      identity:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/registry
-      - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
-      - JWKS_URI=${JWKS_URI}
-      - ENABLE_AUTH=${ENABLE_AUTH}
-    healthcheck:
-      test:
-        [ "CMD-SHELL", "curl -f http://localhost:3333/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  credential:
-    image: ghcr.io/sunbird-rc/sunbird-rc-credentials-service:${RELEASE_VERSION}
-    ports:
-      - "3000:3000"
-    depends_on:
-      db:
-        condition: service_healthy
-      identity:
-        condition: service_healthy
-      credential-schema:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/registry
-      - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
-      - SCHEMA_BASE_URL=${SCHEMA_BASE_URL}
-      - CREDENTIAL_SERVICE_BASE_URL=${CREDENTIAL_SERVICE_BASE_URL}
-      - JWKS_URI=${JWKS_URI}
-      - ENABLE_AUTH=${ENABLE_AUTH}
-    healthcheck:
-      test:
-        [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 10
   file-storage:
     image: quay.io/minio/minio
     volumes:
@@ -476,3 +410,5 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+
