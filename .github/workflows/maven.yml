@@ -22,18 +22,25 @@ jobs:
         cache: 'maven'
     - name: Set up properties
       run: sh configure-dependencies.sh
-    - name: Check free space before test
+    - name: Check space before free up the space
+      run: df -h
+    - name: Free up space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+    - name: Check space before tests
       run: df -h
       # debug step
-    - name: Setup upterm session
-      uses: lhotari/action-upterm@v1
-      with:
-        ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie holashchand
-        limit-access-to-actor: true
+#    - name: Setup upterm session
+#      uses: lhotari/action-upterm@v1
+#      with:
+#        ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie holashchand
+#        limit-access-to-actor: true
     - name: Build and test
       run: make test
-    - name: Check free space after test
-      continue-on-error: true
+    - name: Check space after tests
       run: df -h
 #  test:
 #    runs-on: ubuntu-latest
