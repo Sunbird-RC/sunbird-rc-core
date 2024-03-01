@@ -30,33 +30,33 @@ test: build
 	@docker-compose -f docker-compose-v1.yml down
 	@rm -rf db-data* || echo "no permission to delete"
 	@echo "storage check before starting the tests and after building the docker files"
-	@df -h
+	@df -h && du -h --max-depth=2 / && docker system df && docker image ls
 	# test with distributed definition manager and native search
 	@docker-compose -f docker-compose-v1.yml --env-file test_environments/test_with_distributedDefManager_nativeSearch.env up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose -f docker-compose-v1.yml ps
 	@echo "storage check after setting up services for 1nd test"
-	@df -h
+	@df -h && du -h --max-depth=2 / && docker system df && docker image ls
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	@echo "storage check after 1 e2e test completed"
-	@df -h
+	@df -h && du -h --max-depth=2 / && docker system df && docker image ls
 	# test with kafka(async), events, notifications,
 	@docker-compose -f docker-compose-v1.yml --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db es clickhouse redis keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose -f docker-compose-v1.yml ps
 	@echo "storage check after setting up services for 2nd test"
-	@df -h
+	@df -h && du -h --max-depth=2 / && docker system df && docker image ls
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
 	@rm -rf db-data-2 || echo "no permission to delete"
 	@echo "storage check after completion of 2nd test"
-	@df -h
+	@df -h && du -h --max-depth=2 / && docker system df && docker image ls
 #	make -C services/identity-service test
 #	make -C services/credential-schema test
 #	make -C services/credentials-service test
