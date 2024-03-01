@@ -22,10 +22,8 @@ jobs:
         cache: 'maven'
     - name: Set up properties
       run: sh configure-dependencies.sh
-    - name: Check Space
-      run: |
-        echo "Free space before test:"
-        df -h
+    - name: Check free space before test
+      run: df -h
       # debug step
     - name: Setup upterm session
       uses: lhotari/action-upterm@v1
@@ -34,10 +32,9 @@ jobs:
         limit-access-to-actor: true
     - name: Build and test
       run: make test
-    - name: Check Space
-      run: |
-        echo "Free space after test:"
-        df -h
+    - name: Check free space after test
+      continue-on-error: true
+      run: df -h
 #  test:
 #    runs-on: ubuntu-latest
 #    steps:
