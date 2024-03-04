@@ -87,11 +87,11 @@ services:
       - signature_v2_delete_url=${SIGNATURE_V2_DELETE_URL-http://credential:3000/credentials/{id}}
       - signature_v2_verify_url=${SIGNATURE_V2_VERIFY_URL-http://credential:3000/credentials/{id}/verify}
       - signature_v2_revocation_list_url=${SIGNATURE_V2_REVOCATION_LIST_URL-http://credential:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
-      - signature_v2_schema_health_check_url=${SIGNATURE_V2_SCHEMA_HEALTH_CHECK_URL-http://schema:3333/health}
-      - signature_v2_schema_create_url=${SIGNATURE_V2_SCHEMA_CREATE_URL-http://schema:3333/credential-schema}
-      - signature_v2_schema_update_url=${SIGNATURE_V2_SCHEMA_UPDATE_URL-http://schema:3333/credential-schema/{id}/{version}}
-      - signature_v2_schema_get_by_id_and_version_url=${SIGNATURE_V2_SCHEMA_GET_BY_ID_AND_VERSION_URL-http://schema:3333/credential-schema/{id}/{version}
-      - signature_v2_schema_search_by_tags_url=${SIGNATURE_V2_SCHEMA_GET_BY_TAGS_URL-http://schema:3333/credential-schema?tags={tags}}
+      - signature_v2_schema_health_check_url=${SIGNATURE_V2_SCHEMA_HEALTH_CHECK_URL-http://credential-schema:3333/health}
+      - signature_v2_schema_create_url=${SIGNATURE_V2_SCHEMA_CREATE_URL-http://credential-schema:3333/credential-schema}
+      - signature_v2_schema_update_url=${SIGNATURE_V2_SCHEMA_UPDATE_URL-http://credential-schema:3333/credential-schema/{id}/{version}}
+      - signature_v2_schema_get_by_id_and_version_url=${SIGNATURE_V2_SCHEMA_GET_BY_ID_AND_VERSION_URL-http://credential-schema:3333/credential-schema/{id}/{version}
+      - signature_v2_schema_search_by_tags_url=${SIGNATURE_V2_SCHEMA_GET_BY_TAGS_URL-http://credential-schema:3333/credential-schema?tags={tags}}
       - sign_url=http://certificate-signer:8079/sign
       - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health
