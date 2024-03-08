@@ -92,7 +92,9 @@ public interface ISearchService {
                 String operatorStr = entryValMap.getKey();
                 
                 if (entryValMap.getValue().isObject()) {
-                    addToFilterList(entry.getKey(), entryVal, filterList);
+                    // accumulating the path as it goes deep in to the heirarachy if nested separating each level by a '.'
+                    path = path == null ? entry.getKey() : path + "." + entry.getKey();
+                    addToFilterList(path, entryVal, filterList);
                 } else {
                     Object value = null;
                     if (entryValMap.getValue().isArray()) {
