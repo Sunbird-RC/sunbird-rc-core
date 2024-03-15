@@ -357,7 +357,7 @@ did:
   enabled: ${did_enabled:false}
   healthCheckURL: ${did_health_check_url:http://localhost:3332/health}
   generateURL: ${did_generate_url:http://localhost:3332/did/generate}
-  resolveURL: ${did_resolve_url:http://localhost:3332/did/resolve}
+  resolveURL: ${did_resolve_url:http://localhost:3332/did/resolve/{id}}
 
 signature:
   enabled: ${signature_enabled:false}
@@ -369,6 +369,8 @@ signature:
     keysURL: ${keys_url:http://localhost:8013/keys/}
     domain: ${domain_url:https://w3id.org/security/v1/}
   v2:
+    credentialDidMethod: ${signature_v2_credential_did_method:rcw}
+    issuerDidMethod: ${signature_v2_issuer_did_method:issuer}
     healthCheckURL: ${signature_v2_health_check_url:http://localhost:3000/health}
     issueCredentialURL: ${signature_v2_issue_url:http://localhost:3000/credentials/issue}
     getCredentialByIdURL: ${signature_v2_get_url:http://localhost:3000/credentials/{id}}
@@ -376,6 +378,8 @@ signature:
     verifyCredentialURL: ${signature_v2_verify_url:http://localhost:3000/credentials/{id}/verify}
     getRevocationListURL: ${signature_v2_revocation_list_url:http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
     schema:
+      author: ${signature_v2_schema_author:Registry}
+      authorDidMethod: ${signature_v2_schema_author_did_method:author}
       healthCheckURL: ${signature_v2_schema_health_check_url:http://localhost:3333/health}
       createSchemaURL: ${signature_v2_schema_create_url:http://localhost:3333/credential-schema}
       updateSchemaURL: ${signature_v2_schema_update_url:http://localhost:3333/credential-schema/{id}/{version}}

@@ -76,22 +76,26 @@ services:
       - claims_enabled=${CLAIMS_ENABLED-false}
       - claims_url=http://claim-ms:8082
       - did_enabled=${DID_ENABLED-false}
-      - did_health_check_url=${DID_HEALTH_CHECK_URL-http://identity:3332/health}
-      - did_generate_url=${DID_GENERATE_URL-http://identity:3332/did/generate}
-      - did_resolve_url=${DID_RESOLVE_URL-http://identity:3332/did/resolve}
+      - did_health_check_url=http://identity:3332/health
+      - did_generate_url=http://identity:3332/did/generate
+      - did_resolve_url=http://identity:3332/did/resolve/{id}
       - signature_enabled=${SIGNATURE_ENABLED-false}
       - signature_provider=${SIGNATURE_PROVIDER-dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl}
-      - signature_v2_health_check_url=${SIGNATURE_V2_HEALTH_CHECK_URL-http://credential:3000/health}
-      - signature_v2_issue_url=${SIGNATURE_V2_ISSUE_URL-http://credential:3000/credentials/issue}
-      - signature_v2_get_url=${SIGNATURE_V2_GET_URL-http://credential:3000/credentials/{id}}
-      - signature_v2_delete_url=${SIGNATURE_V2_DELETE_URL-http://credential:3000/credentials/{id}}
-      - signature_v2_verify_url=${SIGNATURE_V2_VERIFY_URL-http://credential:3000/credentials/{id}/verify}
-      - signature_v2_revocation_list_url=${SIGNATURE_V2_REVOCATION_LIST_URL-http://credential:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
-      - signature_v2_schema_health_check_url=${SIGNATURE_V2_SCHEMA_HEALTH_CHECK_URL-http://credential-schema:3333/health}
-      - signature_v2_schema_create_url=${SIGNATURE_V2_SCHEMA_CREATE_URL-http://credential-schema:3333/credential-schema}
-      - signature_v2_schema_update_url=${SIGNATURE_V2_SCHEMA_UPDATE_URL-http://credential-schema:3333/credential-schema/{id}/{version}}
-      - signature_v2_schema_get_by_id_and_version_url=${SIGNATURE_V2_SCHEMA_GET_BY_ID_AND_VERSION_URL-http://credential-schema:3333/credential-schema/{id}/{version}
-      - signature_v2_schema_search_by_tags_url=${SIGNATURE_V2_SCHEMA_GET_BY_TAGS_URL-http://credential-schema:3333/credential-schema?tags={tags}}
+      - signature_v2_credential_did_method=rcw
+      - signature_v2_issuer_did_method=issuer
+      - signature_v2_schema_author=Registry
+      - signature_v2_schema_author_did_method=author
+      - signature_v2_health_check_url=http://credential:3000/health
+      - signature_v2_issue_url=http://credential:3000/credentials/issue
+      - signature_v2_get_url=http://credential:3000/credentials/{id}
+      - signature_v2_delete_url=http://credential:3000/credentials/{id}
+      - signature_v2_verify_url=http://credential:3000/credentials/{id}/verify
+      - signature_v2_revocation_list_url=http://credential:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}
+      - signature_v2_schema_health_check_url=http://credential-schema:3333/health
+      - signature_v2_schema_create_url=http://credential-schema:3333/credential-schema
+      - signature_v2_schema_update_url=http://credential-schema:3333/credential-schema/{id}/{version}
+      - signature_v2_schema_get_by_id_and_version_url=http://credential-schema:3333/credential-schema/{id}/{version}
+      - signature_v2_schema_search_by_tags_url=http://credential-schema:3333/credential-schema?tags={tags}
       - sign_url=http://certificate-signer:8079/sign
       - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health

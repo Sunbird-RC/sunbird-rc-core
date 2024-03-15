@@ -120,7 +120,7 @@ public class DIDService implements HealthIndicator {
 
     public JsonNode resolveDid(String didId) {
         try {
-            ResponseEntity<String> response = retryRestTemplate.getForEntity(resolveIdUrl + "/" + didId);
+            ResponseEntity<String> response = retryRestTemplate.getForEntity(resolveIdUrl, didId);
             if (response.getStatusCode().is2xxSuccessful()) {
                 return JSONUtil.convertStringJsonNode(response.getBody());
             }

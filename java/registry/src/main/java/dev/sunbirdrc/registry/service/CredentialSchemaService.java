@@ -46,12 +46,14 @@ public class CredentialSchemaService implements HealthIndicator {
     private String getByTagsUrl;
 
     @Autowired(required = false)
-    dev.sunbirdrc.registry.service.DIDService DIDService;
+    private DIDService didService;
     @Autowired
     IDefinitionsManager definitionsManager;
 
-    private static final String authorName = "Registry";
-    private static final String authorDidMethod = "abc";
+    @Value("${signature.v2.schema.author}")
+    private String authorName;
+    @Value("${signature.v2.schema.authorDidMethod}")
+    private String authorDidMethod;
 
     @Autowired
     private RetryRestTemplate retryRestTemplate;
@@ -111,7 +113,7 @@ public class CredentialSchemaService implements HealthIndicator {
         logger.debug("Ensuring credential schema for {}", title);
         JsonNode schema = convertCredentialTemplateToSchema(title, credTemplate);
         ObjectNode prevSchema = (ObjectNode) getLatestSchemaByTags(Collections.singletonList(title));
-        String author = DIDService.ensureDidForName(authorName, authorDidMethod);
+        String author = didService.ensureDidForName(authorName, authorDidMethod);
         String authored = Instant.now().toString();
         ((ObjectNode) schema).set("author", JsonNodeFactory.instance.textNode(author));
         ((ObjectNode) schema).set("authored", JsonNodeFactory.instance.textNode(authored));
