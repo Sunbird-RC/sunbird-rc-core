@@ -63,8 +63,8 @@ services:
       - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.NativeSearchService}
       - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=${sunbird_sso_url-http://keycloak:8080/auth}
-      - oauth2_resource_uri=${oauth2_resource_uri-http://keycloak:8080/auth/realms/sunbird-rc}
-      - oauth2_resource_roles_path=${oauth2_resource_roles_path-realm_access.roles}
+      - OAUTH2_RESOURCES_0_URI=${oauth2_resource_uri-http://keycloak:8080/auth/realms/sunbird-rc}
+      - OAUTH2_RESOURCES_0_PROPERTIES_ROLES_PATH=${oauth2_resource_roles_path-realm_access.roles}
       - identity_provider=${identity_provider-dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
       - idgen_enabled=${IDGEN_ENABLED-false}
       - idgen_health_check_url=http://id-gen-service:8088/egov-idgen/health

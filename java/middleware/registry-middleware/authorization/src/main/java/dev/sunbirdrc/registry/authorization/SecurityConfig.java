@@ -3,14 +3,12 @@ package dev.sunbirdrc.registry.authorization;
 import dev.sunbirdrc.registry.authorization.pojos.OAuth2Configuration;
 import dev.sunbirdrc.registry.authorization.pojos.OAuth2Resources;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
@@ -51,10 +49,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	}
 
-	private void addManager(Map<String, AuthenticationManager> authenticationManagers, OAuth2Resources issuer) {
-		JwtAuthenticationProvider authenticationProvider = new JwtAuthenticationProvider(JwtDecoders.fromOidcIssuerLocation(issuer.getUri()));
-		authenticationProvider.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter(issuer.getProperties()));
-		authenticationManagers.put(issuer.getUri(), authenticationProvider::authenticate);
+	private void addManager(Map<String, AuthenticationManager> authenticationManagers, OAuth2Resources auth2Resources) {
+		TenantJwtDecoder tenantJwtDecoder = CustomJwtDecoders.fromOidcIssuerLocation(auth2Resources.getUri());
+		JwtAuthenticationProvider authenticationProvider = new JwtAuthenticationProvider(tenantJwtDecoder);
+		authenticationProvider.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter(auth2Resources.getProperties()));
+		authenticationManagers.put(tenantJwtDecoder.getIssuer(), authenticationProvider::authenticate);
 	}
 
 }
