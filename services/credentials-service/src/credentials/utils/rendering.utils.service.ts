@@ -8,7 +8,8 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const QRCode = require('qrcode');
+import QRCode from 'qrcode';
+import JSZip from 'jszip';
 
 @Injectable()
 export class RenderingUtilsService {
@@ -16,9 +17,19 @@ export class RenderingUtilsService {
 
   async generateQR(cred: W3CCredential) {
     try {
-      const verificationURL = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
-      const QRData = await QRCode.toDataURL(verificationURL);
-      return QRData;
+      let qrData = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
+      if(process?.env?.QR_TYPE === "W3C_VC") {
+        const zip = new JSZip();
+        zip.file("certificate.json", JSON.stringify(cred), {
+          compression: "DEFLATE"
+        });
+        qrData = await zip.generateAsync({type: 'string', compression: "DEFLATE"})
+          .then(function (content) {
+            return content;
+          });
+        return QRCode.toDataURL(qrData, {scale: 3});
+      }
+      return QRCode.toDataURL(qrData);
     } catch (err) {
       this.logger.error('Error rendering QR: ', err);
       throw new InternalServerErrorException('Error rendering QR');
