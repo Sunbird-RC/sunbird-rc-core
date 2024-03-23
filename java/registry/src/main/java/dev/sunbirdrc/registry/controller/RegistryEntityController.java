@@ -80,13 +80,9 @@ public class RegistryEntityController extends AbstractController {
     private boolean signatureEnabled;
     @Value("${certificate.enabled}")
     private boolean certificateEnabled;
-    @Autowired(required = false)
-    private ICertificateService certificateService;
 
     @Value("${filestorage.enabled}")
     private boolean fileStorageEnabled;
-    @Autowired(required = false)
-    private FileStorageService fileStorageService;
 
 
   @Autowired
@@ -99,7 +95,7 @@ public class RegistryEntityController extends AbstractController {
     boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}")
     boolean externalTemplatesEnabled;
-    @Value("${cord.anchor_to_cord:true}")
+    @Value("${cord.anchorToCord:true}")
     boolean anchorToCord;
 
   @RequestMapping(
