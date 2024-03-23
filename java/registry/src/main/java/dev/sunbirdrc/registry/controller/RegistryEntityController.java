@@ -70,10 +70,10 @@ public class RegistryEntityController extends AbstractController {
     RegistryEntityController.class
   );
 
-  @Autowired
-  private ICertificateService certificateService;
+  @Autowired(required = false)
+    private ICertificateService certificateService;
 
-  @Autowired
+  @Autowired(required = false)
   private FileStorageService fileStorageService;
 
     @Value("${signature.enabled}")
