@@ -329,7 +329,7 @@ public class RegistryHelper {
             if(documentObject.has("osOwner")) documentObject.remove("osOwner");
             JsonNode rootNode=new ObjectMapper().createObjectNode()
             .put("schemaId",schemaId)
-            .set("property",documentObject);
+            .set("properties",documentObject);
             
             JsonNode anchorVC=apiHelper(rootNode,issuerCredentialUrl);
         } catch (Exception e) {
