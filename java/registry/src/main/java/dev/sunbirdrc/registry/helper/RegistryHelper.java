@@ -99,7 +99,6 @@ public class RegistryHelper {
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
 
     @Value("${registry.cord.issuer_schema_url}") String issuer_schema_url;
-    @Value("${registry.cord.issuer_registry_url}") String issuer_registry_url;
     @Value("${registry.cord.issuer_credential_url}") String issuer_credential_url;
 
  
@@ -239,11 +238,6 @@ public class RegistryHelper {
         JsonNode schema=apiHelper(obj,issuer_schema_url);
         return schema;
     }
-    /** Anchors registry to the CORD NETWORK ,*/
-    public JsonNode anchorRegistryAPI(JsonNode obj) throws Exception{
-        JsonNode registryDetails=apiHelper(obj,issuer_registry_url);
-        return registryDetails;
-    }
 
     /** Helper function for Anchoring to CORD */
     public JsonNode anchorToCord(JsonNode rootNode) throws Exception{
@@ -269,16 +263,7 @@ public class RegistryHelper {
         
         JsonNode anchoredSchema=anchorSchemaAPI(schemaToBeAnchored);
         logger.info("ANCHORED SCHEMA TO CORD CHAIN  {}",anchoredSchema);
-        /* Anchoring registry to CORD */
-        JsonNode registrySchema=objectMapper.createObjectNode()
-        .put("title",convertedSchema.get("title").asText())
-        .put("description",convertedSchema.get("description").asText())
-        .put("schemaId",anchoredSchema.get("schemaId").asText());
         
-        JsonNode registryId=anchorRegistryAPI(registrySchema);
-        logger.info("REGISTRY ID GENERATED ON CORD {} ",registryId);
-        
-        ((ObjectNode)rootNode).set("cord_registry_id", registryId.get("registryId"));
         ((ObjectNode)rootNode).set("cord_schema_id", anchoredSchema.get("schemaId"));
         
             return rootNode;
@@ -289,7 +274,7 @@ public class RegistryHelper {
 
     }
     /* Anchor documents to the CORD chain
-     * The below function first calls the search schema endpoint to get the registry_id & schema_id
+     * The below function first calls the search schema endpoint to get the schema_id
      * to create a proper json structure for issuer agent credentials api 
      * 
      * Schema for the search API
@@ -306,9 +291,7 @@ public class RegistryHelper {
      * Schema accepted by ISSUER AGENT Credentials api
      * {
      *      "schemaId":"",
-     *      "registryId":"",
-     *      "holderDid":"",
-     *      "property":{
+     *      "properties":{
      *         "":""    
      *      }
      * }
@@ -332,23 +315,21 @@ public class RegistryHelper {
              
              JsonNode schemaArray=getDetails.get("Schema");
              JsonNode firstSchema = schemaArray.get(0);
-             appendCredentialsToCord(firstSchema.get("cord_schema_id").asText(),firstSchema.get("cord_registry_id").asText(), credentials);
+             appendCredentialsToCord(firstSchema.get("cord_schema_id").asText(), credentials);
              
         } catch (Exception e) {
             logger.error("EXCEPTION OCCURRED",e);
         }   
     }
-    // The holderDid is hardcoded for now.
-    private void appendCredentialsToCord(String schemaId,String registryId,JsonNode document){
+
+    private void appendCredentialsToCord(String schemaId,JsonNode document){
         try {
             ObjectNode documentObject = (ObjectNode) document;
             if(documentObject.has("osid")) documentObject.remove("osid");
             if(documentObject.has("osOwner")) documentObject.remove("osOwner");
             JsonNode rootNode=new ObjectMapper().createObjectNode()
             .put("schemaId",schemaId)
-            .put("registryId",registryId)
-            .put("holderDid","did:cord:3yxVe6KTeexjYkK43q1SZxthbBVhnBdxwh1SYLTxzWxPobSS")
-            .set("property",documentObject);
+            .set("properties",documentObject);
             
             JsonNode anchorVC=apiHelper(rootNode,issuer_credential_url);
         } catch (Exception e) {
