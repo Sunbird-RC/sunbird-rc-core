@@ -12,6 +12,7 @@ import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.CredentialSchemaService;
+import dev.sunbirdrc.registry.service.DIDService;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.service.SignatureService;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -56,8 +57,10 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     @Value("${signature.v2.getRevocationListURL}")
     private String getRevocationListURL;
 
-    private static final String credentialMethod = "rcw";
-    private static final String credentialIssuerMethod = "abc";
+    @Value("${signature.v2.credentialDidMethod}")
+    private String credentialMethod;
+    @Value("${signature.v2.issuerDidMethod}")
+    private String credentialIssuerMethod;
 
     @Autowired
     protected RetryRestTemplate retryRestTemplate;
@@ -66,7 +69,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     @Autowired
     private CredentialSchemaService credentialSchemaService;
     @Autowired
-    private dev.sunbirdrc.registry.service.DIDService DIDService;
+    private DIDService didService;
 
     @Override
     public Object sign(Map<String, Object> propertyValue) throws SignatureException.UnreachableException, SignatureException.CreationException {
@@ -99,7 +102,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
 
     @Override
     public String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException {
-        ObjectNode didDocument = (ObjectNode) DIDService.resolveDid(keyId);
+        ObjectNode didDocument = (ObjectNode) didService.resolveDid(keyId);
         ArrayNode verificationMethods = (ArrayNode) didDocument.get("verificationMethod");
         AtomicReference<JsonNode> verificationMethod = new AtomicReference<>();
         verificationMethods.elements().forEachRemaining(vm -> {
@@ -131,7 +134,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         return getCredentialById(credentialId.asText(), mediaType, templateId, template);
     }
 
-    private JsonNode issueCredential(String title, Object credentialTemplate, JsonNode input) throws Exception {
+    public JsonNode issueCredential(String title, Object credentialTemplate, JsonNode input) throws Exception {
         // Render the credential using credential template
         Handlebars hb = new Handlebars();
         String templateJsonString = null;
@@ -152,7 +155,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
 
 
         // ensure issuer did
-        String issuerDid = DIDService.ensureDidForName(credential.get("issuer").asText(), credentialIssuerMethod);
+        String issuerDid = didService.ensureDidForName(credential.get("issuer").asText(), credentialIssuerMethod);
         credential.set("issuer", JsonNodeFactory.instance.textNode(issuerDid));
 
         // Wire the create credential request payload
