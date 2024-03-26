@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,6 +30,7 @@ import java.util.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 @Component
+@ConditionalOnProperty(value = "did.enabled", havingValue = "true")
 public class DIDService implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(DIDService.class);
     @Value("${did.healthCheckURL}")
