@@ -98,8 +98,8 @@ public class RegistryHelper {
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
 
-    @Value("${registry.cord.issuer_schema_url}") String issuer_schema_url;
-    @Value("${registry.cord.issuer_credential_url}") String issuer_credential_url;
+    @Value("${registry.cord.issuerSchemaUrl}") String issuerSchemaUrl;
+    @Value("${registry.cord.issuerCredentialUrl}") String issuerCredentialUrl;
 
  
     @Autowired(required = false)
@@ -235,7 +235,7 @@ public class RegistryHelper {
     
      /** Anchors schema to the CORD CHAIN*/
     public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
-        JsonNode schema=apiHelper(obj,issuer_schema_url);
+        JsonNode schema=apiHelper(obj,issuerSchemaUrl);
         return schema;
     }
 
@@ -331,7 +331,7 @@ public class RegistryHelper {
             .put("schemaId",schemaId)
             .set("properties",documentObject);
             
-            JsonNode anchorVC=apiHelper(rootNode,issuer_credential_url);
+            JsonNode anchorVC=apiHelper(rootNode,issuerCredentialUrl);
         } catch (Exception e) {
             logger.error("EXCEPTION OCCURRED WHILE APPENDING TO CORD");
         }

@@ -66,9 +66,9 @@ registry:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
   cord:
-    anchor_to_cord: ${anchor_to_cord:true}
-    issuer_schema_url: ${issuer_schema_url:http://172.17.0.1:5106/api/v1/schema}
-    issuer_credential_url: ${issuer_credential_url:http://172.17.0.1:5106/api/v1/cred}
+    anchorToCord: ${anchor_to_cord:true}
+    issuerSchemaUrl: ${issuer_schema_url:http://172.17.0.1:5106/api/v1/schema}
+    issuerCredentialUrl: ${issuer_credential_url:http://172.17.0.1:5106/api/v1/cred}
 
 workflow:
   enabled: ${workflow.enable:true}
