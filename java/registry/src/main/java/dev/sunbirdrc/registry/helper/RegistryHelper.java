@@ -105,6 +105,9 @@ public class RegistryHelper {
     private ShardManager shardManager;
 
     @Autowired
+    private ClaimRequestClient claimRequestClient;
+
+    @Autowired
     RegistryService registryService;
 
     @Autowired
@@ -1012,7 +1015,7 @@ public class RegistryHelper {
             }
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(attestations, propertyToUpdate);
+                updateAttestation(attestations, propertyToUpdate, userId);
             }
         }
         if (entity != null) {
@@ -1026,7 +1029,7 @@ public class RegistryHelper {
         String propertyURI = getPropertyURI(entityId, request);
         return propertyURI.split("/")[0];
     }
-    private void updateAttestation(ArrayNode attestations,String propertyToUpdate) {
+    private void updateAttestation(ArrayNode attestations,String propertyToUpdate, String userId) {
         for (JsonNode attestation : attestations) {
             if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())
               && !attestation.get("name").asText().equals(propertyToUpdate)
@@ -1034,6 +1037,15 @@ public class RegistryHelper {
                 ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
                 JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
                 ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
+            }
+            if (attestation.get(_osState.name()).asText().equals(States.ATTESTATION_REQUESTED.name())
+                    && !attestation.get("name").asText().equals(propertyToUpdate)
+            ) {
+                JsonNode claim = claimRequestClient.getClaimByAttestationId(attestation.get("osid").asText());
+                logger.info("Closing claim: ", claim.get("id"));
+                claimRequestClient.closeClaim(claim.get("id").asText(), userId, "CLOSING CLAIM. ENTITY UPDATED AFTER RAISING CLAIM");
+                logger.info("Invalidating the attestation. Attestation id: " + attestation.get("osid").asText());
+                ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.DRAFT.name()));
             }
         }
     }

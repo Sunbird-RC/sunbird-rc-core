@@ -53,11 +53,27 @@ public class ClaimRequestClient {
         return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH + "/" + claimId, requestBody, JsonNode.class);
     }
 
+    public JsonNode getClaimByAttestationId(String attestationId) {
+        return restTemplate.getForObject(claimRequestUrl + FETCH_CLAIMS_PATH + "?attestationId=" + attestationId, JsonNode.class);
+    }
+
     public ResponseEntity<Object> attestClaim(JsonNode attestationRequest, String claimId) {
         return restTemplate.exchange(
                 claimRequestUrl + CLAIMS_PATH + "/" + claimId,
                 HttpMethod.POST,
                 new HttpEntity<>(attestationRequest),
+                Object.class
+        );
+    }
+
+    public ResponseEntity<Object> closeClaim(String claimId, String userId, String notes) {
+        ObjectNode requestBody = JsonNodeFactory.instance.objectNode();
+        requestBody.set("userId", JsonNodeFactory.instance.textNode(userId));
+        requestBody.set("notes", JsonNodeFactory.instance.textNode(notes));
+        return restTemplate.exchange(
+                claimRequestUrl + CLAIMS_PATH + "/" + claimId,
+                HttpMethod.PUT,
+                new HttpEntity<>(requestBody),
                 Object.class
         );
     }

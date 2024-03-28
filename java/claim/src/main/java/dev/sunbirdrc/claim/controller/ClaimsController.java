@@ -17,11 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.LOWERCASE_ENTITY;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
+import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
 @Controller
 public class ClaimsController {
@@ -75,6 +76,38 @@ public class ClaimsController {
         logger.info("Attesting claim : {}", claimId);
         Claim updatedClaim = claimService.attestClaim(claimId, requestBody);
         return new ResponseEntity<>(updatedClaim, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/claims/{claimId}", method = RequestMethod.PUT)
+    public ResponseEntity<Claim> closeClaims(@PathVariable String claimId, @RequestBody JsonNode requestBody) {
+        if (!requestBody.has(USER_ID))
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+
+        String userId = requestBody.get(USER_ID).asText();
+        Optional<Claim> claimOptional = claimService.findById(claimId);
+        if (!claimOptional.isPresent()) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        Claim existingClaim = claimOptional.get();
+        if (!claimsAuthorizer.isAuthorizedToCloseClaim(existingClaim, userId)) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        }
+
+        logger.info("Closing claim : {}", claimId);
+        JsonNode notesNode = requestBody.get(NOTES);
+        String notes = notesNode == null ? null : notesNode.asText();
+        Claim updatedClaim = claimService.closeClaim(existingClaim, notes, userId);
+        return new ResponseEntity<>(updatedClaim, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/getClaims", method = RequestMethod.GET)
+    public ResponseEntity<Claim> getClaims(@RequestParam String attestationId) {
+        logger.info("Getting claim using attestation id : {}", attestationId);
+        List<Claim> claim = claimService.findByAttestationId(attestationId);
+        if (claim == null || claim.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(claim.get(0), HttpStatus.OK);
     }
 
     @GetMapping(value = "/health")

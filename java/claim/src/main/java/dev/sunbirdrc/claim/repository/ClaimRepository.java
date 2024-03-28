@@ -5,10 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClaimRepository extends JpaRepository<Claim, String> {
     List<Claim> findByConditionsIn(List<String> conditions);
     List<Claim> findByAttestorEntityIn(List<String> entities);
     List<Claim> findByAttestorEntity(String entity);
+    List<Claim> findByAttestationIdEquals(String attestationId);
 }

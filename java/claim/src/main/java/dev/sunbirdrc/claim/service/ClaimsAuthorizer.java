@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Objects;
 
 @Service
 public class ClaimsAuthorizer {
@@ -47,5 +48,9 @@ public class ClaimsAuthorizer {
             return claim.getEntityId().equals(userEntityId);
         }
         return false;
+    }
+
+    public boolean isAuthorizedToCloseClaim(Claim claim, String userId) {
+        return Objects.equals(claim.getEntityId(), userId);
     }
 }
