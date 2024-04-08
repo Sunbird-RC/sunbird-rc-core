@@ -230,7 +230,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     public ComponentHealthInfo getHealthInfo() {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("UP")) {
+            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("OK")) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {
