@@ -31,18 +31,18 @@ import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.Constants.TITLE;
 
 @RestController
-@ConditionalOnProperty(name = "api-swagger.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "swagger.enabled", havingValue = "true")
 public class RegistrySwaggerController {
     private final IDefinitionsManager definitionsManager;
     private final RefResolver refResolver;
     private final ObjectMapper objectMapper;
     @Value("${registry.schema.url}")
     private String schemaUrl;
-    @Value("${api-swagger.title}")
+    @Value("${swagger.title}")
     private String swaggerTitle;
-    @Value("${api-swagger.description}")
+    @Value("${swagger.description}")
     private String swaggerDescription;
-    @Value("${api-swagger.version}")
+    @Value("${swagger.version}")
     private String swaggerVersion;
 
     private RegistryHelper registryHelper;

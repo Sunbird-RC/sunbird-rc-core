@@ -26,12 +26,12 @@ import java.time.Duration;
 public class SunbirdRCApplication {
     private static ApplicationContext context;
     private static SpringApplication application = new SpringApplication(SunbirdRCApplication.class);
-    @Value("${registry.manager.type}")
+    @Value("${definitions.manager-type}")
     private String definitionManagerType;
 
-    @Value("${registry.redis.host:localhost}")
+    @Value("${redis.host:localhost}")
     private String redisHost;
-    @Value("${registry.redis.port:6379}")
+    @Value("${redis.port:6379}")
     private String redisPort;
 
 
@@ -50,7 +50,7 @@ public class SunbirdRCApplication {
         return context;
     }
 
-    @Value("${cors.allowedOrigin}")
+    @Value("${cors.allowed-origin}")
     public String corsAllowedOrigin;
 
     @Bean

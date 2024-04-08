@@ -41,25 +41,25 @@ import static dev.sunbirdrc.registry.Constants.HTTP_URI_PREFIX;
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
 @Component
-@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
+@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider-name}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
 public class SignatureV2ServiceImpl implements SignatureService, ICertificateService {
     private static final Logger logger = LoggerFactory.getLogger(SignatureV2ServiceImpl.class);
-    @Value("${signature.v2.healthCheckURL}")
+    @Value("${signature.v2.health-check-url}")
     private String healthCheckUrl;
-    @Value("${signature.v2.issueCredentialURL}")
+    @Value("${signature.v2.issue-url}")
     private String issueCredentialURL;
-    @Value("${signature.v2.getCredentialByIdURL}")
+    @Value("${signature.v2.get-url}")
     private String getCredentialByIdURL;
-    @Value("${signature.v2.deleteCredentialByIdURL}")
+    @Value("${signature.v2.delete-url}")
     private String deleteCredentialByIdURL;
-    @Value("${signature.v2.verifyCredentialURL}")
+    @Value("${signature.v2.verify-url}")
     private String verifyCredentialURL;
-    @Value("${signature.v2.getRevocationListURL}")
+    @Value("${signature.v2.revocation-list-url}")
     private String getRevocationListURL;
 
-    @Value("${signature.v2.credentialDidMethod}")
+    @Value("${signature.v2.credential-did-method}")
     private String credentialMethod;
-    @Value("${signature.v2.issuerDidMethod}")
+    @Value("${signature.v2.issuer-did-method}")
     private String credentialIssuerMethod;
 
     @Autowired

@@ -49,13 +49,13 @@ public class AuditServiceImpl implements IAuditService {
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
-    @Value("${audit.frame.store}")
+    @Value("${audit.frame-store}")
     private String auditFrameStore;
 
-    @Value("${audit.frame.suffix}")
+    @Value("${audit.suffix}")
     private String auditSuffix;
 
-    @Value("${audit.frame.suffixSeparator}")
+    @Value("${audit.suffix-separator}")
     private String auditSuffixSeparator;
 
     @Autowired
@@ -68,7 +68,7 @@ public class AuditServiceImpl implements IAuditService {
     private AuditProviderFactory auditProviderFactory;
 
 
-    @Value("${search.providerName}")
+    @Value("${search.provider-name}")
     private String searchProvider;
 
     private boolean isFileAudit() {

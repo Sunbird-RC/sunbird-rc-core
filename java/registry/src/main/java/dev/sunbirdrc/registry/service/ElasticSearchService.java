@@ -40,7 +40,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
  *
  */
 @Component
-@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
+@ConditionalOnProperty(name = "search.provider-name", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 public class ElasticSearchService implements ISearchService {
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchService.class);
 
@@ -59,16 +59,10 @@ public class ElasticSearchService implements ISearchService {
     @Value("${search.limit}")
     private int limit;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     private String uuidPropertyName;
 
-    @Value("${audit.enabled}")
-    private boolean auditEnabled;
-    
-    @Value("${audit.frame.suffix}")
-    private String auditSuffix;
-
-    @Value("${registry.expandReference}")
+    @Value("${registry.expand-reference}")
     private boolean expandReferenceObj;
 
     @Autowired

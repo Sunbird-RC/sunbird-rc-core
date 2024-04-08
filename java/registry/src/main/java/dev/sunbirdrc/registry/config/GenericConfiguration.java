@@ -98,14 +98,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private int readTimeout;
 	@Value("${service.connection.request.timeout}")
 	private int connectionRequestTimeout;
-	@Value("${authentication.enabled}")
-	private boolean authenticationEnabled;
-	@Value(("${authentication.url}"))
-	private String authUrl;
-	@Value(("${authentication.realm}"))
-	private String authRealm;
-	@Value(("${authentication.publicKey}"))
-	private String authPublicKey;
 	@Value("${perf.monitoring.enabled}")
 	private boolean performanceMonitoringEnabled;
 	@Value("${registry.context.base}")
@@ -116,50 +108,50 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String validationType = "json";
 	@Value("${validation.enabled}")
 	private boolean validationEnabled = true;
-	@Value("${taskExecutor.index.threadPoolName}")
+	@Value("${task-executor.index.thread-pool-name}")
 	private String indexThreadName;
-	@Value("${taskExecutor.index.corePoolSize}")
+	@Value("${task-executor.index.core-pool-size}")
 	private int indexCorePoolSize;
-	@Value("${taskExecutor.index.maxPoolSize}")
+	@Value("${task-executor.index.max-pool-size}")
 	private int indexMaxPoolSize;
-	@Value("${taskExecutor.index.queueCapacity}")
+	@Value("${task-executor.index.queue-capacity}")
 	private int indexQueueCapacity;
-	@Value("${auditTaskExecutor.threadPoolName}")
+	@Value("${audit-task-executor.thread-pool-name}")
 	private String auditThreadName;
-	@Value("${auditTaskExecutor.corePoolSize}")
+	@Value("${audit-task-executor.core-pool-size}")
 	private int auditCorePoolSize;
-	@Value("${auditTaskExecutor.maxPoolSize}")
+	@Value("${audit-task-executor.max-pool-size}")
 	private int auditMaxPoolSize;
-	@Value("${auditTaskExecutor.queueCapacity}")
+	@Value("${audit-task-executor.queue-capacity}")
 	private int auditQueueCapacity;
-	@Value("${elastic.search.connection_url}")
+	@Value("${elastic.search.connection-url}")
 	private String elasticConnInfo;
-	@Value("${elastic.search.auth_enabled}")
+	@Value("${elastic.search.auth-enabled}")
 	private String authEnabled;
-	@Value("${elastic.search.elastic_username}")
+	@Value("${elastic.search.username}")
 	private String username;
-	@Value("${elastic.search.elastic_password}")
+	@Value("${elastic.search.password}")
 	private String password;
-	@Value("${notification.service.connection_url}")
+	@Value("${notification.url}")
 	private String notificationServiceConnInfo;
-	@Value("${notification.service.enabled}")
+	@Value("${notification.enabled}")
 	private boolean notificationServiceEnabled;
-	@Value("${notification.service.health_url}")
+	@Value("${notification.health-check-url}")
 	private String notificationServiceHealthUrl;
-	@Value("${search.providerName}")
+	@Value("${search.provider-name}")
 	private String searchProviderName;
-	@Value("${read.providerName}")
+	@Value("${read.provider-name}")
 	private String readProviderName;
 	@Value("${server.port}")
 	private long serverPort;
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
-	@Value("${httpConnection.maxConnections:5}")
+	@Value("${http.max-connections:5}")
 	private int httpMaxConnections;
 	@Value("${elastic.search.scheme}")
 	private String scheme;
 
-	@Value("${registry.hard_delete_enabled}")
+	@Value("${registry.hard-delete-enabled}")
 	private boolean isHardDeleteEnabled;
 
 	@Autowired
@@ -329,7 +321,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Autowired
-	public void setSignatureProvider(@Value("${signature.provider}") String signatureProvider) {
+	public void setSignatureProvider(@Value("${signature.provider-name}") String signatureProvider) {
 		GenericConfiguration.signatureProvider = signatureProvider;
 	}
 
@@ -442,7 +434,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	 * @throws IOException
 	 */
 
-	@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
+	@ConditionalOnProperty(name = "search.provider-name", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 	@Bean
 	public IElasticService elasticService() throws IOException {
 		ElasticServiceImpl elasticService = new ElasticServiceImpl();
@@ -462,7 +454,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return elasticService;
 	}
 
-	@ConditionalOnProperty(name = "notification.service.enabled", havingValue = "true")
+	@ConditionalOnProperty(name = "notification.enabled", havingValue = "true")
 	@Bean
 	public NotificationService notificationService() {
 		return new NotificationService(notificationServiceConnInfo, notificationServiceHealthUrl, notificationServiceEnabled);

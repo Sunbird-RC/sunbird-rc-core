@@ -27,11 +27,11 @@ public class RegistryTestBase {
 	private static final String CONTEXT_CONSTANT = "teacher:";
 	protected static Type mapType = new TypeToken<Map<String, String>>() {
 	}.getType();
-	private static String ssoUrl = System.getenv("sunbird_sso_url");
-	private static String ssoClientId = System.getenv("sunbird_sso_client_id");
-	private static String ssoUsername = System.getenv("sunbird_sso_username");
-	private static String ssoPassword = System.getenv("sunbird_sso_password");
-	private static String ssoRealm = System.getenv("sunbird_sso_realm");
+	private static String ssoUrl = System.getenv("IDENTITY_URL");
+	private static String ssoClientId = System.getenv("IDENTITY_CLIENT_ID");
+	private static String ssoUsername = System.getenv("IDENTITY_USERNAME");
+	private static String ssoPassword = System.getenv("IDENTITY_PASSWORD");
+	private static String ssoRealm = System.getenv("IDENTITY_REALM");
 	public static String accessToken = generateAuthToken();
 	public String jsonld;
 	protected RestTemplate restTemplate;
@@ -51,7 +51,7 @@ public class RegistryTestBase {
 	}
 
 	private static String generateAuthToken() {
-		String ssoAuthBody = new StringBuilder().append("client_id=").append(ssoClientId).append("&username=")
+		String ssoAuthBody = new StringBuilder().append("client_id=").append(``ssoClientId).append("&username=")
 				.append(ssoUsername).append("&password=").append(ssoPassword).append("&grant_type=password").toString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setCacheControl("no-cache");

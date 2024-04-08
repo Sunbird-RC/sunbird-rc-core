@@ -21,7 +21,7 @@ import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
 @Controller
-@ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "file-storage.enabled", havingValue = "true", matchIfMissing = true)
 public class FileStorageController {
     private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     private final FileStorageService fileStorageService;

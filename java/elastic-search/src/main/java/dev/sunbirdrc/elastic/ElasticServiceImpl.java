@@ -147,7 +147,7 @@ public class ElasticServiceImpl implements IElasticService {
      * @return
      * @throws IOException
      */
-    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public static boolean addIndex(String indexName, String documentType) throws IOException {
         boolean response = false;
@@ -215,7 +215,7 @@ public class ElasticServiceImpl implements IElasticService {
      * @return
      */
     @Override
-    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
@@ -276,7 +276,7 @@ public class ElasticServiceImpl implements IElasticService {
     }
 
     @Override
-    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);

@@ -36,7 +36,7 @@ public class SchemaService {
 
 	@Value("${signature.enabled:false}")
 	private boolean signatureEnabled;
-	@Value("${signature.provider}")
+	@Value("${signature.provider-name}")
 	private String signatureProvider;
 	@Autowired(required = false)
 	private CredentialSchemaService credentialSchemaService;
@@ -176,6 +176,7 @@ public class SchemaService {
 		if(!signatureEnabled || !Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
 			return;
 		}
+		if(credentialTemplate != null) return;
         try {
             credentialSchemaService.ensureCredentialSchema(title, credentialTemplate, status);
         } catch (Exception e) {

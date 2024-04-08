@@ -1,7 +1,7 @@
 package dev.sunbirdrc.registry.authorization;
 
 import dev.sunbirdrc.registry.authorization.pojos.OAuth2Configuration;
-import dev.sunbirdrc.registry.authorization.pojos.OAuth2Resources;
+import dev.sunbirdrc.registry.authorization.pojos.OAuth2Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +31,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		HttpSecurity httpConfig = http.csrf().disable();
 		Map<String, AuthenticationManager> authenticationManagers = new HashMap<>();
-		this.oAuth2Configuration.getResources().forEach(issuer -> addManager(authenticationManagers, issuer));
+		this.oAuth2Configuration.getResource().forEach(issuer -> addManager(authenticationManagers, issuer));
 		httpConfig
 				.addFilterBefore(schemaAuthFilter, WebAsyncManagerIntegrationFilter.class)
 				.authorizeRequests(auth -> auth
@@ -49,10 +49,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	}
 
-	private void addManager(Map<String, AuthenticationManager> authenticationManagers, OAuth2Resources auth2Resources) {
+	private void addManager(Map<String, AuthenticationManager> authenticationManagers, OAuth2Resource auth2Resources) {
 		TenantJwtDecoder tenantJwtDecoder = CustomJwtDecoders.fromOidcIssuerLocation(auth2Resources.getUri());
 		JwtAuthenticationProvider authenticationProvider = new JwtAuthenticationProvider(tenantJwtDecoder);
-		authenticationProvider.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter(auth2Resources.getProperties()));
+		authenticationProvider.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter(auth2Resources));
 		authenticationManagers.put(tenantJwtDecoder.getIssuer(), authenticationProvider::authenticate);
 	}
 

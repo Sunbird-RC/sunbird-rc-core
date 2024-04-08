@@ -28,7 +28,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ClaimPluginActor extends BaseActor {
     // TODO: read url from config
-    private final String claimRequestUrl = System.getenv().getOrDefault("claims_url", "http://localhost:8082");
+    private final String claimRequestUrl = System.getenv().getOrDefault("claims_url", System.getenv().getOrDefault("CLAIMS_URL", "http://localhost:8082"));
     private final String CLAIMS_PATH = "/api/v1/claims";
     RestTemplate restTemplate = new RestTemplate();
 
@@ -79,6 +79,7 @@ public class ClaimPluginActor extends BaseActor {
     }
 
     private String getClaimRequestUrl() {
+        logger.debug("claims request url: {} ", claimRequestUrl);
         if (isBlank(claimRequestUrl)) {
             logger.error("claims service url is not set but it seems to be in use.");
         }

@@ -77,13 +77,13 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
-    @Value("${registry.hard_delete_enabled}")
+    @Value("${registry.hard-delete-enabled}")
     private boolean isHardDeleteEnabled;
 
     @Value("${event.enabled}")
     private boolean isEventsEnabled;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
     @Value("${signature.enabled}")
@@ -95,22 +95,19 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${persistence.commit.enabled:true}")
     private boolean commitEnabled;
 
-    @Value("${search.providerName}")
+    @Value("${search.provider-name}")
     private String searchProvider;
 
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
-    @Value("${registry.perRequest.indexCreation.enabled:false}")
+    @Value("${registry.per-request.index-creation.enabled:false}")
     private boolean perRequestIndexCreation;
 
-    @Value("${elastic.search.add_shard_prefix:true}")
+    @Value("${elastic.search.add-shard-prefix:true}")
     private boolean addShardPrefixForESRecord;
 
-    @Value("${registry.context.base}")
-    private String registryBaseUrl;
-
-    @Value("${notification.async.enabled}")
+    @Value("${notification.async-enabled}")
     private boolean asyncEnabled;
 
     @Value("${notification.topic}")
@@ -139,7 +136,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${idgen.enabled:false}")
     private boolean idGenEnabled;
 
-    @Value("${registry.expandReference}")
+    @Value("${registry.expand-reference}")
     private boolean expandReferenceObj;
 
     /**

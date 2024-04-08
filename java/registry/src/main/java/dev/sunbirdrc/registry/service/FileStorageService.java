@@ -36,14 +36,14 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_FILE_STORAGE_SERVICE_NAME;
 
 @Service
-@ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "file-storage.enabled", havingValue = "true", matchIfMissing = true)
 public class FileStorageService implements HealthIndicator {
 	private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 	private final MinioClient minioClient;
 	private final String bucketName;
 	private static final String CONTENT_TYPE_TEXT = "text/plain";
 
-	public FileStorageService(MinioClient minioClient, @Value("${filestorage.bucketname}") String bucketName) {
+	public FileStorageService(MinioClient minioClient, @Value("${file-storage.bucket-name}") String bucketName) {
 		this.bucketName = bucketName;
 		this.minioClient = minioClient;
 	}

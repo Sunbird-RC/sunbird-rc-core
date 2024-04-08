@@ -12,17 +12,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "file-storage.enabled", havingValue = "true", matchIfMissing = true)
 public class MinioClientConfig {
 
 	private static final Logger logger = LoggerFactory.getLogger(MinioClientConfig.class);
-	@Value("${filestorage.url}")
+	@Value("${file-storage.connection-url}")
 	String url;
-	@Value("${filestorage.accesskey}")
+	@Value("${file-storage.access-key}")
 	String accessKey;
-	@Value("${filestorage.secretkey}")
+	@Value("${file-storage.secret-key}")
 	String secretKey;
-	@Value("${filestorage.bucketname}")
+	@Value("${file-storage.bucket-name}")
 	String bucketName;
 
 	@Bean("minioClient")

@@ -10,7 +10,7 @@ import java.util.List;
 public class EntityTypeHandler {
     private final List<String> externalEntities;
 
-    public EntityTypeHandler(@Value("${registry.externalentities}") String[] externalEntities) {
+    public EntityTypeHandler(@Value("${registry.external-entities}") String[] externalEntities) {
         this.externalEntities = Arrays.asList(externalEntities);
     }
 

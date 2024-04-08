@@ -77,7 +77,7 @@ public class RegistryUtilsController {
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
-	@Value("${audit.frame.store}")
+	@Value("${audit.frame-store}")
 	public String auditStoreType;
 
 	@RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
