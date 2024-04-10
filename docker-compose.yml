@@ -467,6 +467,10 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/registry
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/registry
+      - SPRING_FLYWAY_USERNAME=postgres
+      - SPRING_FLYWAY_PASSWORD=postgres
+      - SPRING_FLYWAY_TABLE=flyway_idgen_history
       - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
       - AUTOCREATE_NEW_SEQ=true
       - IDFORMAT_FROM_MDMS=false
@@ -487,6 +491,7 @@ services:
       - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/registry
       - SPRING_FLYWAY_USERNAME=postgres
       - SPRING_FLYWAY_PASSWORD=postgres
+      - SPRING_FLYWAY_TABLE=flyway_encryption_history
       - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
       - EGOV_MDMS_PROVIDER=org.egov.enc.masterdata.provider.DBMasterDataProvider
       - MANAGEMENT_ENDPOINTS_WEB_BASE_PATH=/
