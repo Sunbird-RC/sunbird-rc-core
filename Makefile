@@ -12,14 +12,13 @@ build: java/registry/target/registry.jar
 	rm -rf java/claim/target/*.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t ghcr.io/sunbird-rc/sunbird-rc-core .
 	make -C java/claim
-	make -C services/notification-service docker
-	make -C services/metrics docker
 	make -C services/id-gen-service docker
 	make -C services/encryption-service docker
 	make -C services/identity-service/ docker
 	make -C services/credential-schema docker
 	make -C services/credentials-service/ docker
-
+	make -C services/notification-service docker
+	make -C services/metrics docker
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
