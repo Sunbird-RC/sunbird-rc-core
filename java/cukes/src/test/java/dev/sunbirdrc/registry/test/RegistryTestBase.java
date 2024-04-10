@@ -51,7 +51,7 @@ public class RegistryTestBase {
 	}
 
 	private static String generateAuthToken() {
-		String ssoAuthBody = new StringBuilder().append("client_id=").append(``ssoClientId).append("&username=")
+		String ssoAuthBody = new StringBuilder().append("client_id=").append(ssoClientId).append("&username=")
 				.append(ssoUsername).append("&password=").append(ssoPassword).append("&grant_type=password").toString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setCacheControl("no-cache");

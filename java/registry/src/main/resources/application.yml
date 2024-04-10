@@ -320,7 +320,7 @@ swagger:
   version: 1.0.0
 
 idgen:
-  enabled: idgen_enabled:false
+  enabled: false
   tenant-id: default
   health-check-url: http://localhost:8088/egov-idgen/health
   generate-url: http://localhost:8088/egov-idgen/id/_generate
@@ -334,7 +334,7 @@ did:
 
 signature:
   enabled: false
-  provider-name: dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl
+  provider-name: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
   v1:
     health-check-url: ${sign_health_check_url:http://localhost:8079/health}
     sign-url: ${sign_url:http://localhost:8079/sign}
