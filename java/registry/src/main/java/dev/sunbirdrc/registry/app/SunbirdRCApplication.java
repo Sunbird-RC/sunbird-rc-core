@@ -72,7 +72,7 @@ public class SunbirdRCApplication {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "registry.manager.type", havingValue = "DistributedDefinitionsManager")
+    @ConditionalOnProperty(value = "definitions.manager-type", havingValue = "DistributedDefinitionsManager")
     public JedisPool jedisPool() {
         final JedisPoolConfig poolConfig = new JedisPoolConfig();
         JedisPool jedisPool = new JedisPool(poolConfig, redisHost, Integer.parseInt(redisPort));
@@ -91,6 +91,7 @@ public class SunbirdRCApplication {
 
     @Bean
     public IDefinitionsManager definitionsManager() {
+        System.out.println("IDefinitionManager: " + definitionManagerType);
         if(definitionManagerType.equals("DefinitionsManager")) {
             return new DefinitionsManager();
         }
