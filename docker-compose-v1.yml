@@ -53,7 +53,9 @@ services:
       - encryption_enabled=${ENCRYPTION_ENABLED-false}
       - encryption_health_check_url=http://encryption-service:8013/health
       - encryption_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_uri=http://encryption-service:8013/crypto/v1/_decrypt
       - encryption_batch_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_batch_uri=http://encryption-service:8013/crypto/v1/_decrypt
       - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService

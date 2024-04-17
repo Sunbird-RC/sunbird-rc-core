@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -39,8 +40,12 @@ public class PrivateField {
         if(privatePropertyLst != null) {
             DocumentContext documentContext = JsonPath.parse(rootNode.toString());
             privatePropertyLst.forEach(path -> {
-                Object read = documentContext.read(path);
-                plainKeyValues.put(path, read);
+                try {
+                    Object read = documentContext.read(path);
+                    plainKeyValues.put(path, read);
+                } catch (PathNotFoundException ignored) {
+                }
+
             });
         }
         return plainKeyValues;
