@@ -469,6 +469,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 //		return auditService;
 //	}
 
+	@ConditionalOnProperty(name = "authentication.enabled", havingValue = "true", matchIfMissing = true)
 	@Bean
 	public IdentityManager identityManager() {
 		ServiceLoader<IdentityProvider> loader = ServiceLoader.load(IdentityProvider.class);
