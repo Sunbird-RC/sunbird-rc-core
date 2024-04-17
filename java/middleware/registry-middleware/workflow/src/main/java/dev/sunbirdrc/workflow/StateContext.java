@@ -137,7 +137,7 @@ public class StateContext {
         return this.revertSystemFields;
     }
 
-    public Boolean getLoginEnabled() {
+    public boolean getLoginEnabled() {
         return loginEnabled;
     }
 
@@ -145,7 +145,7 @@ public class StateContext {
         this.loginEnabled = loginEnabled;
     }
 
-    public Boolean isAuthenticationEnabled() {
+    public boolean isAuthenticationEnabled() {
         return this.authenticationEnabled;
     }
 
