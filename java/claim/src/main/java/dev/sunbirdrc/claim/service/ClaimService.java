@@ -53,6 +53,10 @@ public class ClaimService {
         return claimRepository.findAll();
     }
 
+    public List<Claim> findByAttestationId(String attestationId) {
+        return claimRepository.findByAttestationIdEquals(attestationId);
+    }
+
     public Map<String, Object> findClaimsForAttestor(String entity, JsonNode attestorNode, Pageable pageable) {
         List<Claim> claims = claimRepository.findByAttestorEntity(entity);
         logger.info("Found {} claims to process", claims.size());
@@ -97,6 +101,16 @@ public class ClaimService {
         claim.setStatus(ClaimStatus.CLOSED.name());
         claim.setAttestorUserId(requestBody.get(USER_ID).asText());
         return claimRepository.save(claim);
+    }
+
+    public Claim closeClaim(Claim claim, String notes, String userId) {
+        claim.setUpdatedAt(new Date());
+        claim.setStatus(ClaimStatus.CLOSED.name());
+        Claim updatedClaim = claimRepository.save(claim);
+        if (notes != null) {
+            addNotes(notes, updatedClaim, userId);
+        }
+        return updatedClaim;
     }
 
     public void addNotes(String notes, Claim claim, String addedBy) {
