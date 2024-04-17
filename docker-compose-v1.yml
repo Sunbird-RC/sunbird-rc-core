@@ -1,0 +1,403 @@
+version: '2.4'
+
+services:
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
+    volumes:
+      - ./${ES_DIR-es-data}:/usr/share/elasticsearch/data/*
+    environment:
+      - discovery.type=single-node
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+      - ELASTIC_PASSWORD=${ELASTIC_SEARCH_PASSWORD}
+      - xpack.security.enabled=${ELASTIC_SECURITY_ENABLED-false}
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '-f',
+          'localhost:9200/_cluster/health',
+          '--header',
+          'Authorization: Basic ZWxhc3RpYzpEa0llZFBQU0Ni',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+  db:
+    image: postgres
+    volumes:
+      - ./${DB_DIR-db-data}:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=registry
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  registry:
+    image: ghcr.io/sunbird-rc/sunbird-rc-core:${RELEASE_VERSION}
+    volumes:
+      - ./${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+      - ./${VIEW_DIR-java/registry/src/main/resources/views}:/home/sunbirdrc/config/views/
+    environment:
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=postgres
+      - encryption_enabled=${ENCRYPTION_ENABLED-false}
+      - encryption_health_check_url=http://encryption-service:8013/health
+      - encryption_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_uri=http://encryption-service:8013/crypto/v1/_decrypt
+      - encryption_batch_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_batch_uri=http://encryption-service:8013/crypto/v1/_decrypt
+      - event_enabled=${EVENT_ENABLED-false}
+      - event_topic=events
+      - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
+      - elastic_search_connection_url=${ELASTIC_SEARCH_CONNECTION_URL-es:9200}
+      - elastic_search_scheme=${ELASTIC_SEARCH_SCHEME-http}
+      - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
+      - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
+      - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
+      - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.NativeSearchService}
+      - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
+      - sunbird_sso_url=${sunbird_sso_url-http://keycloak:8080/auth}
+      - oauth2_resource_uri=${oauth2_resource_uri-http://keycloak:8080/auth/realms/sunbird-rc}
+      - oauth2_resource_roles_path=${oauth2_resource_roles_path-realm_access.roles}
+      - identity_provider=${identity_provider-dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
+      - idgen_enabled=${IDGEN_ENABLED-false}
+      - idgen_health_check_url=http://id-gen-service:8088/egov-idgen/health
+      - idgen_generate_url=http://id-gen-service:8088/egov-idgen/id/_generate
+      - idgen_id_format_url=http://id-gen-service:8088/egov-idgen/id/_format/add
+      - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
+      - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
+      - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
+      - claims_enabled=${CLAIMS_ENABLED-false}
+      - claims_url=http://claim-ms:8082
+      - signature_enabled=${SIGNATURE_ENABLED-false}
+      - signature_provider=${SIGNATURE_PROVIDER-dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
+      - sign_url=http://certificate-signer:8079/sign
+      - verify_url=http://certificate-signer:8079/verify
+      - sign_health_check_url=http://certificate-signer:8079/health
+      - certificate_enabled=${CERTIFICATE_ENABLED-false}
+      - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
+      - certificate_health_check_url=http://certificate-api:8078/health
+      - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
+      - sunbird_keycloak_user_set_password=true
+      - filestorage_enabled=${FILESSTORAGE_ENABLED-false}
+      - filestorage_connection_url=http://file-storage:9000
+      - filestorage_access_key=admin
+      - filestorage_secret_key=12345678
+      - filestorage_bucket_key=issuance
+      - registry_base_apis_enable=false
+      - sunbird_keycloak_user_password=abcd@123
+      - logging.level.root=INFO
+      - enable_external_templates=true
+      - async_enabled=${ASYNC_ENABLED-false}
+      - authentication_enabled=${AUTHENTICATION_ENABLED-true}
+      - kafka_bootstrap_address=kafka:9092
+      - webhook_enabled=false
+      - webhook_url=http://localhost:5001/api/v1/callback
+      - redis_host=redis
+      - redis_port=6379
+      - manager_type=${MANAGER_TYPE-DefinitionsManager}
+      - expand_reference=${EXPAND_REFERENCE-false}
+      - swagger_title=${SWAGGER_TITLE-Sunbird Registry and Credential}
+      - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
+      - notification_enabled=${NOTIFICATION_ENABLED-false}
+      - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
+    ports:
+      - '8081:8081'
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -nv -t1 --spider http://localhost:8081/health || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  keycloak:
+    image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
+    volumes:
+      - ./${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
+    environment:
+      - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
+      - DB_VENDOR=postgres
+      - DB_ADDR=db
+      - DB_PORT=5432
+      - DB_DATABASE=registry
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER-admin}
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin}
+      - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
+      - PROXY_ADDRESS_FORWARDING=true
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9990/ || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    ports:
+      - '8080:8080'
+      - '9990:9990'
+    depends_on:
+      db:
+        condition: service_healthy
+  claim-ms:
+    image: ghcr.io/sunbird-rc/sunbird-rc-claim-ms:${RELEASE_VERSION}
+    environment:
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=postgres
+      - sunbirdrc_url=http://registry:8081
+    ports:
+      - '8082:8082'
+    depends_on:
+      db:
+        condition: service_started
+      registry:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -nv -t1 --spider http://localhost:8082/health || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  certificate-signer:
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-signer:${RELEASE_VERSION}
+    environment:
+      - PORT=8079
+      - TIME_ZONE=Asia/Kolkata
+    ports:
+      - '8079:8079'
+    volumes:
+      - ./imports:/etc/signer
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8079/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  certificate-api:
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-api:${RELEASE_VERSION}
+    environment:
+      - PORT=8078
+    ports:
+      - '8078:8078'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -nv -t1 --spider http://localhost:8078/health || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  file-storage:
+    image: quay.io/minio/minio
+    volumes:
+      - ${HOME}/minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=12345678
+    command: server --address 0.0.0.0:9000 --console-address 0.0.0.0:9001 /data
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 10
+  notification-ms:
+    image: ghcr.io/sunbird-rc/sunbird-rc-notification-service:${RELEASE_VERSION}
+    ports:
+      - '8765:8765'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -nv -t1 --spider
+          http://localhost:8765/notification-service/v1/health || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    environment:
+      - TRACK_NOTIFICATIONS=${TRACK_NOTIFICATIONS-false}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS-kafka:9092}
+    depends_on:
+      kafka:
+        condition: service_started
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: '2181'
+      ZOOKEEPER_TICK_TIME: '2000'
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      zookeeper:
+        condition: service_started
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_BROKER_ID: '1'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:9092,OUTSIDE://localhost:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'kafka-topics',
+          '--list',
+          '--bootstrap-server',
+          'localhost:9092',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  public-key-service:
+    image: ghcr.io/sunbird-rc/sunbird-rc-public-key-service
+    environment:
+      - CONFIG_BASE_PATH=/etc/keys
+    ports:
+      - '3300:3300'
+    healthcheck:
+      test:
+        ['CMD', 'curl', '-f', 'localhost:3300/public-key-service/api/v1/health']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - ./imports:/etc/keys
+  context-proxy-service:
+    image: ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service
+    ports:
+      - '4400:4400'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'localhost:4400/health']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  nginx:
+    image: ghcr.io/sunbird-rc/sunbird-rc-nginx
+    ports:
+      - '80:80'
+    depends_on:
+      registry:
+        condition: service_healthy
+      context-proxy-service:
+        condition: service_started
+      public-key-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      claim-ms:
+        condition: service_started
+      file-storage:
+        condition: service_started
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'localhost:80']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+  metrics:
+    image: ghcr.io/sunbird-rc/sunbird-rc-metrics
+    environment:
+      CLICK_HOUSE_URL: clickhouse:9000
+      CLICKHOUSE_DATABASE: default
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_METRICS_TOPIC: events
+      REDIS_URL: redis:6379
+    ports:
+      - '8070:8070'
+    depends_on:
+      kafka:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+  digilocker-certificate-api:
+    image: ghcr.io/sunbird-rc/sunbird-rc-digilocker-certificate-api
+    volumes:
+      - ./services/digilocker-certificate-api/config/:/go/config/
+    ports:
+      - '8087:8087'
+    environment:
+      KEYCLOAK_CLIENT_ID: admin-api
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_SECRET}
+      DIGILOCKER_HMAC_AUTHKEY: ${DIGILOCKER_HMAC_AUTHKEY}
+      DIGILOCKER_AUTH_KEYNAME: x-digilocker-hmac
+      PORT: 8087
+  bulk_issuance:
+    image: ghcr.io/sunbird-rc/sunbird-rc-bulk-issuance
+    ports:
+      - '5665:5665'
+    environment:
+      REGISTRY_BASE_URL: http://registry:8081/
+      DATABASE_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.4.2.11-alpine
+    ports:
+      - '9002:9000'
+    healthcheck:
+      test:
+        wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit
+        1
+  id-gen-service:
+    image: ghcr.io/sunbird-rc/id-gen-service:${RELEASE_VERSION}
+    ports:
+      - '8088:8088'
+    environment:
+      spring.datasource.url: jdbc:postgresql://db:5432/registry
+      spring.flyway.baseline-on-migrate: "true"
+      autocreate.new.seq: "true"
+      idformat.from.mdms: "false"
+      egov.mdms.provider: org.egov.id.masterdata.provider.DBMasterDataProvider
+    depends_on:
+      db:
+        condition: service_healthy
+  encryption-service:
+    image: ghcr.io/sunbird-rc/encryption-service:${RELEASE_VERSION}
+    ports:
+      - '8013:8013'
+    environment:
+      server.port: 8013
+      server.servlet.context-path: /
+      spring.datasource.url: jdbc:postgresql://db:5432/registry
+      spring.flyway.url: jdbc:postgresql://db:5432/registry
+      egov.mdms.provider: org.egov.enc.masterdata.provider.DBMasterDataProvider
+      spring.flyway.baseline-on-migrate: "true"
+      management.endpoints.web.base-path: /
+    depends_on:
+      db:
+        condition: service_healthy
+
+

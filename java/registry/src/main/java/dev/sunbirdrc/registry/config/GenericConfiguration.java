@@ -11,9 +11,11 @@ import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.AuditRecord;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.CustomExceptionHandler;
 import dev.sunbirdrc.registry.frame.FrameContext;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
 import dev.sunbirdrc.registry.interceptor.RequestIdValidationInterceptor;
 import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -32,6 +34,7 @@ import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
 import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
+import lombok.Getter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
@@ -58,13 +61,11 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.sunbird.akka.core.SunbirdActorFactory;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.identity_providers.providers.IdentityProvider;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 
@@ -86,6 +87,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	private final String NONE_STR = "none";
+	@Getter
+	private static String signatureProvider;
 
 	@Autowired
 	private IDefinitionsManager iDefinitionsManager;
@@ -155,8 +158,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private int httpMaxConnections;
 	@Value("${elastic.search.scheme}")
 	private String scheme;
+
+	@Value("${registry.hard_delete_enabled}")
+	private boolean isHardDeleteEnabled;
+
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
+	@Autowired
+	private IdentityProviderConfiguration identityProviderConfiguration;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -259,6 +268,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
+	public SchemaAuthFilter schemaAuthFilter() {
+		SchemaAuthFilter schemaAuthFilter = new SchemaAuthFilter();
+		schemaAuthFilter.appendAnonymousInviteSchema(iDefinitionsManager.getEntitiesWithAnonymousInviteRoles());
+		schemaAuthFilter.appendAnonymousSchema(iDefinitionsManager.getEntitiesWithAnonymousManageRoles());
+		logger.info("Added anonymous schema to auth filters");
+		return schemaAuthFilter;
+	}
+
+	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE, proxyMode = ScopedProxyMode.TARGET_CLASS)
 	public AuditRecord auditRecord() {
 		return new AuditRecord();
@@ -308,6 +326,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public boolean isElasticSearchEnabled() {
 		return (searchProviderName.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
+	}
+
+	@Autowired
+	public void setSignatureProvider(@Value("${signature.provider}") String signatureProvider) {
+		GenericConfiguration.signatureProvider = signatureProvider;
 	}
 
 	@Bean
@@ -360,6 +383,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
 			} catch (IOException | CustomException e) {
 				logger.error("Exception occurred while adding validation interceptor: {}", ExceptionUtils.getStackTrace(e));
+                throw new RuntimeException(e);
 			}
 		}
 	}
@@ -433,6 +457,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			Set<String> indices = new HashSet<>(iDefinitionsManager.getAllKnownDefinitions());
 			indices.add(ATTESTATION_POLICY);
 			elasticService.init(indices);
+			elasticService.setIsHardDeleteEnabled(isHardDeleteEnabled);
 		}
 		return elasticService;
 	}
@@ -456,4 +481,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 //		IAuditService auditService = new AuditProviderFactory().getAuditService(auditFrameStore);
 //		return auditService;
 //	}
+
+	@ConditionalOnProperty(name = "authentication.enabled", havingValue = "true", matchIfMissing = true)
+	@Bean
+	public IdentityManager identityManager() {
+		ServiceLoader<IdentityProvider> loader = ServiceLoader.load(IdentityProvider.class);
+		for (IdentityProvider provider : loader) {
+			if (identityProviderConfiguration.getProvider().equals(provider.getClass().getName())) {
+				return provider.createManager(identityProviderConfiguration);
+			}
+		}
+		throw new RuntimeException("Identity provider " + identityProviderConfiguration.getProvider() + " not found");
+	}
 }

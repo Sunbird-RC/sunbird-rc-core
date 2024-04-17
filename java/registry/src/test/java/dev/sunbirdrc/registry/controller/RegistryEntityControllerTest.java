@@ -89,7 +89,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com",null, node))
                 .thenReturn("");
         mockMvc.perform(
                     MockMvcRequestBuilders
@@ -98,7 +98,7 @@ public class RegistryEntityControllerTest {
                                 mockHttpServletRequest.addHeader("accept", "application/pdf");
                                 mockHttpServletRequest.addHeader("template", "http://dummy.com");
                                 try {
-                                    Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenReturn("anonymous");
+                                    Mockito.when(registryHelper.getUserId("Institute")).thenReturn("anonymous");
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -120,7 +120,7 @@ public class RegistryEntityControllerTest {
                                 .get("/api/v1/Institute/123/attestation/instituteAffiliation/456")
                                 .with(mockHttpServletRequest -> {
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenReturn("anonymous");
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenReturn("anonymous");
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -142,7 +142,7 @@ public class RegistryEntityControllerTest {
                                 .get("/api/v1/Institute/123/attestation/instituteAffiliation/456")
                                 .with(mockHttpServletRequest -> {
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenThrow(new Exception("Forbidden"));
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenThrow(new Exception("Forbidden"));
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -159,7 +159,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", null, node))
                 .thenThrow(new NullPointerException(""));
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -168,7 +168,7 @@ public class RegistryEntityControllerTest {
                                     mockHttpServletRequest.addHeader("accept", "application/pdf");
                                     mockHttpServletRequest.addHeader("template", "http://dummy.com");
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenThrow(new RecordNotFoundException("Invalid id"));
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenThrow(new RecordNotFoundException("Invalid id"));
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -187,7 +187,7 @@ public class RegistryEntityControllerTest {
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(null);
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString());
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), booleanThat(v -> v == true));
     }
 
     @Test
@@ -200,7 +200,7 @@ public class RegistryEntityControllerTest {
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(registryHelper, never()).revokeAnEntity(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any(JsonNode.class));
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString());
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), booleanThat(v -> v == true));
     }
 
     @Test

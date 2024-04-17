@@ -75,12 +75,14 @@ public class NativeSearchService implements ISearchService {
 
 	@Value("${search.expandInternal}")
 	private boolean expandInternal;
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
 
 	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
 	private boolean removeNonPublicFieldsForNativeSearch;
 
 	@Override
-	public JsonNode search(JsonNode inputQueryNode) throws IOException {
+	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
 
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
@@ -109,7 +111,7 @@ public class NativeSearchService implements ISearchService {
 				List<Object> transaction = new LinkedList<>();
 
 				Shard shard = shardManager.activateShard(dbConnection.getShardId());
-				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
+				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName, expandReferenceObj);
 				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
 				try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
 					Graph graph = osGraph.getGraphStore();
@@ -131,9 +133,10 @@ public class NativeSearchService implements ISearchService {
 					continueSearch = !isSpecificSearch;
 				}
 				try {
+					if(userId == null) userId = apiMessage.getUserID();
 					auditService.auditNativeSearch(
 							new AuditRecord()
-									.setUserId(apiMessage.getUserID())
+									.setUserId(userId)
 									.setTransactionId(transaction),
 							shard, searchQuery.getEntityTypes(), inputQueryNode);
 				} catch (Exception e) {

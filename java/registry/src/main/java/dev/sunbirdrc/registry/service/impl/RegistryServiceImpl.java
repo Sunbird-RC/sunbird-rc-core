@@ -6,19 +6,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.elastic.IElasticService;
-import dev.sunbirdrc.pojos.ComponentHealthInfo;
-import dev.sunbirdrc.pojos.HealthCheckResponse;
-import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
+import dev.sunbirdrc.pojos.attestation.States;
+import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
+import dev.sunbirdrc.registry.helper.SignatureHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.model.EventType;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -33,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -43,7 +46,6 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
@@ -58,20 +60,21 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
     @Autowired(required = false)
-    private SignatureService signatureService;
+    private SignatureHelper signatureHelper;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
     @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired(required = false)
-    private SignatureHelper signatureHelper;
     @Autowired
     private EntityTransformer entityTransformer;
     @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
+    @Value("${registry.hard_delete_enabled}")
+    private boolean isHardDeleteEnabled;
 
     @Value("${event.enabled}")
     private boolean isEventsEnabled;
@@ -128,23 +131,12 @@ public class RegistryServiceImpl implements RegistryService {
     private SchemaService schemaService;
 
     @Autowired(required = false)
-    private List<HealthIndicator> healthIndicators;
-    public HealthCheckResponse health(Shard shard) throws Exception {
-        HealthCheckResponse healthCheck;
-        AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
-        List<ComponentHealthInfo> checks = new ArrayList<>();
-        if (healthIndicators != null) {
-            healthIndicators.parallelStream().forEach(healthIndicator -> {
-                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-                checks.add(healthInfo);
-                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-            });
-        }
+    private IIdGenService idGenService;
+    @Value("${idgen.enabled:false}")
+    private boolean idGenEnabled;
 
-        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
-        return healthCheck;
-    }
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
     /**
      * delete the vertex and changes the status
@@ -156,12 +148,12 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
-                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
+                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 Vertex vertex = vertexReader.getVertex(entityName, uuid);
                 if (vertex == null) {
                     throw new RecordNotFoundException(INVALID_ID_MESSAGE);
@@ -170,9 +162,13 @@ public class RegistryServiceImpl implements RegistryService {
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
                 }
-                if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
+                if (isHardDeleteEnabled || !(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                         && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    registryDao.deleteEntity(vertex);
+                    if (isHardDeleteEnabled) {
+                        registryDao.hardDeleteEntity(vertex);
+                    } else {
+                        registryDao.deleteEntity(vertex);
+                    }
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),
@@ -211,15 +207,30 @@ public class RegistryServiceImpl implements RegistryService {
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
         Definition definition = null;
+        List<UniqueIdentifierField> uniqueIdentifierFields = definitionsManager.getUniqueIdentifierFields(vertexLabel);
+
+        if(idGenEnabled && uniqueIdentifierFields != null && !uniqueIdentifierFields.isEmpty()) {
+            try {
+                Map<String, String> uid = idGenService.generateId(uniqueIdentifierFields);
+                DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(rootNode.get(vertexLabel)));
+                for(Map.Entry<String, String> entry: uid.entrySet()) {
+                    String path = String.format("$%s", entry.getKey().replaceAll("/", "."));
+                    int fieldStartIndex = path.lastIndexOf(".");
+                    doc.put(path.substring(0, fieldStartIndex), path.substring(fieldStartIndex + 1), entry.getValue());
+                }
+                ((ObjectNode) rootNode).set(vertexLabel, JSONUtil.convertStringJsonNode(doc.jsonString()));
+            } catch (CustomException e) {
+                throw new UniqueIdentifierException(e);
+            }
+        }
 
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
+        if (!skipSignature) {
+            generateCredentials(rootNode, null, vertexLabel);
+        }
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
-        }
-
-        if (!skipSignature) {
-            generateCredentials(rootNode, vertexLabel);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.validateNewSchema(rootNode);
@@ -227,7 +238,7 @@ public class RegistryServiceImpl implements RegistryService {
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
-            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
@@ -272,14 +283,19 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
 
-    private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
+    private void generateCredentials(JsonNode rootNode, JsonNode inputNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
         Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
         if (signatureEnabled && credentialTemplate != null) {
             Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("title", vertexLabel);
             requestBodyMap.put("data", rootNode.get(vertexLabel));
             requestBodyMap.put("credentialTemplate", credentialTemplate);
-            Object signedCredentials = signatureService.sign(requestBodyMap);
-            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+            if(OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel))) {
+                signatureHelper.revoke(vertexLabel, null, OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel)).asText());
+            }
+            Object signedCredentials = signatureHelper.sign(requestBodyMap);
+            OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel), signedCredentials);
+            if(inputNode != null) OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);
         }
     }
 
@@ -287,13 +303,13 @@ public class RegistryServiceImpl implements RegistryService {
     public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
-        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
         if (encryptionEnabled) {
             inputNode = encryptionHelper.getEncryptedJson(inputNode);
         }
+        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
@@ -301,7 +317,7 @@ public class RegistryServiceImpl implements RegistryService {
                 // Read the node and
                 // TODO - decrypt properties to pass validation
                 ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager);
+                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 JsonNode readNode = vr.read(entityType, id);
 
                 String rootId = readNode.findPath(Constants.ROOT_KEYWORD).textValue();
@@ -358,18 +374,18 @@ public class RegistryServiceImpl implements RegistryService {
                 }
 
                 if (!skipSignature) {
-                    generateCredentials(inputNode, entityType);
+                    generateCredentials(mergedNode, inputNode, entityType);
                 }
 
                 if (entityType.equals(Schema)) {
-                    schemaService.validateUpdateSchema(readNode, inputNode);
+                    schemaService.validateUpdateSchema(readNode, mergedNode);
                 }
 
                 // The entity type is a child and so could be different from parent entity type.
                 doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
 
                 if (entityType.equals(Schema)) {
-                    schemaService.updateSchema(inputNode);
+                    schemaService.updateSchema(mergedNode);
                 }
 
                 databaseProvider.commitTransaction(graph, tx);

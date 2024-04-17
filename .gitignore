@@ -87,5 +87,7 @@ coverage
 out
 
 .ipynb_checkpoints
-db-data
+db-data*
+vault-data
+es-data*
 keycloak-mobile*.jar

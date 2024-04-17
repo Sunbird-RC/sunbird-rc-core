@@ -8,12 +8,7 @@ import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.util.ArrayHelper;
-import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.IDefinitionsManager;
-import dev.sunbirdrc.registry.util.ReadConfigurator;
-import dev.sunbirdrc.registry.util.RefLabelHelper;
-import dev.sunbirdrc.registry.util.TypePropertyHelper;
+import dev.sunbirdrc.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -32,6 +27,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
+
 /**
  * Given a vertex from the graph, constructs a json out it
  */
@@ -46,15 +43,18 @@ public class VertexReader {
     private Vertex rootVertex;
     private LinkedHashMap<String, Vertex> uuidVertexMap = new LinkedHashMap<>();
 
+    private boolean expandReferenceObj;
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
+
     public VertexReader(DatabaseProvider databaseProvider, Graph graph, ReadConfigurator configurator, String uuidPropertyName,
-                        IDefinitionsManager definitionsManager) {
+                        IDefinitionsManager definitionsManager, boolean expandReferenceObj) {
         this.databaseProvider = databaseProvider;
         this.graph = graph;
         this.configurator = configurator;
         this.uuidPropertyName = uuidPropertyName;
         this.definitionsManager = definitionsManager;
+        this.expandReferenceObj = expandReferenceObj;
     }
 
     /**
@@ -460,7 +460,7 @@ public class VertexReader {
             throw new RecordNotFoundException("entity status is inactive");
         }
         ObjectNode rootNode = constructObject(rootVertex);
-        entityType = (String) ValueType.getValue(rootNode.get(TypePropertyHelper.getTypeName()));
+        String entityType = (String) ValueType.getValue(rootNode.get(TypePropertyHelper.getTypeName()));
 
         // Set the type for the root node, so as to wrap.
         populateMaps(rootNode, rootVertex);
@@ -485,12 +485,40 @@ public class VertexReader {
         // objects.
         // The properties could exist anywhere. Refer to the local arrMap.
         expandChildObject(rootNode, 0);
-
+        if(expandReferenceObj)
+            expandReferenceNodes(rootNode);
         entityNode.set(entityType, rootNode);
+
 
         // After reading the entire type, now trim the @type property
         trimAttributes(entityNode);
         return entityNode;
+    }
+
+    private void expandReferenceNodes(ObjectNode rootNode) {
+        rootNode.fields().forEachRemaining(entry -> {
+            // Regex pattern to check for a DID
+            String pattern = "^"+ DID_TYPE+":[^:]+:[^:]+";
+            if(entry.getValue().isValueNode() && entry.getValue().asText().matches(pattern)) {
+                String[] dids = entry.getValue().asText().split(":");
+                String osid = RecordIdentifier.parse(dids[2]).getUuid();
+                Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, osid);
+                while (vertexIterator.hasNext()) {
+                    Vertex dependent = vertexIterator.next();
+                    ObjectNode references;
+                    try {
+                        references = (ObjectNode) readInternal(dependent);
+                        references = (ObjectNode) references.get(references.fieldNames().next());
+                        references = (ObjectNode) JSONUtil.removeNodesByPath(references, definitionsManager.getExcludingFieldsForEntity(dids[1]));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    if(references != null) {
+                        entry.setValue(references);
+                    }
+                }
+            }
+        });
     }
 
     /**

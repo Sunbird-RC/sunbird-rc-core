@@ -13,23 +13,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up JDK 11
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'adopt'
         cache: 'maven'
     - name: Set up properties
       run: sh configure-dependencies.sh
-#   # debug step
-    # - name: Setup upterm session
-    #   uses: lhotari/action-upterm@v1
-    #   with:
-    #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie Sreejith-K
-    #     limit-access-to-actor: true
-    # - name: Build and test
-    #   run: make test
+    - name: Check space before free up the space
+      run: df -h
+    - name: Free up space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /usr/local/.ghcup/ghc/9.6.4
+    - name: Check space before tests
+      run: df -h
+      # debug step
+#    - name: Setup upterm session
+#      uses: lhotari/action-upterm@v1
+#      with:
+#        ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie holashchand
+#        limit-access-to-actor: true
+    - name: Build and test
+      run: make test
+    - name: Check space after tests
+      run: df -h
 #  test:
 #    runs-on: ubuntu-latest
 #    steps:

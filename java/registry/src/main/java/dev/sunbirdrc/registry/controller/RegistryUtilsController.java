@@ -15,10 +15,10 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import dev.sunbirdrc.registry.helper.SignatureHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import dev.sunbirdrc.registry.service.RegistryService;
-import dev.sunbirdrc.registry.service.SignatureService;
+import dev.sunbirdrc.registry.service.HealthCheckService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -54,7 +54,7 @@ public class RegistryUtilsController {
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
 	@Autowired(required = false)
-	private SignatureService signatureService;
+	private SignatureHelper signatureHelper;
 
 	@Autowired
 	private APIMessage apiMessage;
@@ -69,7 +69,7 @@ public class RegistryUtilsController {
 	RegistryHelper registryHelper;
 
 	@Autowired
-	private RegistryService registryService;
+	private HealthCheckService healthCheckService;
 
 	@Value("${frame.file}")
 	private String frameFile;
@@ -91,7 +91,7 @@ public class RegistryUtilsController {
 			watch.start("RegistryUtilsController.generateSignature");
 			Map<String, Object> requestBodyMap = apiMessage.getRequest().getRequestMap();
 			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_DATA) && requestBodyMap.containsKey(Constants.SIGN_CREDENTIAL_TEMPLATE))){
-				Object result = signatureService
+				Object result = signatureHelper
 						.sign(requestBodyMap);
 				response.setResult(result);
 				responseParams.setErrmsg("");
@@ -165,7 +165,7 @@ public class RegistryUtilsController {
 					verifyReq.put("entity", gson.fromJson(gson.toJson(entityList), ArrayList.class));
 				}
 
-				Object result = signatureService.verify(verifyReq);
+				Object result = signatureHelper.verify(verifyReq);
 				response.setResult(result);
 				responseParams.setErrmsg("");
 				responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -194,7 +194,7 @@ public class RegistryUtilsController {
 		}
 		try {
 			watch.start("RegistryUtilsController.getKey");
-			String result = signatureService.getKey(keyId);
+			String result = signatureHelper.getKey(keyId);
 			response.setResult(result);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -219,7 +219,7 @@ public class RegistryUtilsController {
 			if (!signatureEnabled) {
 				throw new UnreachableException("Signature service not enabled!");
 			}
-			boolean healthCheckResult = signatureService.getHealthInfo().isHealthy();
+			boolean healthCheckResult = signatureHelper.isHealthy();
 			HealthCheckResponse healthCheck = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
 					healthCheckResult, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheck));
@@ -252,7 +252,7 @@ public class RegistryUtilsController {
 
 		try {
 			Shard shard = shardManager.getDefaultShard();
-			HealthCheckResponse healthCheckResult = registryService.health(shard);
+			HealthCheckResponse healthCheckResult = healthCheckService.health(shard);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -277,7 +277,7 @@ public class RegistryUtilsController {
 		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
 			try {
 				watch.start("RegistryController.audit");
-				JsonNode result = registryHelper.getAuditLog(payload);
+				JsonNode result = registryHelper.getAuditLog(payload, null);
 
 				response.setResult(result);
 				responseParams.setStatus(Response.Status.SUCCESSFUL);
