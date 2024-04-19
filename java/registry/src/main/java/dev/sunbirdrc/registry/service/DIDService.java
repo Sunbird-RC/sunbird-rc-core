@@ -70,15 +70,15 @@ public class DIDService implements HealthIndicator {
         payload.set(FILTERS, filters);
         JsonNode results = searchService.search(payload, "");
         if(results.get(authorSchemaName).isEmpty()) {
-            throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, didPropertyName));
+            throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, propertyName));
         }
-        return results.get(authorSchemaName).get(0).get(didPropertyName).asText();
+        return results.get(authorSchemaName).get(0).get(propertyName).asText();
     }
 
     public String ensureDidForName(String name, String method) throws Exception {
         String did;
         try {
-            did = getDid(name);
+            did = this.getDid(name);
         } catch (Exception e) {
             did = this.generateDid(method, null);
             ObjectNode rootNode = objectMapper.createObjectNode();
