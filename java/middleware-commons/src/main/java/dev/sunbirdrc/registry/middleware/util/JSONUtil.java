@@ -501,7 +501,10 @@ public class JSONUtil {
 				}
 			}
 		}
-		return arrayNode.get(arrayNode.size() - 1);
+		List<JsonNode> nodeList = new ArrayList<>();
+		arrayNode.elements().forEachRemaining(nodeList::add);
+		nodeList.sort(Comparator.comparingLong(node -> node.get("osCreatedAt").asLong()));
+		return nodeList.get(nodeList.size() -1 );
 	}
 
 	private static boolean isRequestBodyPropertyPresentInClaim(Map<String,List<String>> requestBodyProperty,Map<String,JsonNode> claimEntryProperty){

@@ -27,6 +27,7 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.Date;
 
 @RestController
 @ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
@@ -140,6 +141,7 @@ public class RegistryClaimsController extends AbstractController{
             if(!propertyData.isNull()) {
                 attestationRequest.setPropertyData(propertyData);
             }
+            attestationRequest.setOsCreatedAt(new Date());
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);

@@ -9,10 +9,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.pojos.ComponentHealthInfo;
-import dev.sunbirdrc.pojos.HealthCheckResponse;
-import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
+import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.CustomException;
@@ -39,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -49,7 +46,6 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
@@ -294,6 +290,9 @@ public class RegistryServiceImpl implements RegistryService {
             requestBodyMap.put("title", vertexLabel);
             requestBodyMap.put("data", rootNode.get(vertexLabel));
             requestBodyMap.put("credentialTemplate", credentialTemplate);
+            if(OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel))) {
+                signatureHelper.revoke(vertexLabel, null, OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel)).asText());
+            }
             Object signedCredentials = signatureHelper.sign(requestBodyMap);
             OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel), signedCredentials);
             if(inputNode != null) OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);

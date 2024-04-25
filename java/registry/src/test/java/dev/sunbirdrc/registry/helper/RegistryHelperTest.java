@@ -910,7 +910,7 @@ public class RegistryHelperTest {
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
 		doNothing().when(registryService).updateEntity(any(), any(), any(), any(), anyBoolean());
 		doNothing().when(notificationHelper).sendNotification(any(), any());
-		registryHelper.updateEntityAndState(existingJson, updateJson, "");
+		registryHelper.updateEntityAndState(existingJson, updateJson, "", false);
 		verify(registryService, times(1)).updateEntity(any(), any(), any(), any(), anyBoolean());
 		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}

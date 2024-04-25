@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -22,4 +23,5 @@ public class AttestationRequest {
 	private Map<String, List<String>> propertiesOSID;
 	private JsonNode propertyData;
 	private String emailId;
+	private Date osCreatedAt;
 }
