@@ -93,8 +93,8 @@ public interface ISearchService {
                 
                 if (entryValMap.getValue().isObject()) {
                     // accumulating the path as it goes deep in to the heirarachy if nested separating each level by a '.'
-                    path = path == null ? entry.getKey() : path + "." + entry.getKey();
-                    addToFilterList(path, entryVal, filterList);
+                    String currpath = path == null ? entry.getKey() : path + "." + entry.getKey();
+                    addToFilterList(currpath, entryVal, filterList);
                 } else {
                     Object value = null;
                     if (entryValMap.getValue().isArray()) {
