@@ -26,6 +26,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
@@ -140,7 +141,8 @@ public class DIDService implements HealthIndicator {
     public ComponentHealthInfo getHealthInfo() {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("UP")) {
+            JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK", "UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {
