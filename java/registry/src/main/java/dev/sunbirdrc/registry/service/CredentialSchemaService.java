@@ -216,7 +216,7 @@ public class CredentialSchemaService implements HealthIndicator {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
             JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
-            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK", "UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK","UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {
