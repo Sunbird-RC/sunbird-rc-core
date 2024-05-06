@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
-import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 @Component
 public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> {
@@ -46,14 +45,14 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 		objectNode.set(FILTERS, JsonNodeFactory.instance.objectNode());
 		try {
 			JsonNode searchResults = searchService.search(objectNode, "");
-			for (JsonNode schemaNode : searchResults.get(Schema)) {
+			for (JsonNode schemaNode : searchResults.get(Schema).get(ENTITY_LIST)) {
 				try {
 					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
 					logger.error("Failed loading schema to definition manager: {}", ExceptionUtils.getStackTrace(e));
 				}
 			}
-			logger.error("Loaded {} schema from DB", searchResults.get(Schema).size());
+			logger.error("Loaded {} schema from DB", searchResults.get(Schema).get(TOTAL_COUNT));
 		} catch (IOException e) {
 			logger.error("Exception occurred while loading schema from db: {}", ExceptionUtils.getStackTrace(e));
 		} catch (Exception e) {

@@ -43,6 +43,10 @@ public class Constants {
 	public static final String END_DATE="endDate";
 	public static final String LIMIT="limit";
 	public static final String OFFSET="offset";
+	public static final String NEXT_PAGE="nextPage";
+	public static final String PREV_PAGE="prevPage";
+	public static final String TOTAL_COUNT="totalCount";
+	public static final String ENTITY_LIST="data";
 
 	// JSON LD specific
 	public static final String CONTEXT_KEYWORD = "@context";

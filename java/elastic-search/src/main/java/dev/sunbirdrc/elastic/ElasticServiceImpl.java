@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
@@ -49,8 +50,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
-import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 public class ElasticServiceImpl implements IElasticService {
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
@@ -283,21 +283,25 @@ public class ElasticServiceImpl implements IElasticService {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
                 .query(query)
                 .size(searchQuery.getLimit())
-                .from(searchQuery.getOffset());
+                .from(searchQuery.getOffset())
+                .trackTotalHits(true);
         SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
-        ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
+        ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+        ArrayNode dataArray = JsonNodeFactory.instance.arrayNode();
         ObjectMapper mapper = new ObjectMapper();
-            SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
-            for (SearchHit hit : searchResponse.getHits()) {
-                JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
-                // TODO: Add draft mode condition
-                if(node.get("_status") == null || node.get("_status").asBoolean()) {
-                    resultArray.add(node);
-                }
+        SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
+        for (SearchHit hit : searchResponse.getHits()) {
+            JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
+            // TODO: Add draft mode condition
+            if(node.get(STATUS_KEYWORD) == null || node.get(STATUS_KEYWORD).asBoolean()) {
+                dataArray.add(node);
             }
-            logger.debug("Total search records found " + resultArray.size());
+        }
+        resultNode.set(ENTITY_LIST, dataArray);
+        resultNode.put(TOTAL_COUNT, searchResponse.getHits().getTotalHits());
+        logger.debug("Total search records found " + dataArray.size());
 
-        return resultArray;
+        return resultNode;
 
     }
 
