@@ -350,17 +350,17 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public JsonNode searchEntity(JsonNode inputJson, String userId) throws Exception {
-        return searchEntity(inputJson, searchService, userId);
+    public JsonNode searchEntity(JsonNode inputJson, String userId, boolean forceNativeSearch) throws Exception {
+        return searchEntity(inputJson, forceNativeSearch ? nativeSearchService : searchService, userId);
     }
 
     private JsonNode searchEntity(JsonNode inputJson, ISearchService service, String userId) throws Exception {
         logger.debug("searchEntity starts");
-        JsonNode resultNode = service.search(inputJson, userId);
+        ObjectNode resultNode = (ObjectNode) service.search(inputJson, userId);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
-            resultNode = vTransformer.transform(viewTemplate, resultNode);
+            resultNode.set(ENTITY_LIST, vTransformer.transform(viewTemplate, resultNode.get(ENTITY_LIST)));
         }
         // Search is tricky to support LD. Needs a revisit here.
         logger.debug("searchEntity ends");
@@ -826,7 +826,7 @@ public class RegistryHelper {
             ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
 
             watch.start("RegistryController.searchEntity");
-            JsonNode result = searchEntity(payload, userId);
+            JsonNode result = searchEntity(payload, userId, false);
             watch.stop("RegistryController.searchEntity");
             if(result != null && result.get(entityName) != null && !result.get(entityName).isEmpty()) {
                 String uuid = result.get(entityName).get(0).get(uuidPropertyName).asText();
@@ -843,7 +843,7 @@ public class RegistryHelper {
     private JsonNode getEntityByUserId(String entityName, String userId) throws Exception {
         ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
         watch.start("RegistryController.searchEntity");
-        JsonNode result = searchEntity(payload, userId);
+        JsonNode result = searchEntity(payload, userId, false);
         watch.stop("RegistryController.searchEntity");
         return result;
     }
@@ -919,12 +919,27 @@ public class RegistryHelper {
         }
         return result;
     }
-    public JsonNode searchEntitiesByUserId(String entity, String userId, String viewTemplateId) throws Exception {
-        ObjectNode searchByOwnerQuery = getSearchByOwnerQuery(entity, userId);
+    public void addSearchTokenToQuery(String searchToken, ObjectNode searchQuery) {
+        ObjectNode searchTokenNode = JSONUtil.parseSearchToken(searchToken);
+        if(searchTokenNode != null) {
+            if(searchTokenNode.has(FILTERS)) {
+                if(!searchQuery.has(FILTERS)) {
+                    searchQuery.set(FILTERS, JsonNodeFactory.instance.objectNode());
+                }
+                ((ObjectNode)searchQuery.get(FILTERS)).setAll((ObjectNode) searchTokenNode.get(FILTERS));
+            }
+            if(searchTokenNode.has(LIMIT)) searchQuery.set(LIMIT, searchTokenNode.get(LIMIT));
+            if(searchTokenNode.has(OFFSET)) searchQuery.set(OFFSET, searchTokenNode.get(OFFSET));
+            if(searchTokenNode.has(VIEW_TEMPLATE_ID)) searchQuery.set(VIEW_TEMPLATE_ID, searchTokenNode.get(VIEW_TEMPLATE_ID));
+        }
+    }
+    public JsonNode searchQueryByUserId(String entityName, String userId, String searchToken, String viewTemplateId) throws Exception {
+        ObjectNode searchByOwnerQuery = getSearchByOwnerQuery(entityName, userId);
+        addSearchTokenToQuery(searchToken, searchByOwnerQuery);
         if (!Strings.isEmpty(viewTemplateId)) {
             searchByOwnerQuery.put(VIEW_TEMPLATE_ID, viewTemplateId);
         }
-        return searchEntity(searchByOwnerQuery, nativeSearchService, userId);
+        return searchByOwnerQuery;
     }
 
     public void authorizeInviteEntity(HttpServletRequest request, String entityName) throws Exception {
@@ -1172,7 +1187,7 @@ public class RegistryHelper {
                         "       }\n" +
                         "    }\n" +
                         "}");
-                JsonNode searchResponse = searchEntity(searchRequest, "");
+                JsonNode searchResponse = searchEntity(searchRequest, "", false);
                 return convertJsonNodeToAttestationList(searchResponse);
             } catch (Exception e) {
                 logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
@@ -1239,7 +1254,7 @@ public class RegistryHelper {
                 "       }\n" +
                 "    }\n" +
                 "}");
-        searchEntity(searchRequest, userId);
+        searchEntity(searchRequest, userId, false);
         return Collections.emptyList();
     }
 
@@ -1328,7 +1343,7 @@ public class RegistryHelper {
         searchNode.set(FILTERS,
                 JsonNodeFactory.instance.objectNode().set(SIGNED_HASH,
                         JsonNodeFactory.instance.objectNode().put("eq", generateHash(signedData))));
-        JsonNode searchResponse = searchEntity(searchNode, userId);
+        JsonNode searchResponse = searchEntity(searchNode, userId, false);
         return searchResponse.get(REVOKED_CREDENTIAL) != null && searchResponse.get(REVOKED_CREDENTIAL).size() > 0;
     }
 

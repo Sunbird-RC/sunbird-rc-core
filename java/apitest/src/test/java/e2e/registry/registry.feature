@@ -151,8 +151,8 @@ Feature: Registry api tests
     And header Authorization = student_token
     When method get
     Then status 200
-    And response[0].osid.length > 0
-    * def studentOsid = response[0].osid
+    And response.data[0].osid.length > 0
+    * def studentOsid = response.data[0].osid
   # update student info
     Given url registryUrl
     And path 'api/v1/Student/' + studentOsid
@@ -168,7 +168,7 @@ Feature: Registry api tests
     And header Authorization = student_token
     When method get
     Then status 200
-    And response[0].name == "xyz"
+    And response.data[0].name == "xyz"
   # get student
     Given url registryUrl
     And path 'api/v1/Student/search'
@@ -177,8 +177,8 @@ Feature: Registry api tests
     Then status 200
     * print response
     And response.length == 1
-    And match response[0].contact == '#notpresent'
-    And match response[0].favoriteSubject == '#notpresent'
+    And match response.data[0].contact == '#notpresent'
+    And match response.data[0].favoriteSubject == '#notpresent'
   # delete student info
     Given url registryUrl
     And path 'api/v1/Student/' + studentOsid
@@ -191,7 +191,8 @@ Feature: Registry api tests
     And path 'api/v1/Student'
     And header Authorization = student_token
     When method get
-    Then status 404
+    Then status 200
+    And response.totalCount == 0
 
   @env=async
   Scenario: Create a teacher schema and create teacher entity asynchronously
@@ -240,8 +241,8 @@ Feature: Registry api tests
     When method post
     Then status 200
     * print response
-    And response.length == 1
-    And response[0].contact == '#notpresent'
+    And response.totalCount == 1
+    And response.data[0].contact == '#notpresent'
   # get teacher info
     Given url registryUrl
     And path 'api/v1/Teacher/search'
@@ -249,8 +250,8 @@ Feature: Registry api tests
     When method post
     Then status 200
     * print response
-    And response.length == 1
-    And response[0].contact == '#notpresent'
+    And response.totalCount == 1
+    And response.data[0].contact == '#notpresent'
 
   @envnot=fusionauth
   Scenario: Create Board and invite institutes
@@ -316,7 +317,7 @@ Feature: Registry api tests
     And header Authorization = board_token
     When method get
     Then status 200
-    And response[0].osid.length > 0
+    And response.data[0].osid.length > 0
 
   # invite institute with token
     Given url registryUrl
@@ -347,9 +348,9 @@ Feature: Registry api tests
     And header Authorization = institute_token
     When method get
     Then status 200
-    And response[0].osid.length > 0
-    * def instituteOsid = response[0].osid
-    * def address = response[0].address
+    And response.data[0].osid.length > 0
+    * def instituteOsid = response.data[0].osid
+    * def address = response.data[0].address
 
   # update property of institute
     Given url registryUrl
@@ -366,8 +367,8 @@ Feature: Registry api tests
     And header Authorization = institute_token
     When method get
     Then status 200
-    And assert response[0].address[0].phoneNo.length == 1
-    And assert response[0].address[0].phoneNo[0] == "444"
+    And assert response.data[0].address[0].phoneNo.length == 1
+    And assert response.data[0].address[0].phoneNo[0] == "444"
 
   @envnot=fusionauth
   Scenario: write a api test, to test the schema not found error

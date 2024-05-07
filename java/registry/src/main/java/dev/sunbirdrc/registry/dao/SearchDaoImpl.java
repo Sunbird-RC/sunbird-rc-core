@@ -24,6 +24,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.hasNot;
 
@@ -47,10 +49,15 @@ public class SearchDaoImpl implements SearchDao {
             GraphTraversal<Vertex, Vertex> parentTraversal = resultGraphTraversal.asAdmin();
 
             resultGraphTraversal = getFilteredResultTraversal(resultGraphTraversal, filterList)
-                    .or(hasNot(Constants.STATUS_KEYWORD), has(Constants.STATUS_KEYWORD, Constants.STATUS_ACTIVE))
-                    .range(offset, offset + searchQuery.getLimit()).limit(searchQuery.getLimit());
+                    .or(hasNot(Constants.STATUS_KEYWORD), has(Constants.STATUS_KEYWORD, Constants.STATUS_ACTIVE));
+            GraphTraversal<Vertex, Vertex> resultGraphTraversalCount = resultGraphTraversal.asAdmin().clone();
+            resultGraphTraversal.range(offset, offset + searchQuery.getLimit());
             JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal, expandInternal);
-            resultNode.set(entity, result);
+            ObjectNode response = JsonNodeFactory.instance.objectNode();
+            response.set(ENTITY_LIST, result);
+            long count = resultGraphTraversalCount.count().next();
+            response.set(TOTAL_COUNT, JsonNodeFactory.instance.numberNode(count));
+            resultNode.set(entity, response);
         }
 
         return resultNode;

@@ -57,4 +57,4 @@ Feature: Registry api tests
         And header Authorization = student_token
         When method get
         Then status 200
-        And response[0].osid.length > 0
+        And response.data[0].osid.length > 0
