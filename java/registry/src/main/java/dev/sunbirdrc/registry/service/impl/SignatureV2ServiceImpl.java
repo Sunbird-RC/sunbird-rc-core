@@ -214,7 +214,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         return JsonNodeFactory.instance.arrayNode();
     }
 
-    private JsonNode verifyCredential(String credentialId) throws IOException {
+    public JsonNode verifyCredential(String credentialId) throws IOException {
         ResponseEntity<String> response = retryRestTemplate.getForEntity(verifyCredentialURL, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {
             return JSONUtil.convertStringJsonNode(response.getBody());
