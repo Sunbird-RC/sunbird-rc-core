@@ -86,6 +86,10 @@ public class NativeSearchService implements ISearchService {
 
 	@Override
 	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
+		return search(inputQueryNode, userId, false);
+	}
+
+	public JsonNode search(JsonNode inputQueryNode, String userId, boolean skipRemoveNonPublicFields) throws IOException {
 
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
@@ -125,7 +129,7 @@ public class NativeSearchService implements ISearchService {
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}
-						result.add(removeNonPublicFields(searchQuery, shardResult));
+						result.add(removeNonPublicFields(searchQuery, shardResult, skipRemoveNonPublicFields));
 						if (tx != null) {
 							transaction.add(tx.hashCode());
 						}
@@ -145,14 +149,13 @@ public class NativeSearchService implements ISearchService {
 				} catch (Exception e) {
 					logger.error("Exception while auditing: {}", ExceptionUtils.getStackTrace(e));
 				}
-
-		 	}
+			}
 		}
 
 		return buildResultNode(searchQuery, result);
 	}
 
-	private ObjectNode removeNonPublicFields(SearchQuery searchQuery, ObjectNode shardResult) throws Exception {
+	private ObjectNode removeNonPublicFields(SearchQuery searchQuery, ObjectNode shardResult, boolean skipRemoveNonPublicFields) throws Exception {
 		ObjectNode response = JsonNodeFactory.instance.objectNode();
 		NumericNode count;
 		for(String entityType: searchQuery.getEntityTypes()) {
@@ -160,7 +163,7 @@ public class NativeSearchService implements ISearchService {
 			ArrayNode data = JsonNodeFactory.instance.arrayNode();
 			ArrayNode arrayNode = (ArrayNode) (shardResult.get(entityType).get(ENTITY_LIST));
 			count = (NumericNode) shardResult.get(entityType).get(TOTAL_COUNT);
-			if (removeNonPublicFieldsForNativeSearch) {
+			if (removeNonPublicFieldsForNativeSearch && !skipRemoveNonPublicFields) {
 				for(JsonNode node : arrayNode) {
 					data.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
 				}
