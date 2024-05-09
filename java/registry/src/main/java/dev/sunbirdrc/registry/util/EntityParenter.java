@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.util;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.dao.VertexWriter;
 import dev.sunbirdrc.registry.exception.CustomException;
+import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
@@ -173,6 +174,17 @@ public class EntityParenter {
         return result;
     }
 
+    public void ensureKnownParenter(String definitionName, Graph graph, DatabaseProvider dbProvider, String shardId) {
+        String parentLabel = ParentLabelGenerator.getLabel(definitionName);
+
+        VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
+        Vertex v = vertexWriter.ensureParentVertex(parentLabel);
+
+        ShardParentInfo shardParentInfo = new ShardParentInfo(definitionName, v);
+        shardParentInfo.setUuid(dbProvider.getId(v));
+        shardParentMap.get(shardId).getParentInfos().add(shardParentInfo);
+    }
+
     /**
      * Gets a known parent id
      *
@@ -238,6 +250,7 @@ public class EntityParenter {
     @Async("taskExecutor")
     public void ensureIndexExists(DatabaseProvider dbProvider, Vertex parentVertex, Definition definition, String shardId) {
         try {
+            logger.info("Ensuring index for definition {}", definition.getTitle());
             if (!indexHelper.isIndexPresent(definition, shardId)) {
                 logger.info("Adding index to shard: {} for definition: {}", shardId, definition.getTitle());
                 asyncAddIndex(dbProvider, shardId, parentVertex, definition);
@@ -278,6 +291,8 @@ public class EntityParenter {
                     updateParentVertexIndexProperties(dbProvider, parentVertex, inxFields.getIndexFields(), inxFields.getUniqueIndexFields());
                     indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
                 }
+            } catch (IndexException.LabelNotFoundException ex) {
+                logger.warn(ex.getMessage());
             } catch (Exception e) {
                 logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), ExceptionUtils.getStackTrace(e));
             }
