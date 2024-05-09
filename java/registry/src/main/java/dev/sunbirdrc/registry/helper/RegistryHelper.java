@@ -350,13 +350,23 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public JsonNode searchEntity(JsonNode inputJson, String userId, boolean forceNativeSearch) throws Exception {
-        return searchEntity(inputJson, forceNativeSearch ? nativeSearchService : searchService, userId);
+    public JsonNode searchEntity(JsonNode inputJson, String userId) throws Exception {
+        return searchEntity(inputJson, searchService, userId, false);
     }
 
-    private JsonNode searchEntity(JsonNode inputJson, ISearchService service, String userId) throws Exception {
+    public JsonNode searchEntityFromDBWithPrivateFields(JsonNode inputJson, String userId) throws Exception {
+        return searchEntity(inputJson, nativeSearchService, userId, true);
+    }
+
+    private JsonNode searchEntity(JsonNode inputJson, ISearchService service, String userId, boolean skipRemoveNonPublicFields) throws Exception {
         logger.debug("searchEntity starts");
-        ObjectNode resultNode = (ObjectNode) service.search(inputJson, userId);
+        ObjectNode resultNode;
+        if(skipRemoveNonPublicFields && service instanceof NativeSearchService) {
+            resultNode = (ObjectNode) ((NativeSearchService) service).search(inputJson, userId, true);
+        } else {
+            resultNode = (ObjectNode) service.search(inputJson, userId);
+        }
+
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -738,12 +748,12 @@ public class RegistryHelper {
         newEntityArrNode.add(entityType + auditSuffixSeparator + auditSuffix);
         ((ObjectNode) queryNode).set(ENTITY_TYPE, newEntityArrNode);
 
-        JsonNode resultNode = searchService.search(queryNode, userId);
+        ObjectNode resultNode = (ObjectNode) searchService.search(queryNode, userId);
 
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
-            resultNode = vTransformer.transform(viewTemplate, resultNode);
+            resultNode.set(ENTITY_LIST, vTransformer.transform(viewTemplate, resultNode.get(ENTITY_LIST)));
         }
         logger.debug("get audit log ends");
 
@@ -826,26 +836,18 @@ public class RegistryHelper {
             ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
 
             watch.start("RegistryController.searchEntity");
-            JsonNode result = searchEntity(payload, userId, false);
+            JsonNode result = searchEntity(payload, userId);
             watch.stop("RegistryController.searchEntity");
-            if(result != null && result.get(entityName) != null && !result.get(entityName).isEmpty()) {
-                String uuid = result.get(entityName).get(0).get(uuidPropertyName).asText();
+            if(result != null && result.get(entityName) != null && !result.get(entityName).get(ENTITY_LIST).isEmpty()) {
+                String uuid = result.get(entityName).get(ENTITY_LIST).get(0).get(uuidPropertyName).asText();
                 JsonNode user = readEntity(userId, entityName, uuid, true, null, false);
                 ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
                 arrayNode.add(user.get(entityName));
-                ((ObjectNode) result).set(entityName, arrayNode);
+                ((ObjectNode) result.get(entityName)).set(ENTITY_LIST, arrayNode);
             }
             return result;
         }
         throw new Exception("Forbidden");
-    }
-
-    private JsonNode getEntityByUserId(String entityName, String userId) throws Exception {
-        ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
-        watch.start("RegistryController.searchEntity");
-        JsonNode result = searchEntity(payload, userId, false);
-        watch.stop("RegistryController.searchEntity");
-        return result;
     }
 
     @NotNull
@@ -1098,7 +1100,8 @@ public class RegistryHelper {
         final String attestorPlugin = "did:internal:ClaimPluginActor";
         Action action = Action.SET_TO_DRAFT;
         ObjectNode additionalInputs = JsonNodeFactory.instance.objectNode();
-        JsonNode attestorInfo = getEntityByUserId(attestorEntityName, userId).get(attestorEntityName).get(0);
+        JsonNode searchQuery = searchQueryByUserId(attestorEntityName, userId, null, null);
+        JsonNode attestorInfo = searchEntityFromDBWithPrivateFields(searchQuery, userId).get(attestorEntityName).get(ENTITY_LIST).get(0);
         additionalInputs.put("claimId", claimId);
         additionalInputs.put("action", action.name());
         additionalInputs.put("notes", "Closed due to entity update");
@@ -1187,7 +1190,7 @@ public class RegistryHelper {
                         "       }\n" +
                         "    }\n" +
                         "}");
-                JsonNode searchResponse = searchEntity(searchRequest, "", false);
+                JsonNode searchResponse = searchEntity(searchRequest, "");
                 return convertJsonNodeToAttestationList(searchResponse);
             } catch (Exception e) {
                 logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
@@ -1254,7 +1257,7 @@ public class RegistryHelper {
                 "       }\n" +
                 "    }\n" +
                 "}");
-        searchEntity(searchRequest, userId, false);
+        searchEntity(searchRequest, userId);
         return Collections.emptyList();
     }
 
@@ -1343,8 +1346,8 @@ public class RegistryHelper {
         searchNode.set(FILTERS,
                 JsonNodeFactory.instance.objectNode().set(SIGNED_HASH,
                         JsonNodeFactory.instance.objectNode().put("eq", generateHash(signedData))));
-        JsonNode searchResponse = searchEntity(searchNode, userId, false);
-        return searchResponse.get(REVOKED_CREDENTIAL) != null && searchResponse.get(REVOKED_CREDENTIAL).size() > 0;
+        JsonNode searchResponse = searchEntity(searchNode, userId);
+        return searchResponse.get(REVOKED_CREDENTIAL) != null && !searchResponse.get(REVOKED_CREDENTIAL).get(ENTITY_LIST).isEmpty();
     }
 
     public static ResponseEntity<Object> ServiceNotEnabledResponse(String message, Response response, ResponseParams responseParams) {

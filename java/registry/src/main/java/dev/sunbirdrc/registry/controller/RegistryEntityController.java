@@ -220,7 +220,7 @@ public class RegistryEntityController extends AbstractController {
             searchNode.set(ENTITY_TYPE, entity);
             checkEntityNameInDefinitionManager(entityName);
             if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
-                JsonNode result = registryHelper.searchEntity(searchNode, null, false).get(entityName);
+                JsonNode result = registryHelper.searchEntity(searchNode, null).get(entityName);
                 ObjectNode pageUrls = JSONUtil.getSearchPageUrls(searchNode, searchLimit, searchOffset, result.get(TOTAL_COUNT).asLong(), request.getRequestURL().toString());
                 ((ObjectNode) result).setAll(pageUrls);
                 watch.stop("RegistryController.searchEntity");
@@ -696,7 +696,7 @@ public class RegistryEntityController extends AbstractController {
             String userId = registryHelper.getUserId(entityName);
             if (!Strings.isEmpty(userId)) {
                 JsonNode searchQuery = registryHelper.searchQueryByUserId(entityName, userId, searchToken, viewTemplateId);
-                JsonNode responseFromDb = registryHelper.searchEntity(searchQuery, userId, true);
+                JsonNode responseFromDb = registryHelper.searchEntityFromDBWithPrivateFields(searchQuery, userId);
                 JsonNode results = responseFromDb.get(entityName);
                 if (!results.isEmpty()) {
                     ObjectNode pageUrls = JSONUtil.getSearchPageUrls(searchQuery, searchLimit, searchOffset, results.get(TOTAL_COUNT).asLong(), request.getRequestURL().toString());
