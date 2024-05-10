@@ -1,9 +1,11 @@
 package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.jsonldjava.utils.Obj;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -346,6 +348,12 @@ public class VertexReader {
                                     if (ovalue != null) {
                                         resultArr.add(ovalue);
                                     } else {
+                                        if (node.isObject()) {
+                                            Map<String, Object> deletedNodeRef = JSONUtil.convertJsonNodeToMap(node);
+                                            deletedNodeRef.put(uuidPropertyName , osidVal);
+                                            JsonNode refactorNode = new ObjectMapper().convertValue(deletedNodeRef , JsonNode.class);
+                                            resultArr.add(refactorNode);
+                                        }
                                         logger.info("Field {} Array items not found in map", field);
                                     }
                                 }
