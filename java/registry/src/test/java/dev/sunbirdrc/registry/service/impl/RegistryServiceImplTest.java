@@ -51,8 +51,10 @@ import org.sunbird.akka.core.SunbirdActorFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.SchemaName;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -147,6 +149,9 @@ public class RegistryServiceImplTest {
 	@Mock
 	private SchemaAuthFilter schemaAuthFilter;
 
+	@Mock
+	private EntityParenter entityParenter;
+
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 		ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
@@ -157,6 +162,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
 		ReflectionTestUtils.setField(schemaService, "schemaAuthFilter", schemaAuthFilter);
+		ReflectionTestUtils.setField(schemaService, "entityParenter", entityParenter);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
@@ -242,6 +248,7 @@ public class RegistryServiceImplTest {
 		object.put(Schema.toLowerCase(), schema);
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
+		when(entityParenter.ensureKnownParenters()).thenReturn(Optional.of(""));
 		registryService.addEntity(shard, "", schemaNode, true);
 		assertEquals(previousSize + 1, definitionsManager.getAllKnownDefinitions().size());
 	}
@@ -498,10 +505,12 @@ public class RegistryServiceImplTest {
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
 		ObjectNode object = JsonNodeFactory.instance.objectNode();
 		object.put(Schema.toLowerCase(), schema);
+		object.put(SchemaName, "TrainingCertificate");
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		when(entityParenter.ensureKnownParenters()).thenReturn(Optional.of(""));
 		registryService.addEntity(shard, "", schemaNode, true);
 		verify(eventService, times(1)).pushEvents(event);
 		assertEquals(existingDefinitions+1, definitionsManager.getAllKnownDefinitions().size());
