@@ -162,7 +162,6 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
 		ReflectionTestUtils.setField(schemaService, "schemaAuthFilter", schemaAuthFilter);
-		ReflectionTestUtils.setField(schemaService, "entityParenter", entityParenter);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
@@ -248,7 +247,7 @@ public class RegistryServiceImplTest {
 		object.put(Schema.toLowerCase(), schema);
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
-		when(entityParenter.ensureKnownParenters()).thenReturn(Optional.of(""));
+		doNothing().when(entityParenter).ensureKnownParenter(any(), any(), any(), any());
 		registryService.addEntity(shard, "", schemaNode, true);
 		assertEquals(previousSize + 1, definitionsManager.getAllKnownDefinitions().size());
 	}
@@ -510,7 +509,7 @@ public class RegistryServiceImplTest {
 		schemaNode.set(Schema, object);
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
-		when(entityParenter.ensureKnownParenters()).thenReturn(Optional.of(""));
+		doNothing().when(entityParenter).ensureKnownParenter(any(), any(), any(), any());
 		registryService.addEntity(shard, "", schemaNode, true);
 		verify(eventService, times(1)).pushEvents(event);
 		assertEquals(existingDefinitions+1, definitionsManager.getAllKnownDefinitions().size());

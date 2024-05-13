@@ -122,6 +122,43 @@ public class EntityParenter {
         indexHelper.setDefinitionIndexMap(indexMap);
     }
 
+    public void loadDefinitionIndex(String label, String shardId) {
+        ShardParentInfo shardParentInfo = shardParentMap.get(shardId).getParentInfos().stream().filter(d -> Objects.equals(d.getName(), label)).findAny().get();
+        Definition definition = definitionsManager.getDefinition(shardParentInfo.getName());
+        Vertex parentVertex = shardParentInfo.getVertex();
+        List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
+        if (!indexFields.contains(uuidPropertyName)) {
+            indexFields.add(uuidPropertyName); // adds default field
+            // (uuid)
+        }
+        List<String> compositeIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
+        List<String> uniqueIndexFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
+        List<String> compositeUniqueIndexFields = IndexHelper.getCompositeIndexFields(uniqueIndexFields);
+        List<String> singleIndexFields = IndexHelper.getSingleIndexFields(indexFields);
+        List<String> indexUniqueFields = IndexHelper.getSingleIndexFields(uniqueIndexFields);
+
+        IndexFields indicesByDefinition = new IndexFields();
+        indicesByDefinition.setDefinitionName(definition.getTitle());
+        indicesByDefinition.setIndexFields(indexFields);
+        indicesByDefinition.setUniqueIndexFields(indexUniqueFields);
+        indicesByDefinition.setNewSingleIndexFields(indexHelper.getNewFields(parentVertex, singleIndexFields, false));
+        indicesByDefinition.setNewCompositeIndexFields(indexHelper.getNewFields(parentVertex, compositeIndexFields, false));
+        indicesByDefinition.setNewUniqueIndexFields(indexHelper.getNewFields(parentVertex, indexUniqueFields, true));
+        indicesByDefinition.setNewCompositeUniqueIndexFields(indexHelper.getNewFields(parentVertex, compositeUniqueIndexFields, true));
+
+        int nNewIndices = indicesByDefinition.getNewSingleIndexFields().size();
+        int nNewUniqIndices = indicesByDefinition.getNewUniqueIndexFields().size();
+        int nNewCompIndices = indicesByDefinition.getNewCompositeIndexFields().size();
+        int nNewCompUniqueIndices = indicesByDefinition.getNewCompositeUniqueIndexFields().size();
+
+        boolean indexingComplete = (nNewIndices == 0 && nNewUniqIndices == 0 && nNewCompIndices == 0 && nNewCompUniqueIndices == 0);
+        indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), indexingComplete);
+        logger.info("On loadDefinitionIndex for Shard:" + shardId + " definition: {} updated index to {} ",
+                definition.getTitle(), indexingComplete);
+
+        definitionIndexFields.put(indicesByDefinition.getDefinitionName(), indicesByDefinition);
+    }
+
     /**
      * Creates the parent vertex in all the shards for all default definitions
      *
@@ -275,6 +312,11 @@ public class EntityParenter {
         if (parentVertex != null && definition != null) {
 
             IndexFields inxFields = definitionIndexFields.get(definition.getTitle());
+            if(inxFields == null) {
+                logger.info("Index Fields are null, reloading index fields for definition: {}", definition.getTitle());
+                this.loadDefinitionIndex(definition.getTitle(), shardId);
+                inxFields = definitionIndexFields.get(definition.getTitle());
+            }
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 try (Transaction tx = dbProvider.startTransaction(graph)) {

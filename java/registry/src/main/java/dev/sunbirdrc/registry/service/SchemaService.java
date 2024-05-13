@@ -56,9 +56,6 @@ public class SchemaService {
 	@Autowired
 	private SchemaAuthFilter schemaAuthFilter;
 
-	@Autowired
-	private EntityParenter entityParenter;
-
 	public void deleteSchemaIfExists(Vertex vertex) throws SchemaException {
 		if (vertex.property(STATUS) != null && vertex.property(STATUS).value().equals(SchemaStatus.PUBLISHED.toString())) {
 			throw new SchemaException(NOT_ALLOWED_FOR_PUBLISHED_SCHEMA);
@@ -93,7 +90,6 @@ public class SchemaService {
 				validator.addDefinitions(schema);
 				addAnonymousSchemaToFilter(definition);
 				this.ensureCredentialSchema(definition.getTitle(), definitionsManager.getCredentialTemplate(definition.getTitle()), SchemaStatus.PUBLISHED.toString());
-				entityParenter.ensureKnownParenters();
 			} else {
 				throw new SchemaException("Duplicate Error: Schema already exists");
 			}
@@ -118,7 +114,6 @@ public class SchemaService {
 			addAnonymousSchemaToFilter(definition);
 			validator.addDefinitions(schema);
 			saveIdFormat(definition.getTitle());
-			entityParenter.loadDefinitionIndex();
 			ensureCredentialSchema(definition.getTitle(), definitionsManager.getCredentialTemplate(definition.getTitle()), SchemaStatus.PUBLISHED.toString());
 		}
 	}

@@ -11,7 +11,6 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
-import dev.sunbirdrc.registry.util.EntityParenter;
 import dev.sunbirdrc.validators.IValidate;
 import org.apache.commons.io.IOUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -54,8 +53,6 @@ public class SchemaServiceTest {
 	SchemaAuthFilter schemaAuthFilter;
 	@InjectMocks
 	SchemaService schemaService;
-	@Mock
-	EntityParenter entityParenter;
 
 	String trainingCertificateSchema;
 
@@ -68,8 +65,6 @@ public class SchemaServiceTest {
 		ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
 		ReflectionTestUtils.setField(definitionsManager, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
-		ReflectionTestUtils.setField(schemaService, "entityParenter", entityParenter);
-		when(entityParenter.ensureKnownParenters()).thenReturn(Optional.of(""));
 	}
 
 	@Test
