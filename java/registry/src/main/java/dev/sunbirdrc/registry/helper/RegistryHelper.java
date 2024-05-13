@@ -826,7 +826,9 @@ public class RegistryHelper {
         // To maintain the consistency with searchEntity we are using ArrayNode
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
         arrayNode.add(rolesNode);
-        result.set(entityName, arrayNode);
+        ObjectNode searchResp = JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, arrayNode);
+        searchResp.put(TOTAL_COUNT, 1L);
+        result.set(entityName, searchResp);
         return result;
     }
 
