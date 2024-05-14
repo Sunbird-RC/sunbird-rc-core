@@ -13,6 +13,7 @@ import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
@@ -47,7 +48,7 @@ import org.sunbird.akka.core.Router;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
@@ -243,6 +244,10 @@ public class RegistryServiceImpl implements RegistryService {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
                 entityId = registryDao.addEntity(graph, rootNode);
+                if (vertexLabel.equals(Schema)) {
+                    String definitionName = rootNode.get(Schema).get(SchemaName).asText();
+                    entityParenter.ensureKnownParenter(definitionName, graph, dbProvider, shard.getShardId());
+                }
                 if (commitEnabled) {
                     dbProvider.commitTransaction(graph, tx);
                 }

@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.sink;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -138,23 +139,23 @@ public abstract class DatabaseProvider implements HealthIndicator {
     /**
      * Creates index
      */
-    public void createIndex(Graph graph, String label, List<String> propertyNames){
+    public void createIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
     /**
      * Creates unique index
      */
-    public void createUniqueIndex(Graph graph, String label, List<String> propertyNames){
+    public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
     /**
      * Creates composite index
      */
-    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
+    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
 
-    public void createCompositeUniqueIndex(Graph graph, String label, List<String> propertyNames){
+    public void createCompositeUniqueIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
 

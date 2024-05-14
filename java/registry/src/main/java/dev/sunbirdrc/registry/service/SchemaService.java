@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.util.Definition;
+import dev.sunbirdrc.registry.util.EntityParenter;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.apache.tinkerpop.gremlin.structure.Vertex;

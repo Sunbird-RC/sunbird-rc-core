@@ -31,6 +31,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;

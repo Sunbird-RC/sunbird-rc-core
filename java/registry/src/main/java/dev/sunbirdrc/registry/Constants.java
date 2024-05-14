@@ -19,6 +19,7 @@ public class Constants {
     public static final String ATTESTATION_POLICY = "AttestationPolicy";
     public static final String REVOKED_CREDENTIAL = "RevokedCredential";
     public static final String Schema = "Schema";
+    public static final String SchemaName = "name";
     public static final String Template = "template";
     public static final String TemplateId = "template-id";
     public static final String TemplateKey = "template-key";
