@@ -349,10 +349,7 @@ public class VertexReader {
                                         resultArr.add(ovalue);
                                     } else {
                                         if (node.isObject()) {
-                                            Map<String, Object> deletedNodeRef = JSONUtil.convertJsonNodeToMap(node);
-                                            deletedNodeRef.put(uuidPropertyName , osidVal);
-                                            JsonNode refactorNode = new ObjectMapper().convertValue(deletedNodeRef , JsonNode.class);
-                                            resultArr.add(refactorNode);
+                                            resultArr.add(ovalue);
                                         }
                                         logger.info("Field {} Array items not found in map", field);
                                     }
