@@ -54,8 +54,7 @@ import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.helper.RegistryHelper.ServiceNotEnabledResponse;
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
-import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -483,7 +482,7 @@ public class RegistryEntityController extends AbstractController {
             checkEntityNameInDefinitionManager(entityName);
             ArrayList<String> fields = getConsentFields(request);
             JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
+            JsonNode jsonNode = userInfoFromRegistry.get(entityName).get(ENTITY_LIST);
             if (jsonNode instanceof ArrayNode) {
                 ArrayNode values = (ArrayNode) jsonNode;
                 if (values.size() > 0) {
@@ -856,9 +855,9 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            if (result.get(entityName).size() > 0) {
+            if (result.get(entityName).get(ENTITY_LIST).size() > 0) {
                 Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(0), credentialTemplate);
+                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(ENTITY_LIST).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");

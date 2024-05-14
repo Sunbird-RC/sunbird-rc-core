@@ -29,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Date;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+
 @RestController
 @ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
 public class RegistryClaimsController extends AbstractController{
@@ -49,7 +51,7 @@ public class RegistryClaimsController extends AbstractController{
                                                HttpServletRequest request) {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode claims = claimRequestClient.getClaims(result.get(entityName).get(0), pageable, entityName);
+            JsonNode claims = claimRequestClient.getClaims(result.get(entityName).get(ENTITY_LIST).get(0), pageable, entityName);
             logger.info("Received {} claims", claims.size());
             return new ResponseEntity<>(claims, HttpStatus.OK);
         } catch (Exception e) {
@@ -63,7 +65,7 @@ public class RegistryClaimsController extends AbstractController{
                                            HttpServletRequest request) {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(0), entityName, claimId);
+            JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(ENTITY_LIST).get(0), entityName, claimId);
             return new ResponseEntity<>(claim, HttpStatus.OK);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             logger.error("Fetching claim failed {}", ExceptionUtils.getStackTrace(e));
@@ -109,7 +111,7 @@ public class RegistryClaimsController extends AbstractController{
         JsonNode notes = requestBody.get("notes");
         logger.info("Action : {} , Notes: {}", action, notes);
         JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-        JsonNode attestorInfo = result.get(entityName).get(0);
+        JsonNode attestorInfo = result.get(entityName).get(ENTITY_LIST).get(0);
         ObjectNode additionalInputs = JsonNodeFactory.instance.objectNode();
         additionalInputs.set("attestorInfo", attestorInfo);
         additionalInputs.set("action", action);

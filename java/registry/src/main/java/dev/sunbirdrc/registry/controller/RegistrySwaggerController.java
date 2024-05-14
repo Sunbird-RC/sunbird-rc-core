@@ -29,6 +29,7 @@ import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.Constants.TITLE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
 
 @RestController
 @ConditionalOnProperty(name = "api-swagger.enabled", havingValue = "true")
@@ -74,7 +75,7 @@ public class RegistrySwaggerController {
     public ResponseEntity<Object> getUserSwaggerDoc(HttpServletRequest request) throws Exception {
         JsonNode userCreatedSchemas = registryHelper.getRequestedUserDetails(request, Schema);
         Set<String> schemas = new HashSet<>();
-        for (JsonNode schemaRes : userCreatedSchemas.get(Schema)) {
+        for (JsonNode schemaRes : userCreatedSchemas.get(Schema).get(ENTITY_LIST)) {
             JsonNode schema = objectMapper.readTree(schemaRes.get(Schema.toLowerCase()).asText());
             schemas.add(schema.get(TITLE).textValue());
         }

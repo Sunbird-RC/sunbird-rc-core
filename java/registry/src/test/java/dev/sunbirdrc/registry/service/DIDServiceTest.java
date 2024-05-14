@@ -1,5 +1,7 @@
 package dev.sunbirdrc.registry.service;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -89,7 +91,9 @@ public class DIDServiceTest {
         ObjectNode resultsNode = JsonNodeFactory.instance.objectNode();
         ArrayNode authorArray = JsonNodeFactory.instance.arrayNode();
         authorArray.add(authorNode);
-        resultsNode.set("Issuer", authorArray);
+        ObjectNode resp = JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, authorArray);
+        resp.put(TOTAL_COUNT, 1L);
+        resultsNode.set(authorSchemaName, resp);
 
         when(searchService.search(any(), anyString())).thenReturn(resultsNode);
 
@@ -98,7 +102,7 @@ public class DIDServiceTest {
         assertEquals("1234567890", foundDid);
 
         // Negative test case when no results are found
-        resultsNode.set("Issuer", JsonNodeFactory.instance.arrayNode());
+        resultsNode.set(authorSchemaName, JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()));
         when(searchService.search(any(), anyString())).thenReturn(resultsNode);
         try {
             didService.findDidForProperty(propertyName, value);
@@ -202,10 +206,12 @@ public class DIDServiceTest {
         // Create a mock JsonNode for testing
         ObjectNode results = JsonNodeFactory.instance.objectNode();
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(1);
-        results.set(authorSchemaName, arrayNode);
         ObjectNode record = JsonNodeFactory.instance.objectNode();
         record.set(didPropertyName, JsonNodeFactory.instance.textNode("did:test:1234"));
         arrayNode.add(record);
+        ObjectNode resp = JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, arrayNode);
+        resp.put(TOTAL_COUNT, 1L);
+        results.set(authorSchemaName, resp);
         return results;
     }
 
@@ -213,7 +219,9 @@ public class DIDServiceTest {
         // Create an empty JsonNode for testing
         ObjectNode results = JsonNodeFactory.instance.objectNode();
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(1);
-        results.set(authorSchemaName, arrayNode);
+        ObjectNode resp = JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, arrayNode);
+        resp.put(TOTAL_COUNT, 1L);
+        results.set(authorSchemaName, resp);
         return results;
     }
 
