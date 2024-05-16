@@ -57,6 +57,7 @@ public class AuditDBImpl extends AuditServiceImpl {
       		}
       		
         	JsonNode rootNode = convertAuditRecordToJson(auditRecord, entityType);
+            signAudit(entityType, rootNode);
             auditToDB(rootNode, entityType, shard);
 
         } catch (AuditFailedException e) {

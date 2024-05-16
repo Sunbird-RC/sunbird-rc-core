@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
 
 @RestController
 public class RegistryUtilsController {
@@ -79,6 +82,11 @@ public class RegistryUtilsController {
 
 	@Value("${audit.frame.store}")
 	public String auditStoreType;
+
+	@Value("${search.offset:0}")
+	private int searchOffset;
+	@Value("${search.limit:2000}")
+	private int searchLimit;
 
 	@RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
 	public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
@@ -269,16 +277,21 @@ public class RegistryUtilsController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/audit", method = RequestMethod.POST)
-	public ResponseEntity<Response> fetchAudit() {
+	@RequestMapping(value = "/audit", method = {RequestMethod.POST, RequestMethod.GET})
+	public ResponseEntity<Response> fetchAudit(HttpServletRequest request, @RequestParam(value = "search", required = false) String searchQueryString) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
 		JsonNode payload = apiMessage.getRequest().getRequestMapNode();
+		if(searchQueryString != null) {
+            payload = JSONUtil.parseSearchToken(searchQueryString);
+		}
 		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
 			try {
 				watch.start("RegistryController.audit");
 				JsonNode result = registryHelper.getAuditLog(payload, null);
-
+				String resultEntity = result.fieldNames().next();
+				ObjectNode pageUrls = JSONUtil.getRootSearchPageUrls(payload, searchLimit, searchOffset, result.get(resultEntity).get(TOTAL_COUNT).asLong(), request.getRequestURL().toString());
+				((ObjectNode) result.get(resultEntity)).setAll(pageUrls);
 				response.setResult(result);
 				responseParams.setStatus(Response.Status.SUCCESSFUL);
 				watch.stop("RegistryController.searchEntity");
