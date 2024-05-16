@@ -610,7 +610,7 @@ public class RegistryHelper {
             case GRANT_CLAIM:
                 Object credentialTemplate = attestationPolicy.getCredentialTemplate();
                 // checking size greater than 1, bcz empty template contains osid field
-                if (credentialTemplate != null) {
+                if (credentialTemplate != null && !credentialTemplate.toString().isEmpty()) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     if (!signatureEnabled) {
                         throw new UnreachableException("Signature service not enabled!");
@@ -1131,7 +1131,7 @@ public class RegistryHelper {
             return;
         }
         Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-        if (credentialTemplate != null) {
+        if (credentialTemplate != null && !credentialTemplate.toString().isEmpty()) {
             ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                     .get(entityName);
             Object signedCredentials = getSignedDoc(entityId, updatedNode, credentialTemplate);

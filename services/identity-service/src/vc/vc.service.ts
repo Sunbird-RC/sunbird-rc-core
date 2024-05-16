@@ -78,9 +78,9 @@ export default class VcService {
         });
       return signedVC;
     } catch (err) {
-      console.log(err);
-      Logger.error('Error signign the document:', err);
-      throw new InternalServerErrorException(`Error signign the document`);
+      console.log("Log: ", JSON.stringify(err, null, 4));
+      Logger.error('Error signing the document:', err);
+      throw new InternalServerErrorException(`Error signing the document`);
     }
   }
 
