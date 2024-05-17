@@ -233,6 +233,7 @@ certificate:
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
   enabled: ${audit_enabled:true}
+  vc-enabled: ${audit_vc_enabled:false}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
@@ -473,6 +474,7 @@ signature:
 
 audit:
   enabled: ${audit_enabled:false}
+  vc-enabled: ${audit_vc_enabled:false}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
