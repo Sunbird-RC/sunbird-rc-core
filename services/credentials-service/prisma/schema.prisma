@@ -23,7 +23,7 @@ model VerifiableCredentials {
   type              String[]
   issuer            String
   issuanceDate      String
-  expirationDate    String
+  expirationDate    String?
   credential_schema String
   subject           Json
   subjectId         String
