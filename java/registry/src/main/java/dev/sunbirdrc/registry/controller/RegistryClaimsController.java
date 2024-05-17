@@ -26,6 +26,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Date;
 
@@ -143,7 +146,7 @@ public class RegistryClaimsController extends AbstractController{
             if(!propertyData.isNull()) {
                 attestationRequest.setPropertyData(propertyData);
             }
-            attestationRequest.setOsCreatedAt(new Date());
+            attestationRequest.setOsCreatedAt(LocalDateTime.ofInstant(new Date().toInstant(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")) );
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
