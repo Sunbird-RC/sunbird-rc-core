@@ -558,7 +558,7 @@ public class JSONUtil {
 		((ObjectNode) searchNode).set(OFFSET, JsonNodeFactory.instance.numberNode(offset + limit));
 		String nextPageToken = Base64.getEncoder().encodeToString(searchNode.toString().getBytes(StandardCharsets.UTF_8));
 		if(offset - limit >=0) result.put(PREV_PAGE, url + "?search=" + prevPageToken);
-		if(offset + limit <= totalCount) result.put(NEXT_PAGE, url + "?search=" + nextPageToken);
+		if(offset + limit < totalCount) result.put(NEXT_PAGE, url + "?search=" + nextPageToken);
 		return result;
 	}
 

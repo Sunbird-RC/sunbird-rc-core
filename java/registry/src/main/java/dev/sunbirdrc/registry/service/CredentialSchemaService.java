@@ -89,9 +89,9 @@ public class CredentialSchemaService implements HealthIndicator {
         Map<String, Object> credTemplates = new HashMap<>();
         this.definitionsManager.getAllDefinitions().forEach(definition -> {
             Object credTemplate = definition.getOsSchemaConfiguration().getCredentialTemplate();
-            if(credTemplate != null) credTemplates.put(definition.getTitle(), credTemplate);
+            if(credTemplate != null && !credTemplate.toString().isEmpty()) credTemplates.put(definition.getTitle(), credTemplate);
             definition.getOsSchemaConfiguration().getAttestationPolicies().forEach(attestationPolicy -> {
-                if(attestationPolicy.getCredentialTemplate() != null) {
+                if(attestationPolicy.getCredentialTemplate() != null && !attestationPolicy.getCredentialTemplate().toString().isEmpty()) {
                     String name = String.format("%s_%s", definition.getTitle(), attestationPolicy.getName());
                     credTemplates.put(name, attestationPolicy.getCredentialTemplate());
                 }

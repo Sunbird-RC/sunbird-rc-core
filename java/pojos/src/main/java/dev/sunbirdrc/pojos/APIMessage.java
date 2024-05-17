@@ -1,5 +1,6 @@
 package dev.sunbirdrc.pojos;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -41,7 +42,9 @@ public class APIMessage {
 		String body = requestWrapper.getBody();
 		if(body != null && !body.isEmpty()) {
 			try {
-				request = new ObjectMapper().readValue(body, Request.class);
+				request = new ObjectMapper()
+						.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false)
+						.readValue(body, Request.class);
 			} catch (IOException e) {
 				logger.error("Can't read request body: {}", ExceptionUtils.getStackTrace(e));
 				request = null;
