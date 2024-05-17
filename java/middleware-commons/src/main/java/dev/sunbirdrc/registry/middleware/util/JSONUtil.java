@@ -20,6 +20,8 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -505,7 +507,12 @@ public class JSONUtil {
 		}
 		List<JsonNode> nodeList = new ArrayList<>();
 		arrayNode.elements().forEachRemaining(nodeList::add);
-		nodeList.sort(Comparator.comparingLong(node -> node.get("osCreatedAt").asLong()));
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+		nodeList.sort(Comparator.comparing(node -> {
+			String dateString = node.get("osCreatedAt").asText();
+			LocalDateTime dateTime = LocalDateTime.parse(dateString, formatter);
+			return dateTime;
+		}));
 		return nodeList.get(nodeList.size() -1 );
 	}
 
