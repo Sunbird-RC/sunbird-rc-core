@@ -1,6 +1,9 @@
 package dev.sunbirdrc.registry.entities;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -11,10 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
@@ -24,7 +24,7 @@ import java.util.Map;
 public class AttestationPolicy {
     private static final Logger logger = LoggerFactory.getLogger(AttestationPolicy.class);
 
-    private String osid;
+	private Map<String, Object> additionalProperties = new HashMap<>();
 
 	private final static String PLUGIN_SPLITTER = ":";
 
@@ -75,6 +75,20 @@ public class AttestationPolicy {
 	public String getAttestorEntity() {
 		String[] split = this.attestorPlugin.split("entity=");
 		return split.length == 2 ? split[1] : "";
+	}
+
+	@JsonAnySetter
+	public void setAdditionalProperty(String name, Object value) {
+		additionalProperties.put(name, value);
+	}
+
+	@JsonAnyGetter
+	public Map<String, Object> getAdditionalProperties() {
+		return additionalProperties;
+	}
+
+	public Object getProperty(String name) {
+		return additionalProperties.get(name);
 	}
 
 	public String getNodePath() {

@@ -244,7 +244,7 @@ public class JSONUtilTest {
                 put("educationDetails", new ArrayList<>(Arrays.asList("1", "2")));
             }
         };
-        JsonNode actualPropertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationProperties, properyOSIDMapper);
+        JsonNode actualPropertyData = JSONUtil.extractPropertyDataFromEntity("osid", entityNode, attestationProperties, properyOSIDMapper);
         assertEquals(expectedPropertyNode, actualPropertyData);
     }
 

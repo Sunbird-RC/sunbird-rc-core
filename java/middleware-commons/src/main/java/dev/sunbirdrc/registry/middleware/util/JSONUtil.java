@@ -481,23 +481,23 @@ public class JSONUtil {
         return typeList.get(0);
     }
 
-	public static String getOSIDFromArrNode(JsonNode resultNode, JsonNode requestBody, List<String> fieldsToRemove) {
+	public static String getUUIDPropertyValueFromArrNode(String uuidPropertyName, String propertiesUUIDKeyName, JsonNode resultNode, JsonNode requestBody) {
 		if (resultNode.isArray()) {
 			ArrayNode arrayNode = (ArrayNode) resultNode;
-			JsonNode matchingClaim = searchClaimOsIdFromRequestProperties(arrayNode,requestBody);
-			return matchingClaim!=null?matchingClaim.get("osid").asText():"";
+			JsonNode matchingClaim = searchClaimUUIDPropertyValueFromRequestProperties(propertiesUUIDKeyName, arrayNode,requestBody);
+			return matchingClaim != null ? matchingClaim.get(uuidPropertyName).asText() : "";
 		}
 		return "";
 	}
 
-	private static JsonNode searchClaimOsIdFromRequestProperties(ArrayNode arrayNode, JsonNode requestBody) {
-		if (requestBody.get("propertiesOSID") != null) {
-			Map<String, List<String>> requestBodyProperty = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
+	private static JsonNode searchClaimUUIDPropertyValueFromRequestProperties(String propertiesUUIDKeyName, ArrayNode arrayNode, JsonNode requestBody) {
+		if (requestBody.get(propertiesUUIDKeyName) != null) {
+			Map<String, List<String>> requestBodyProperty = objectMapper.convertValue(requestBody.get(propertiesUUIDKeyName), Map.class);
 			Iterator<JsonNode> claimIterator = arrayNode.elements();
 			while (claimIterator.hasNext()) {
 				JsonNode claimEntry = claimIterator.next();
-				if (claimEntry.get("propertiesOSID") != null) {
-					JsonNode property = claimEntry.get("propertiesOSID");
+				if (claimEntry.get(propertiesUUIDKeyName) != null) {
+					JsonNode property = claimEntry.get(propertiesUUIDKeyName);
 					Map<String, JsonNode> claimEntryProperty = objectMapper.convertValue(property, Map.class);
 					if (isRequestBodyPropertyPresentInClaim(requestBodyProperty, claimEntryProperty)) {
 						return claimEntry;
@@ -518,16 +518,16 @@ public class JSONUtil {
 
 	private static boolean isRequestBodyPropertyPresentInClaim(Map<String,List<String>> requestBodyProperty,Map<String,JsonNode> claimEntryProperty){
 		for(Map.Entry<String,List<String>> entry: requestBodyProperty.entrySet()){
-			List<String> requestBodyPropertyOSID = entry.getValue();
+			List<String> requestBodyPropertyUUID = entry.getValue();
 			String key = entry.getKey();
-			if(!((List<String>) objectMapper.convertValue(claimEntryProperty.get(key), List.class)).containsAll(requestBodyPropertyOSID)){
+			if(!((List<String>) objectMapper.convertValue(claimEntryProperty.get(key), List.class)).containsAll(requestBodyPropertyUUID)){
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertiesOSIDMapper) {
+	public static JsonNode extractPropertyDataFromEntity(String uuidPropertyName, JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertiesUUIDMapper) {
 		if(attestationProperties == null) {
 			return JsonNodeFactory.instance.nullNode();
 		}
@@ -539,13 +539,13 @@ public class JSONUtil {
 			Object read = documentContext.read(path);
 			JsonNode readNode = new ObjectMapper().convertValue(read, JsonNode.class);
 			result.set(key, readNode);
-			if(readNode.isArray() && propertiesOSIDMapper != null && propertiesOSIDMapper.containsKey(key)) {
-				List<String> osids = propertiesOSIDMapper.get(key);
+			if(readNode.isArray() && propertiesUUIDMapper != null && propertiesUUIDMapper.containsKey(key)) {
+				List<String> uuidPropertyValues = propertiesUUIDMapper.get(key);
 				ArrayNode arrayNode = (ArrayNode) readNode;
 				ArrayNode filteredArrNode = JsonNodeFactory.instance.arrayNode();
 
 				for(JsonNode node :arrayNode) {
-					if(node.has("osid") && osids.contains(node.get("osid").asText())) {
+					if(node.has(uuidPropertyName) && uuidPropertyValues.contains(node.get(uuidPropertyName).asText())) {
 						filteredArrNode.add(node);
 					}
 				}

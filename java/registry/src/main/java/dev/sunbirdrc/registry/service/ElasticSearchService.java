@@ -31,8 +31,7 @@ import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 /**
  * This class provide search option with Elastic search Hits elastic search
@@ -124,7 +123,7 @@ public class ElasticSearchService implements ISearchService {
     private ArrayNode expandReference(JsonNode searchedNode) {
         ArrayNode arrayNode = (ArrayNode) searchedNode;
         ArrayNode nodeWithExpandedReference = JsonNodeFactory.instance.arrayNode();
-        HashMap<String, List<String>> indexOsidsMap = new HashMap<>();
+        HashMap<String, List<String>> indexUuidsMap = new HashMap<>();
         for (JsonNode node : arrayNode) {
             ObjectNode objectNode = (ObjectNode) node;
             objectNode.fields().forEachRemaining(objectField -> {
@@ -132,24 +131,24 @@ public class ElasticSearchService implements ISearchService {
                 if(objectField.getValue().asText().matches(pattern)) {
                     String[] referenceStrSplit = objectField.getValue().asText().split(":");
                     String indexName = referenceStrSplit[1].toLowerCase();
-                    String osid = referenceStrSplit[2];
-                    List<String> osids;
-                    if(indexOsidsMap.get(indexName) == null) {
-                        osids = new ArrayList();
+                    String uuidPropertyValue = referenceStrSplit[2];
+                    List<String> uuidPropertyValues;
+                    if(indexUuidsMap.get(indexName) == null) {
+                        uuidPropertyValues = new ArrayList();
                     } else {
-                        osids = indexOsidsMap.get(indexName);
+                        uuidPropertyValues = indexUuidsMap.get(indexName);
                     }
-                    osids.add(osid);
-                    indexOsidsMap.put(indexName, osids);
+                    uuidPropertyValues.add(uuidPropertyValue);
+                    indexUuidsMap.put(indexName, uuidPropertyValues);
                 }
             });
         }
         SearchQuery searchQuery = null;
         ArrayNode referenceNodes = JsonNodeFactory.instance.arrayNode();
-        for (Map.Entry<String, List<String>> indexOsidEntry: indexOsidsMap.entrySet()) {
+        for (Map.Entry<String, List<String>> indexUuidPropertyEntry: indexUuidsMap.entrySet()) {
             try {
-                searchQuery = getSearchQuery(indexOsidEntry.getKey(), indexOsidEntry.getValue());
-                referenceNodes.addAll((ArrayNode) elasticService.search(indexOsidEntry.getKey(), searchQuery));
+                searchQuery = getSearchQuery(indexUuidPropertyEntry.getKey(), indexUuidPropertyEntry.getValue());
+                referenceNodes.addAll((ArrayNode) elasticService.search(indexUuidPropertyEntry.getKey(), searchQuery));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             } catch (IOException e) {
@@ -162,9 +161,9 @@ public class ElasticSearchService implements ISearchService {
             objectNode.fields().forEachRemaining(objectField -> {
                 if (objectField.getValue().asText().startsWith("did:")) {
                     String[] referenceStrSplit = objectField.getValue().asText().split(":");
-                    String osid = referenceStrSplit[2];
+                    String uuidPropertyValue = referenceStrSplit[2];
                     for(JsonNode referenceNode: finalReferenceNodes) {
-                        if(referenceNode.get("osid").textValue().contains(osid)) {
+                        if(referenceNode.get(uuidPropertyName).textValue().contains(uuidPropertyValue)) {
                             objectNode.set(objectField.getKey(), referenceNode);
                         }
                     }
@@ -175,32 +174,21 @@ public class ElasticSearchService implements ISearchService {
         return nodeWithExpandedReference;
     }
 
-    private SearchQuery getSearchQuery(String entityName, String osid) throws JsonProcessingException {
-        String filter = "{\"filters\": {\"osid\":{ \"eq\":\"" + osid + "\"}}}";
-        ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(filter);
-        ArrayNode entity = JsonNodeFactory.instance.arrayNode();
-        entity.add(entityName);
-        jsonNode.set(ENTITY_TYPE, entity);
-        SearchQuery searchQuery1 = getSearchQuery(jsonNode, offset, limit);
-        return searchQuery1;
-    }
-
-    private SearchQuery getSearchQuery(String entityName, List<String> osids) throws JsonProcessingException {
-        ArrayNode osidsArrayNode = JsonNodeFactory.instance.arrayNode();
-        for (String osid: osids) {
-            osidsArrayNode.add("1-"+osid);
+    private SearchQuery getSearchQuery(String entityName, List<String> uuidPropertyValues) throws JsonProcessingException {
+        ArrayNode uuidPropertyValuesArrayNode = JsonNodeFactory.instance.arrayNode();
+        for (String uuidPropertyValue: uuidPropertyValues) {
+            uuidPropertyValuesArrayNode.add("1-"+uuidPropertyValue);
         }
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
         ObjectNode conditionNode = JsonNodeFactory.instance.objectNode();
-        conditionNode.set("or", osidsArrayNode);
-        ObjectNode osidFilterNode = JsonNodeFactory.instance.objectNode();
-        osidFilterNode.set("osid", conditionNode);
-        objectNode.set("filters", osidFilterNode);
+        conditionNode.set("or", uuidPropertyValuesArrayNode);
+        ObjectNode uuidPropertyValueFilterNode = JsonNodeFactory.instance.objectNode();
+        uuidPropertyValueFilterNode.set(uuidPropertyName, conditionNode);
+        objectNode.set(FILTERS, uuidPropertyValueFilterNode);
         ArrayNode entity = JsonNodeFactory.instance.arrayNode();
         entity.add(entityName);
         objectNode.set(ENTITY_TYPE, entity);
-        SearchQuery searchQuery1 = getSearchQuery(objectNode, offset, limit);
-        return searchQuery1;
+        return getSearchQuery(objectNode, offset, limit);
     }
 
     private void updateStatusFilter(SearchQuery searchQuery) {

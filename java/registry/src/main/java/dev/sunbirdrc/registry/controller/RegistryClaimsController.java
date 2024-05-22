@@ -142,15 +142,15 @@ public class RegistryClaimsController extends AbstractController{
             JsonNode entityNode = registryHelper.readEntity(userId, attestationRequest.getEntityName(),
                             attestationRequest.getEntityId(), false, null, false)
                     .get(attestationRequest.getEntityName());
-            JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), attestationRequest.getPropertiesOSID());
+            JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(uuidPropertyName, entityNode, attestationPolicy.getAttestationProperties(), attestationRequest.getPropertiesUUID(uuidPropertyName));
             if(!propertyData.isNull()) {
                 attestationRequest.setPropertyData(propertyData);
             }
             attestationRequest.setOsCreatedAt(LocalDateTime.ofInstant(new Date().toInstant(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")) );
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
-            String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
-            response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
+            String attestationUUID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
+            response.setResult(Collections.singletonMap("attestation" + uuidPropertyName.toUpperCase(), attestationUUID));
         } catch (Exception e) {
             logger.error("Exception occurred while saving attestation data {}", ExceptionUtils.getStackTrace(e));
             responseParams.setErrmsg(e.getMessage());

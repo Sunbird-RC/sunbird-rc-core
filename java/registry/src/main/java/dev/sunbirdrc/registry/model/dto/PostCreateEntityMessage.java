@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class PostCreateEntityMessage {
     private String userId;
     private String entityType;
-    private String osid;
+    private String uuid;
     private String transactionId;
     private CreateEntityStatus status;
     private String message;

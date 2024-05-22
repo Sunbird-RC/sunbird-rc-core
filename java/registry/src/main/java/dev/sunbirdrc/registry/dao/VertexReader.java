@@ -335,13 +335,13 @@ public class VertexReader {
                                 Map.Entry<String, JsonNode> item = entryIterator.next();
                                 JsonNode ar = item.getValue();
                                 for (JsonNode node : ar) {
-                                    String osidVal;
+                                    String uuidPropertyValue;
                                     if (node.isObject()) {
-                                        osidVal = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
+                                        uuidPropertyValue = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
                                     } else {
-                                        osidVal = ArrayHelper.unquoteString(node.asText());
+                                        uuidPropertyValue = ArrayHelper.unquoteString(node.asText());
                                     }
-                                    ObjectNode ovalue = uuidNodeMap.getOrDefault(osidVal, null);
+                                    ObjectNode ovalue = uuidNodeMap.getOrDefault(uuidPropertyValue, null);
                                     expandChildObject(ovalue, currentLevel + 1);
                                     if (ovalue != null) {
                                         resultArr.add(ovalue);
@@ -375,27 +375,27 @@ public class VertexReader {
      * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
      * SqlG does not support custom id, but the result is direct from the database without client side filtering
      *      unlike Neo4j.
-     * @param osid the osid of vertex to be loaded
-     * @return the vertex associated with osid passed
+     * @param uuidPropertyValue the uuidPropertyValue of vertex to be loaded
+     * @return the vertex associated with uuidPropertyValue passed
      */
-    public Vertex getVertex(String entityType, String osid) {
+    public Vertex getVertex(String entityType, String uuidPropertyValue) {
         Vertex vertex = null;
         Iterator<Vertex> itrV = null;
         switch (databaseProvider.getProvider()) {
             case NEO4J:
-                itrV = graph.vertices(osid);
+                itrV = graph.vertices(uuidPropertyValue);
                 break;
             case SQLG:
             case CASSANDRA:
             case TINKERGRAPH:
                 if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, uuidPropertyValue);
                 } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, uuidPropertyValue);
                 }
                 break;
             default:
-                itrV = graph.vertices(osid);
+                itrV = graph.vertices(uuidPropertyValue);
                 break;
         }
 
@@ -434,18 +434,18 @@ public class VertexReader {
     /**
      * Hits the database to read contents
      * This is the entry function to read contents of a given entity
-     * @param osid
+     * @param uuidPropertyValue
      *            the id to be read
      * @return
      * @throws Exception
      */
-    public JsonNode read(String entityType, String osid) throws Exception {
-        rootVertex = getVertex(entityType, osid);
+    public JsonNode read(String entityType, String uuidPropertyValue) throws Exception {
+        rootVertex = getVertex(entityType, uuidPropertyValue);
         return readInternal(rootVertex);
     }
 
-    public JsonNode read(String osid) throws  Exception {
-        rootVertex = getVertex(null, osid);
+    public JsonNode read(String uuidPropertyValue) throws  Exception {
+        rootVertex = getVertex(null, uuidPropertyValue);
         return readInternal(rootVertex);
     }
 
@@ -501,8 +501,8 @@ public class VertexReader {
             String pattern = "^"+ DID_TYPE+":[^:]+:[^:]+";
             if(entry.getValue().isValueNode() && entry.getValue().asText().matches(pattern)) {
                 String[] dids = entry.getValue().asText().split(":");
-                String osid = RecordIdentifier.parse(dids[2]).getUuid();
-                Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, osid);
+                String uuidPropertyValue = RecordIdentifier.parse(dids[2]).getUuid();
+                Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, uuidPropertyValue);
                 while (vertexIterator.hasNext()) {
                     Vertex dependent = vertexIterator.next();
                     ObjectNode references;

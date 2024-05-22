@@ -2,7 +2,6 @@ package dev.sunbirdrc.registry.consumers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sunbirdrc.registry.Constants;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.model.dto.CreateEntityStatus;
@@ -14,7 +13,6 @@ import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,9 +72,9 @@ public class CreateEntityConsumer {
             JsonNode inputJson = createEntityMessage.getInputJson();
             String entityType = inputJson.fields().next().getKey();
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
-            String entityOsid = registryService.addEntity(shard, createEntityMessage.getUserId(), inputJson, createEntityMessage.isSkipSignature());
-            registryHelper.autoRaiseClaim(entityType, entityOsid, createEntityMessage.getUserId(), null, inputJson, createEntityMessage.getEmailId());
-            postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid)
+            String entityUuid = registryService.addEntity(shard, createEntityMessage.getUserId(), inputJson, createEntityMessage.isSkipSignature());
+            registryHelper.autoRaiseClaim(entityType, entityUuid, createEntityMessage.getUserId(), null, inputJson, createEntityMessage.getEmailId());
+            postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).uuid(entityUuid)
                     .transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
         } catch (Exception e) {
             logger.error("Creating entity failed: {}", ExceptionUtils.getStackTrace(e));
