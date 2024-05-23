@@ -22,6 +22,10 @@ public class DecryptionHelper extends PrivateField {
         return objectNode;
     }
 
+    public JsonNode getDecryptedJson(String entityType, JsonNode data) throws EncryptionException {
+        return process(data, entityType, null);
+    }
+
     protected Map<String, Object> performOperation(Map<String, Object> plainMap) throws EncryptionException {
         return encryptionService.decrypt(plainMap);
     }
