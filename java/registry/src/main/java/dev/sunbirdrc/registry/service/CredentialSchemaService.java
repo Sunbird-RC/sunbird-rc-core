@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
@@ -88,9 +89,9 @@ public class CredentialSchemaService implements HealthIndicator {
         Map<String, Object> credTemplates = new HashMap<>();
         this.definitionsManager.getAllDefinitions().forEach(definition -> {
             Object credTemplate = definition.getOsSchemaConfiguration().getCredentialTemplate();
-            if(credTemplate != null) credTemplates.put(definition.getTitle(), credTemplate);
+            if(credTemplate != null && !credTemplate.toString().isEmpty()) credTemplates.put(definition.getTitle(), credTemplate);
             definition.getOsSchemaConfiguration().getAttestationPolicies().forEach(attestationPolicy -> {
-                if(attestationPolicy.getCredentialTemplate() != null) {
+                if(attestationPolicy.getCredentialTemplate() != null && !attestationPolicy.getCredentialTemplate().toString().isEmpty()) {
                     String name = String.format("%s_%s", definition.getTitle(), attestationPolicy.getName());
                     credTemplates.put(name, attestationPolicy.getCredentialTemplate());
                 }
@@ -214,7 +215,8 @@ public class CredentialSchemaService implements HealthIndicator {
     public ComponentHealthInfo getHealthInfo() {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("OK")) {
+            JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK","UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {

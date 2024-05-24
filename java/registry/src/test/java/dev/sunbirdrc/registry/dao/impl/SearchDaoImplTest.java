@@ -37,6 +37,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
@@ -83,14 +85,14 @@ public class SearchDaoImplTest {
     public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
         SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);//new SearchQuery("", 0, 0);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        assertTrue(result.get("Teacher").isEmpty());
+        assertTrue(result.get("Teacher").get(ENTITY_LIST).isEmpty());
     }
 
     @Test
     public void testEqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertEquals("marko", d.get("teacherName").asText());
         });
     }
@@ -99,7 +101,7 @@ public class SearchDaoImplTest {
     public void testNeqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.neq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertNotEquals("marko", d.get("teacherName").asText());
         });
     }
@@ -111,7 +113,7 @@ public class SearchDaoImplTest {
         range.add(3);
         SearchQuery searchQuery = getSearchQuery(entities, "serialNum", range, FilterOperators.between);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("serialNum").asLong() >= 1);
             assertTrue(d.get("serialNum").asLong() <= 3);
         });
@@ -125,7 +127,7 @@ public class SearchDaoImplTest {
         values.add(VALUE_NOT_PRESENT); 
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", values, FilterOperators.or);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(values.contains(d.get("teacherName").asText()));
         });
     }
@@ -134,7 +136,7 @@ public class SearchDaoImplTest {
     public void testStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.startsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().startsWith("ma"));
         });
     }
@@ -142,7 +144,7 @@ public class SearchDaoImplTest {
     public void testNotStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertFalse(d.get("teacherName").asText().startsWith("ma"));
         });
     }
@@ -151,7 +153,7 @@ public class SearchDaoImplTest {
     public void testEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.endsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().endsWith("as"));
         });
     }
@@ -159,7 +161,7 @@ public class SearchDaoImplTest {
     public void testNotEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertFalse(d.get("teacherName").asText().endsWith("as"));
         });
     }
@@ -168,7 +170,7 @@ public class SearchDaoImplTest {
     public void testContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.contains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().contains("as"));
         });
     }
@@ -176,7 +178,7 @@ public class SearchDaoImplTest {
     public void testNotContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notContains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        result.get("Teacher").forEach(d -> {
+        result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertFalse(d.get("teacherName").asText().contains("as"));
         });
     }
@@ -190,14 +192,14 @@ public class SearchDaoImplTest {
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gt, 1));
 
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        assertTrue(result.get("Teacher").isEmpty());
+        assertTrue(result.get("Teacher").get(ENTITY_LIST).isEmpty());
     }
 
     @Test
     public void testResponseLimit() {
         SearchQuery searchQuery = new SearchQuery(entities, offset, limit);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
-        assertEquals(1, result.get("Teacher").size());
+        assertEquals(1, result.get("Teacher").get(ENTITY_LIST).size());
     }
 
     @PreDestroy

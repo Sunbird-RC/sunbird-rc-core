@@ -36,6 +36,9 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class,
 		OSResourceLoader.class, ShardManager.class, DefaultShardAdvisor.class})
@@ -85,7 +88,7 @@ public class NativeSearchServiceTest {
 	public void shouldReturnRecordsMatchingFilters() throws IOException {
 		JsonNode query = getSearchQuery();
 		JsonNode results = nativeSearchService.search(query, "");
-		Assert.assertEquals(1, results.get("Teacher").size());
+		Assert.assertEquals(1L, results.get("Teacher").get(TOTAL_COUNT).asLong());
 	}
 
 	private JsonNode getSearchQuery() throws JsonProcessingException {
@@ -105,10 +108,9 @@ public class NativeSearchServiceTest {
 		ReflectionTestUtils.setField(nativeSearchService, "removeNonPublicFieldsForNativeSearch", true);
 		JsonNode query = getSearchQuery();
 		JsonNode results = nativeSearchService.search(query, "");
-		System.out.println(results.get("Teacher"));
-		Assert.assertEquals(1, results.get("Teacher").size());
-		Assert.assertEquals(4, results.get("Teacher").get(0).size());
-		Assert.assertNull(results.get("Teacher").get(0).get("serialNum"));
+		Assert.assertEquals(1L, results.get("Teacher").get(TOTAL_COUNT).asLong());
+		Assert.assertEquals(4, results.get("Teacher").get(ENTITY_LIST).get(0).size());
+		Assert.assertNull(results.get("Teacher").get(ENTITY_LIST).get(0).get("serialNum"));
 
 	}
 
@@ -117,9 +119,9 @@ public class NativeSearchServiceTest {
 		ReflectionTestUtils.setField(nativeSearchService, "removeNonPublicFieldsForNativeSearch", false);
 		JsonNode query = getSearchQuery();
 		JsonNode results = nativeSearchService.search(query, "");
-		Assert.assertEquals(1, results.get("Teacher").size());
-		Assert.assertEquals(5, results.get("Teacher").get(0).size());
-		Assert.assertNotNull(results.get("Teacher").get(0).get("serialNum"));
+		Assert.assertEquals(1L, results.get("Teacher").get(TOTAL_COUNT).asLong());
+		Assert.assertEquals(5, results.get("Teacher").get(ENTITY_LIST).get(0).size());
+		Assert.assertNotNull(results.get("Teacher").get(ENTITY_LIST).get(0).get("serialNum"));
 	}
 
 

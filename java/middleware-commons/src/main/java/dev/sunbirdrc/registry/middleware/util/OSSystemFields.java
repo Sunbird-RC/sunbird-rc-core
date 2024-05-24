@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.middleware.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.collections4.ListUtils;
 
@@ -55,9 +56,9 @@ public enum OSSystemFields {
         @Override
         public void setCredential(String signatureProvider, JsonNode node, Object signedCredential) {
             if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
-                JSONUtil.addField((ObjectNode) node, String.valueOf(_osCredentialId), ((ObjectNode) signedCredential).get("id").asText());
+                ((ObjectNode) node).set(String.valueOf(_osCredentialId), ((ObjectNode) signedCredential).get("id"));
             } else {
-                JSONUtil.addField((ObjectNode) node, String.valueOf(_osSignedData), signedCredential.toString());
+                ((ObjectNode) node).set(String.valueOf(_osSignedData), JsonNodeFactory.instance.textNode(signedCredential.toString()));
             }
         }
         @Override
@@ -85,9 +86,9 @@ public enum OSSystemFields {
         @Override
         public void setCredential(String signatureProvider, JsonNode node, Object signedCredential) {
             if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
-                JSONUtil.addField((ObjectNode) node, String.valueOf(_osAttestedData), ((ObjectNode) signedCredential).get("id").asText());
+                ((ObjectNode) node).set(String.valueOf(_osAttestedData), ((ObjectNode) signedCredential).get("id"));
             } else {
-                JSONUtil.addField((ObjectNode) node, String.valueOf(_osAttestedData), signedCredential.toString());
+                ((ObjectNode) node).set(String.valueOf(_osAttestedData), JsonNodeFactory.instance.textNode(signedCredential.toString()));
             }
         }
         @Override

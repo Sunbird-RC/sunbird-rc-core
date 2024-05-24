@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static dev.sunbirdrc.registry.Constants.HTTPS_URI_PREFIX;
 import static dev.sunbirdrc.registry.Constants.HTTP_URI_PREFIX;
@@ -213,7 +214,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         return JsonNodeFactory.instance.arrayNode();
     }
 
-    private JsonNode verifyCredential(String credentialId) throws IOException {
+    public JsonNode verifyCredential(String credentialId) throws IOException {
         ResponseEntity<String> response = retryRestTemplate.getForEntity(verifyCredentialURL, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {
             return JSONUtil.convertStringJsonNode(response.getBody());
@@ -230,7 +231,8 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     public ComponentHealthInfo getHealthInfo() {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("OK")) {
+            JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK", "UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {

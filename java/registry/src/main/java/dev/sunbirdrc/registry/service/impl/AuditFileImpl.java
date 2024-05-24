@@ -33,7 +33,9 @@ public class AuditFileImpl extends AuditServiceImpl {
         try {
             // If the audit is stored as file, fetchAudit from audit entity will not come to this point.
         	AuditFileWriter auditWriter = new AuditFileWriter();
-            auditWriter.auditToFile(auditRecord);
+            JsonNode rootNode = convertAuditRecordToJson(auditRecord, auditRecord.getEntityType());
+            signAudit(auditRecord.getEntityType(), rootNode);
+            auditWriter.auditToFile(rootNode);
 
            // sendAuditToActor(auditRecord, inputNode, auditRecord.getEntityType());
         } catch (Exception e) {
@@ -45,7 +47,6 @@ public class AuditFileImpl extends AuditServiceImpl {
     
     @Override
 	public String getAuditProvider() {
-		
 		return Constants.FILE;
 	}
 }

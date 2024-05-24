@@ -1,5 +1,5 @@
 {
-  "name": "Teacher7",
+  "name": "Teacher",
   "schema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"Teacher\": {\n      \"$ref\": \"#/definitions/Teacher\"\n    }\n  },\n  \"required\": [\n    \"Teacher\"\n  ],\n  \"title\": \"Teacher\",\n  \"definitions\": {\n    \"Teacher\": {\n      \"$id\": \"#/properties/Teacher\",\n      \"type\": \"object\",\n      \"title\": \"The Teacher Schema\",\n      \"required\": [\n        \"name\",\n        \"gender\",\n        \"contact\",\n        \"email\"\n      ],\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"gender\": {\n          \"type\": \"string\"\n        },\n        \"contact\": {\n          \"type\": \"string\"\n        },\n        \"email\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  },\n  \"_osConfig\": {\n    \"uniqueIndexFields\": [],\n    \"ownershipAttributes\": [{\n      \"email\": \"/email\",\n      \"mobile\": \"/contact\",\n      \"userId\": \"/contact\"\n    }],\n    \"roles\": [\n      \"anonymous\"\n    ],\n    \"inviteRoles\": [\n      \"anonymous\"\n    ]\n  }\n}",
   "status": "PUBLISHED"
 }

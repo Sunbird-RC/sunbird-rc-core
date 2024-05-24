@@ -26,6 +26,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
@@ -69,16 +70,16 @@ public class DIDService implements HealthIndicator {
         filters.set(propertyName, JsonNodeFactory.instance.objectNode().put("eq", value));
         payload.set(FILTERS, filters);
         JsonNode results = searchService.search(payload, "");
-        if(results.get(authorSchemaName).isEmpty()) {
-            throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, didPropertyName));
+        if(results.get(authorSchemaName).get(ENTITY_LIST).isEmpty()) {
+            throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, propertyName));
         }
-        return results.get(authorSchemaName).get(0).get(didPropertyName).asText();
+        return results.get(authorSchemaName).get(ENTITY_LIST).get(0).get(didPropertyName).asText();
     }
 
     public String ensureDidForName(String name, String method) throws Exception {
         String did;
         try {
-            did = getDid(name);
+            did = this.getDid(name);
         } catch (Exception e) {
             did = this.generateDid(method, null);
             ObjectNode rootNode = objectMapper.createObjectNode();
@@ -140,7 +141,8 @@ public class DIDService implements HealthIndicator {
     public ComponentHealthInfo getHealthInfo() {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-            if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("OK")) {
+            JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK", "UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {

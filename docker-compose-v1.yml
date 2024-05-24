@@ -2,7 +2,9 @@ version: '2.4'
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.23
+    volumes:
+      - ./${ES_DIR-es-data}:/usr/share/elasticsearch/data/*
     environment:
       - discovery.type=single-node
       - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
@@ -51,7 +53,9 @@ services:
       - encryption_enabled=${ENCRYPTION_ENABLED-false}
       - encryption_health_check_url=http://encryption-service:8013/health
       - encryption_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_uri=http://encryption-service:8013/crypto/v1/_decrypt
       - encryption_batch_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - decryption_batch_uri=http://encryption-service:8013/crypto/v1/_decrypt
       - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService

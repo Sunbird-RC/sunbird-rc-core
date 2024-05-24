@@ -58,6 +58,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
 import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -806,14 +807,19 @@ public class RegistryHelperTest {
 
 	@Test
 	public void shouldReturnTrueIFSignedDataIsRevoked() throws Exception {
-		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode().add(JsonNodeFactory.instance.objectNode().put("signedData", "xyz")));
+		JsonNode searchResponse = JsonNodeFactory.instance.objectNode()
+				.set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.objectNode()
+								.set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()
+										.add(JsonNodeFactory.instance.objectNode().put("signedData", "xyz"))));
 		when(searchService.search(any(), anyString())).thenReturn(searchResponse);
 		assertTrue(registryHelper.checkIfCredentialIsRevoked("signedData", ""));
 	}
 
 	@Test
 	public void shouldReturnFalseIfSignedDataIsNotRevoked() throws Exception {
-		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode());
+		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL,
+				JsonNodeFactory.instance.objectNode()
+						.set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()));
 		when(searchService.search(any(), anyString())).thenReturn(searchResponse);
 		assertFalse(registryHelper.checkIfCredentialIsRevoked("signedData", ""));
 	}
@@ -910,7 +916,7 @@ public class RegistryHelperTest {
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
 		doNothing().when(registryService).updateEntity(any(), any(), any(), any(), anyBoolean());
 		doNothing().when(notificationHelper).sendNotification(any(), any());
-		registryHelper.updateEntityAndState(existingJson, updateJson, "");
+		registryHelper.updateEntityAndState(existingJson, updateJson, "", false);
 		verify(registryService, times(1)).updateEntity(any(), any(), any(), any(), anyBoolean());
 		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}

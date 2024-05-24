@@ -202,7 +202,7 @@ public class RegistryController extends AbstractController {
         try {
             watch.start("RegistryController.update");
             JsonNode existingEntity = registryHelper.readEntity(inputJson, apiMessage.getUserID());
-            registryHelper.updateEntityAndState(existingEntity, inputJson, apiMessage.getUserID());
+            registryHelper.updateEntityAndState(existingEntity, inputJson, apiMessage.getUserID(), false);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");

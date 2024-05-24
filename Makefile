@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v2.0.0-rc1
+RELEASE_VERSION = v2.0.0
 IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-claim-ms \
 			ghcr.io/sunbird-rc/sunbird-rc-notification-service ghcr.io/sunbird-rc/sunbird-rc-metrics \
 			ghcr.io/sunbird-rc/id-gen-service ghcr.io/sunbird-rc/encryption-service \
@@ -27,7 +27,7 @@ java/registry/target/registry.jar: $(SOURCES)
 
 test: build
 	@docker-compose -f docker-compose-v1.yml down
-	@sudo rm -rf db-data* || echo "no permission to delete"
+	@sudo rm -rf db-data* es-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search
 	@docker-compose -f docker-compose-v1.yml --env-file test_environments/test_with_distributedDefManager_nativeSearch.env up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
@@ -45,7 +45,7 @@ test: build
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
-	@sudo rm -rf db-data-2 || echo "no permission to delete"
+	@sudo rm -rf db-data-2 es-data-2 || echo "no permission to delete"
 #	make -C services/identity-service test
 #	make -C services/credential-schema test
 #	make -C services/credentials-service test

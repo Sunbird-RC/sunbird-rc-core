@@ -226,6 +226,7 @@ template:
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
   enabled: true
+  vc-enabled: false
   frame-store: DATABASE
   suffix: Audit
   suffix-separator: ${audit_suffixSeparator:_}
@@ -439,6 +440,7 @@ signature:
 
 audit:
   enabled: false
+  vc-enabled: false
   frame-store: DATABASE
   suffix: Audit
   suffix-separator: _

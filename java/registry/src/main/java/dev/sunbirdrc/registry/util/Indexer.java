@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
+import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -71,15 +72,14 @@ public class Indexer {
      * @param graph
      * @param label     type vertex label (example:Teacher) and table in rdbms
      */
-    public void createIndex(Graph graph, String label) {
-
+    public void createIndex(Graph graph, String label) throws IndexException.LabelNotFoundException {
         if (label != null && !label.isEmpty()) {
             databaseProvider.createUniqueIndex(graph, label, indexUniqueFields);
             databaseProvider.createIndex(graph, label, singleIndexFields);
             databaseProvider.createCompositeIndex(graph, label, compositeIndexFields);
             databaseProvider.createCompositeUniqueIndex(graph, label, compositeUniqueIndexFields);
         } else {
-            logger.info("label is required for creating indexing");
+            throw new IndexException.LabelNotFoundException(label);
         }
     }
 }

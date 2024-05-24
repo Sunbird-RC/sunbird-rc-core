@@ -1,11 +1,13 @@
 package dev.sunbirdrc.registry.service.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.exception.AuditFailedException;
+import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.helper.SignatureHelper;
+import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,9 @@ public class AuditServiceImpl implements IAuditService {
     @Value("${audit.suffix-separator}")
     private String auditSuffixSeparator;
 
+    @Value("${audit.vc-enabled:false}")
+    private boolean auditVCEnabled;
+
     @Autowired
     private IDefinitionsManager definitionsManager;
     
@@ -66,6 +71,12 @@ public class AuditServiceImpl implements IAuditService {
     
     @Autowired
     private AuditProviderFactory auditProviderFactory;
+
+    @Autowired(required = false)
+    private SignatureHelper signatureHelper;
+
+    @Value("${signature.enabled:false}")
+    private boolean signatureEnabled;
 
 
     @Value("${search.provider-name}")
@@ -176,6 +187,19 @@ public class AuditServiceImpl implements IAuditService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+    protected void signAudit(String entityType, JsonNode rootNode) throws SignatureException.CreationException, SignatureException.UnreachableException {
+        if(signatureEnabled && auditVCEnabled) {
+            Object credentialTemplate = definitionsManager.getCredentialTemplate(entityType);
+            if(credentialTemplate == null || credentialTemplate.toString().isEmpty()) return;
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("title", entityType);
+            requestBodyMap.put("data", rootNode.get(entityType));
+            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            Object signedCredentials = signatureHelper.sign(requestBodyMap);
+            OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(entityType), signedCredentials);
+        }
+    }
 
 
 }

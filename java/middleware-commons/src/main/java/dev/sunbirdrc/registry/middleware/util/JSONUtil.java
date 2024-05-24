@@ -19,6 +19,9 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +33,8 @@ import com.jayway.jsonpath.Option;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.NestedExceptionUtils;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 public class JSONUtil {
 
@@ -501,7 +505,15 @@ public class JSONUtil {
 				}
 			}
 		}
-		return arrayNode.get(arrayNode.size() - 1);
+		List<JsonNode> nodeList = new ArrayList<>();
+		arrayNode.elements().forEachRemaining(nodeList::add);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+		nodeList.sort(Comparator.comparing(node -> {
+			String dateString = node.get("osCreatedAt").asText();
+			LocalDateTime dateTime = LocalDateTime.parse(dateString, formatter);
+			return dateTime;
+		}));
+		return nodeList.get(nodeList.size() -1 );
 	}
 
 	private static boolean isRequestBodyPropertyPresentInClaim(Map<String,List<String>> requestBodyProperty,Map<String,JsonNode> claimEntryProperty){
@@ -541,5 +553,44 @@ public class JSONUtil {
 			}
 		}
 		return result;
+	}
+
+	public static ObjectNode getSearchPageUrls(JsonNode inputNode, long defaultLimit, long defaultOffset, long totalCount, String url) throws IOException {
+		ObjectNode result = JsonNodeFactory.instance.objectNode();
+		JsonNode searchNode = objectMapper.readTree(inputNode.toString());
+		long limit = searchNode.get(LIMIT) == null ? defaultLimit : searchNode.get(LIMIT).asLong(defaultLimit);
+		long offset = searchNode.get(OFFSET) == null ? defaultOffset : searchNode.get(OFFSET).asLong(defaultOffset);
+		((ObjectNode) searchNode).set(OFFSET, JsonNodeFactory.instance.numberNode(offset - limit));
+		String prevPageToken = Base64.getEncoder().encodeToString(searchNode.toString().getBytes(StandardCharsets.UTF_8));
+		((ObjectNode) searchNode).set(OFFSET, JsonNodeFactory.instance.numberNode(offset + limit));
+		String nextPageToken = Base64.getEncoder().encodeToString(searchNode.toString().getBytes(StandardCharsets.UTF_8));
+		if(offset - limit >=0) result.put(PREV_PAGE, url + "?search=" + prevPageToken);
+		if(offset + limit < totalCount) result.put(NEXT_PAGE, url + "?search=" + nextPageToken);
+		return result;
+	}
+
+	public static ObjectNode getRootSearchPageUrls(JsonNode inputNode, long defaultLimit, long defaultOffset, long totalCount, String url) throws IOException {
+		ObjectNode result = JsonNodeFactory.instance.objectNode();
+		JsonNode searchNode = objectMapper.readTree(inputNode.toString());
+		String entityName = searchNode.fieldNames().next();
+		long limit = searchNode.get(entityName).get(LIMIT) == null ? defaultLimit : searchNode.get(entityName).get(LIMIT).asLong(defaultLimit);
+		long offset = searchNode.get(entityName).get(OFFSET) == null ? defaultOffset : searchNode.get(entityName).get(OFFSET).asLong(defaultOffset);
+		((ObjectNode) searchNode.at("/" + entityName)).set(OFFSET, JsonNodeFactory.instance.numberNode(offset - limit));
+		String prevPageToken = Base64.getEncoder().encodeToString(searchNode.toString().getBytes(StandardCharsets.UTF_8));
+		((ObjectNode) searchNode.at("/" + entityName)).set(OFFSET, JsonNodeFactory.instance.numberNode(offset + limit));
+		String nextPageToken = Base64.getEncoder().encodeToString(searchNode.toString().getBytes(StandardCharsets.UTF_8));
+		if(offset - limit >=0) result.put(PREV_PAGE, url + "?search=" + prevPageToken);
+		if(offset + limit < totalCount) result.put(NEXT_PAGE, url + "?search=" + nextPageToken);
+		return result;
+	}
+
+	public static ObjectNode parseSearchToken(String endcodedValue) {
+		try {
+			byte[] decoded = Base64.getDecoder().decode(endcodedValue);
+			return (ObjectNode) objectMapper.readTree(decoded);
+		} catch (Exception ignored) {
+			logger.warn("Unable to parse next page token");
+		}
+		return null;
 	}
 }

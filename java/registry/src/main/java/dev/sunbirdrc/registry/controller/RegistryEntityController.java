@@ -48,12 +48,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.helper.RegistryHelper.ServiceNotEnabledResponse;
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -83,6 +84,10 @@ public class RegistryEntityController extends AbstractController {
     boolean securityEnabled;
     @Value("${template.external-enabled:false}")
     boolean externalTemplatesEnabled;
+    @Value("${search.offset:0}")
+    private int searchOffset;
+    @Value("${search.limit:2000}")
+    private int searchLimit;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -191,8 +196,11 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/search", method = RequestMethod.POST)
-    public ResponseEntity<Object> searchEntity(@PathVariable String entityName, @RequestHeader HttpHeaders header, @RequestBody ObjectNode searchNode) {
+    @RequestMapping(value = "/api/v1/{entityName}/search", method = {RequestMethod.POST, RequestMethod.GET})
+    public ResponseEntity<Object> searchEntity(@PathVariable String entityName,
+                                               HttpServletRequest request,
+                                               @RequestHeader HttpHeaders header, @RequestBody(required = false) ObjectNode searchNode,
+                                               @RequestParam(value = "search", required = false) String searchQueryString) {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
@@ -201,12 +209,21 @@ public class RegistryEntityController extends AbstractController {
             watch.start("RegistryController.searchEntity");
             ArrayNode entity = JsonNodeFactory.instance.arrayNode();
             entity.add(entityName);
+            if(searchNode == null && (searchQueryString == null || searchQueryString.isEmpty())) {
+                throw new BadRequestException("Search Request body not found");
+            }
+            if(searchNode == null) {
+                searchNode = JsonNodeFactory.instance.objectNode();
+                registryHelper.addSearchTokenToQuery(searchQueryString, searchNode);
+            }
             searchNode.set(ENTITY_TYPE, entity);
             checkEntityNameInDefinitionManager(entityName);
             if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
-                JsonNode result = registryHelper.searchEntity(searchNode, null);
+                JsonNode result = registryHelper.searchEntity(searchNode, null).get(entityName);
+                ObjectNode pageUrls = JSONUtil.getSearchPageUrls(searchNode, searchLimit, searchOffset, result.get(TOTAL_COUNT).asLong(), request.getRequestURL().toString());
+                ((ObjectNode) result).setAll(pageUrls);
                 watch.stop("RegistryController.searchEntity");
-                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+                return new ResponseEntity<>(result, HttpStatus.OK);
             } else {
                 watch.stop("RegistryController.searchEntity");
                 logger.error("Searching on entity {} not allowed", entityName);
@@ -256,7 +273,7 @@ public class RegistryEntityController extends AbstractController {
             watch.start(tag);
             JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
-            registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
+            registryHelper.updateEntityAndState(existingNode, newRootNode, userId, false);
             if (OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName))) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId,
                         OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName)).asText(), true);
@@ -465,7 +482,7 @@ public class RegistryEntityController extends AbstractController {
             checkEntityNameInDefinitionManager(entityName);
             ArrayList<String> fields = getConsentFields(request);
             JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
+            JsonNode jsonNode = userInfoFromRegistry.get(entityName).get(ENTITY_LIST);
             if (jsonNode instanceof ArrayNode) {
                 ArrayNode values = (ArrayNode) jsonNode;
                 if (values.size() > 0) {
@@ -669,17 +686,21 @@ public class RegistryEntityController extends AbstractController {
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request,
-                                                   @RequestHeader(required = false) String viewTemplateId) throws RecordNotFoundException {
+                                                   @RequestHeader(required = false) String viewTemplateId,
+                                                   @RequestParam(value = "search", required = false) String searchToken) throws RecordNotFoundException {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.GET, "OK", responseParams);
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.getUserId(entityName);
             if (!Strings.isEmpty(userId)) {
-                JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId);
-                JsonNode entities = responseFromDb.get(entityName);
-                if (!entities.isEmpty()) {
-                    return new ResponseEntity<>(entities, HttpStatus.OK);
+                JsonNode searchQuery = registryHelper.searchQueryByUserId(entityName, userId, searchToken, viewTemplateId);
+                JsonNode responseFromDb = registryHelper.searchEntityFromDBWithPrivateFields(searchQuery, userId);
+                JsonNode results = responseFromDb.get(entityName);
+                if (!results.isEmpty()) {
+                    ObjectNode pageUrls = JSONUtil.getSearchPageUrls(searchQuery, searchLimit, searchOffset, results.get(TOTAL_COUNT).asLong(), request.getRequestURL().toString());
+                    ((ObjectNode) results).setAll(pageUrls);
+                    return new ResponseEntity<>(results, HttpStatus.OK);
                 } else {
                     responseParams.setErrmsg("No record found");
                     responseParams.setStatus(Response.Status.UNSUCCESSFUL);
@@ -834,9 +855,9 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            if (result.get(entityName).size() > 0) {
+            if (result.get(entityName).get(ENTITY_LIST).size() > 0) {
                 Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(0), credentialTemplate);
+                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(ENTITY_LIST).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");

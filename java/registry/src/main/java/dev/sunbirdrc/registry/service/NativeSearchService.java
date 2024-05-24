@@ -2,7 +2,9 @@ package dev.sunbirdrc.registry.service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
+import com.fasterxml.jackson.databind.node.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -13,9 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import dev.sunbirdrc.pojos.APIMessage;
 import dev.sunbirdrc.pojos.AuditRecord;
@@ -33,6 +32,10 @@ import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
+
 /**
  * This class provides native search which hits the native database
  * Hence, this have performance in-efficiency on search operations
@@ -83,6 +86,10 @@ public class NativeSearchService implements ISearchService {
 
 	@Override
 	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
+		return search(inputQueryNode, userId, false);
+	}
+
+	public JsonNode search(JsonNode inputQueryNode, String userId, boolean skipRemoveNonPublicFields) throws IOException {
 
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
@@ -122,7 +129,7 @@ public class NativeSearchService implements ISearchService {
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}
-						result = removeNonPublicFields(searchQuery, shardResult);
+						result.add(removeNonPublicFields(searchQuery, shardResult, skipRemoveNonPublicFields));
 						if (tx != null) {
 							transaction.add(tx.hashCode());
 						}
@@ -142,26 +149,33 @@ public class NativeSearchService implements ISearchService {
 				} catch (Exception e) {
 					logger.error("Exception while auditing: {}", ExceptionUtils.getStackTrace(e));
 				}
-
-		 	}
+			}
 		}
 
 		return buildResultNode(searchQuery, result);
 	}
 
-	private ArrayNode removeNonPublicFields(SearchQuery searchQuery, ObjectNode shardResult) throws Exception {
-		ArrayNode result = JsonNodeFactory.instance.arrayNode();
+	private ObjectNode removeNonPublicFields(SearchQuery searchQuery, ObjectNode shardResult, boolean skipRemoveNonPublicFields) throws Exception {
+		ObjectNode response = JsonNodeFactory.instance.objectNode();
+		NumericNode count;
 		for(String entityType: searchQuery.getEntityTypes()) {
-			ArrayNode arrayNode = (ArrayNode) shardResult.get(entityType);
-			if (removeNonPublicFieldsForNativeSearch) {
+			ObjectNode result = JsonNodeFactory.instance.objectNode();
+			ArrayNode data = JsonNodeFactory.instance.arrayNode();
+			ArrayNode arrayNode = (ArrayNode) (shardResult.get(entityType).get(ENTITY_LIST));
+			count = (NumericNode) shardResult.get(entityType).get(TOTAL_COUNT);
+			if (removeNonPublicFieldsForNativeSearch && !skipRemoveNonPublicFields) {
 				for(JsonNode node : arrayNode) {
-					result.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+					data.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
 				}
 			} else {
-				result = arrayNode;
+				data = arrayNode;
 			}
+			result.set(TOTAL_COUNT, count);
+			result.set(ENTITY_LIST, data);
+			response.set(entityType, result);
 		}
-		return result;
+
+		return response;
 	}
 
 	/**
@@ -170,10 +184,20 @@ public class NativeSearchService implements ISearchService {
 	 * @param allShardResult
 	 * @return
 	 */
-	private JsonNode buildResultNode(SearchQuery searchQuery, ArrayNode allShardResult) {
+	private JsonNode buildResultNode(SearchQuery searchQuery, ArrayNode allShardResult) throws IOException {
 		ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
 		for (String entity : searchQuery.getEntityTypes()) {
-			resultNode.set(entity, allShardResult);
+			List<JsonNode> entityResults = allShardResult.findValues(entity);
+			ArrayNode data = JsonNodeFactory.instance.arrayNode();
+			AtomicLong count = new AtomicLong(0L);
+			ObjectNode entityResultsAggregate = JsonNodeFactory.instance.objectNode();
+			entityResults.forEach(shardData -> {
+				data.addAll((ArrayNode) shardData.get(ENTITY_LIST));
+				count.addAndGet(shardData.get(TOTAL_COUNT).asLong());
+			});
+			entityResultsAggregate.set(TOTAL_COUNT, JsonNodeFactory.instance.numberNode(count.get()));
+			entityResultsAggregate.set(ENTITY_LIST, data);
+			resultNode.set(entity, entityResultsAggregate);
 		}
 		return resultNode;
 	}

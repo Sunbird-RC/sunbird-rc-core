@@ -44,6 +44,7 @@ public class ClaimPluginActor extends BaseActor {
             case RAISE_CLAIM:
                 riseClaim(pluginRequestMessage);
                 break;
+            case SET_TO_DRAFT:
             case GRANT_CLAIM:
             case REJECT_CLAIM:
                 attestClaim(pluginRequestMessage);
