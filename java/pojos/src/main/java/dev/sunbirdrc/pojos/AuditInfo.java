@@ -6,6 +6,7 @@ public class AuditInfo {
     private String op;
     private String path;
     private Object value;
+    private String from;
 
     public String getOp() {
         return op;
@@ -21,6 +22,15 @@ public class AuditInfo {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @JsonIgnore
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String path) {
+        this.from = path;
     }
 
     @JsonIgnore

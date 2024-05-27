@@ -22,8 +22,8 @@ import java.util.Map;
 public class PluginResponseMessage {
     private String policyName;
     private String sourceEntity;
-    private String sourceOSID;
-    private String attestationOSID;
+    private String sourceUUID;
+    private String attestationUUID;
     private String attestorPlugin;
     private String response;
     private String signedData;
@@ -34,7 +34,7 @@ public class PluginResponseMessage {
     private Date validUntil;
     private String version;
     private String userId;
-    private Map<String, List<String>> propertiesOSID;
+    private Map<String, List<String>> propertiesUUIDs;
     private String emailId;
     @Builder.Default
     private List<PluginFile> files = new ArrayList<>();

@@ -6,17 +6,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 public class ESMessage {
     String indexName;
-    String osid;
+    String uuidPropertyValue;
     JsonNode input;
 
     public ESMessage() {
     }
-
-    /*public ESMessage(String indexName, String osid, JsonNode input) {
-        setIndexName(indexName);
-        setOsid(osid);
-        setInput(input);
-    }*/
 
     public String getIndexName() {
         return indexName;
@@ -26,12 +20,12 @@ public class ESMessage {
         this.indexName = indexName;
     }
 
-    public String getOsid() {
-        return osid;
+    public String getUuidPropertyValue() {
+        return uuidPropertyValue;
     }
 
-    public void setOsid(String osid) {
-        this.osid = osid;
+    public void setUuidPropertyValue(String uuidPropertyValue) {
+        this.uuidPropertyValue = uuidPropertyValue;
     }
 
     public JsonNode getInput() {

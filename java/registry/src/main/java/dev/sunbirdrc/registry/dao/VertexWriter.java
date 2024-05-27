@@ -2,12 +2,10 @@ package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.ArrayHelper;
-import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -18,14 +16,11 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
 
 /**
  * Helps in writing a vertex, edge into the database
@@ -34,7 +29,7 @@ public class VertexWriter {
     private String uuidPropertyName;
     private Graph graph;
     private DatabaseProvider databaseProvider;
-    private String parentOSid;
+    private String parentUUIDPropertyValue;
     private static final String EMPTY_STR = "";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
@@ -138,7 +133,7 @@ public class VertexWriter {
         Vertex blankNode = vertex;
         String label;
 
-        identifyParentOSid(vertex);
+        identifyParentUuid(vertex);
 
         if (isArrayItemObject) {
             label = RefLabelHelper.getArrayLabel(entryKey, uuidPropertyName);
@@ -154,7 +149,7 @@ public class VertexWriter {
             removeExistingDefaultProperty(vertex, entryKey);
             vertex.property(label, databaseProvider.getId(blankNode));
             blankNode.property(Constants.INTERNAL_TYPE_KEYWORD, entryKey);
-            blankNode.property(Constants.ROOT_KEYWORD, parentOSid);
+            blankNode.property(Constants.ROOT_KEYWORD, parentUUIDPropertyValue);
         }
 
         for (JsonNode jsonNode : arrayNode) {
@@ -162,7 +157,7 @@ public class VertexWriter {
                 Vertex createdV = processNode(entryKey, jsonNode);
                 ObjectNode objectNode = (ObjectNode) jsonNode;
                 objectNode.put(uuidPropertyName,databaseProvider.getId(createdV));
-                createdV.property(Constants.ROOT_KEYWORD, parentOSid);
+                createdV.property(Constants.ROOT_KEYWORD, parentUUIDPropertyValue);
                 uidList.add(databaseProvider.getId(createdV));
                 if (isSignature) {
                     Edge e = addEdge(Constants.SIGNATURE_FOR+Constants.ARRAY_ITEM, blankNode, createdV);
@@ -197,24 +192,24 @@ public class VertexWriter {
         object.put(uuidPropertyName,idToSet);
         parentVertex.property(RefLabelHelper.getLabel(label, uuidPropertyName), idToSet);
 
-        identifyParentOSid(parentVertex);
-        v.property(Constants.ROOT_KEYWORD, parentOSid);
+        identifyParentUuid(parentVertex);
+        v.property(Constants.ROOT_KEYWORD, parentUUIDPropertyValue);
 
         logger.debug("Added edge between {} and {}", parentVertex.label(), v.label());
         return v;
     }
     
    
-    private void identifyParentOSid(Vertex vertex) {
+    private void identifyParentUuid(Vertex vertex) {
         // This attribute will help identify the root from any child
-        if (parentOSid == null || parentOSid.isEmpty()) {
-            parentOSid = databaseProvider.getId(vertex);
+        if (parentUUIDPropertyValue == null || parentUUIDPropertyValue.isEmpty()) {
+            parentUUIDPropertyValue = databaseProvider.getId(vertex);
         }
     }
 
     private Vertex processNode(String label, JsonNode jsonObject) {
         Vertex vertex = createVertex(label);
-        identifyParentOSid(vertex);
+        identifyParentUuid(vertex);
 
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();
@@ -254,7 +249,7 @@ public class VertexWriter {
      */
     public String writeNodeEntity(JsonNode node) {
         Vertex resultVertex = null;
-        String rootOsid = null;
+        String rootUuidPropertyValue = null;
         Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
         while (entryIterator.hasNext()) {
             Map.Entry<String, JsonNode> entry = entryIterator.next();
@@ -263,11 +258,11 @@ public class VertexWriter {
             // parent name/definition
             if (entry.getValue().isObject()) {
                 resultVertex = processNode(entry.getKey(), entry.getValue());
-                rootOsid = databaseProvider.getId(resultVertex);
-                entryObject.put(uuidPropertyName,rootOsid);
+                rootUuidPropertyValue = databaseProvider.getId(resultVertex);
+                entryObject.put(uuidPropertyName,rootUuidPropertyValue);
             }
         }
-        return rootOsid;
+        return rootUuidPropertyValue;
     }
     
 }

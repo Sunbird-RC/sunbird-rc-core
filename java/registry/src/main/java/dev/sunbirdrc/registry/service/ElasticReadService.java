@@ -49,7 +49,7 @@ public class ElasticReadService implements IReadService {
     /**
      * This method interacts with the Elasticsearch and reads the record
      *
-     * @param id           - osid
+     * @param id           - uuid property value
      * @param entityType   - elastic-search index
      * @param configurator
      * @return

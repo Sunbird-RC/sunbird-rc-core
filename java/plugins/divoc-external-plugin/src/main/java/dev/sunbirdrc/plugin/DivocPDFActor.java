@@ -52,7 +52,7 @@ public class DivocPDFActor extends BaseActor {
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createPluginResponseMessage(pluginRequestMessage);
 		if (fileBytes != null) {
 			pluginResponseMessage.setFiles(Collections.singletonList(PluginFile.builder().file(fileBytes)
-					.fileName(String.format("%s.pdf", pluginRequestMessage.getAttestationOSID())).build()));
+					.fileName(String.format("%s.pdf", pluginRequestMessage.getAttestationUUID())).build()));
 			pluginResponseMessage.setStatus(Action.GRANT_CLAIM.name());
 			ObjectNode responseNode = objectMapper.createObjectNode();
 			responseNode.set("status", JsonNodeFactory.instance.textNode("true"));

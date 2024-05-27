@@ -18,7 +18,6 @@ import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.service.*;
-import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
@@ -29,8 +28,6 @@ import dev.sunbirdrc.views.FunctionExecutor;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,11 +39,8 @@ import org.kie.api.runtime.KieContainer;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.sunbird.akka.core.SunbirdActorFactory;
@@ -475,10 +469,10 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")
-				.attestationOSID("test-1")
+				.attestationUUID("test-1")
 				.sourceEntity("Student")
 				.policyName("testAttestationPolicy")
-				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.sourceUUID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();
@@ -514,10 +508,10 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")
-				.attestationOSID("test-1")
+				.attestationUUID("test-1")
 				.sourceEntity("Student")
 				.policyName("testAttestationPolicy")
-				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.sourceUUID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();
@@ -550,10 +544,10 @@ public class RegistryHelperTest {
 		));
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")
-				.attestationOSID("test-1")
+				.attestationUUID("test-1")
 				.sourceEntity("Student")
 				.policyName("testAttestationPolicy")
-				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.sourceUUID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();
@@ -591,10 +585,10 @@ public class RegistryHelperTest {
 		));
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")
-				.attestationOSID("test-1")
+				.attestationUUID("test-1")
 				.sourceEntity("Student")
 				.policyName("testAttestationPolicy")
-				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.sourceUUID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();

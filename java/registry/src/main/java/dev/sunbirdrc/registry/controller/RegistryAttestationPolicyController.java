@@ -76,17 +76,17 @@ public class RegistryAttestationPolicyController extends AbstractController {
         }
     }
 
-    @PutMapping("/api/v1/{entityName}/attestationPolicy/{policyOSID}")
-    public ResponseEntity updateAttestationPolicy(@PathVariable String entityName, @PathVariable String policyOSID,
+    @PutMapping("/api/v1/{entityName}/attestationPolicy/{policyUUID}")
+    public ResponseEntity updateAttestationPolicy(@PathVariable String entityName, @PathVariable String policyUUID,
                                                   @RequestBody final AttestationPolicy attestationPolicy, HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
                 String userId = registryHelper.getUserId(entityName);
-                final Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyOSID);
+                final Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyUUID);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
-                    logger.info("Updating attestation policies id: {}", policyOSID);
+                    logger.info("Updating attestation policies id: {}", policyUUID);
                     response.setResult(registryHelper.updateAttestationPolicy(userId, attestationPolicy));
                     responseParams.setStatus(Response.Status.SUCCESSFUL);
                     return new ResponseEntity<>(response, HttpStatus.OK);

@@ -131,7 +131,7 @@ public class NativeSearchService implements ISearchService {
 					try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
 						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery, expandInternal);
 						if (!shard.getShardLabel().isEmpty()) {
-							// Replace osid with shard details
+							// Replace uuidPropertyValue with shard details
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}

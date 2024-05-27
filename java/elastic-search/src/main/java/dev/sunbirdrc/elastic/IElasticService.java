@@ -20,26 +20,26 @@ public interface IElasticService extends HealthIndicator {
      */
     RestStatus addEntity(String index, String id, JsonNode inputEntity);
 
-    /** Reads document with respect to input osid from ES
+    /** Reads document with respect to input uuidPropertyValue from ES
      * @param index - ElasticSearch Index
-     * @param osid - which maps to document
+     * @param uuidPropertyValue - which maps to document
      * @return
      */
-    Map<String, Object> readEntity(String index, String osid) throws IOException;
+    Map<String, Object> readEntity(String index, String uuidPropertyValue) throws IOException;
 
-    /** updates document with respect to input osid to ES
+    /** updates document with respect to input uuidPropertyValue to ES
      * @param index - ElasticSearch Index
      * @param inputEntity - input json document for updating
-     * @param osid - which maps to document
+     * @param uuidPropertyValue - which maps to document
      * @return
      */
-    RestStatus updateEntity(String index, String osid, JsonNode inputEntity);
+    RestStatus updateEntity(String index, String uuidPropertyValue, JsonNode inputEntity);
 
-    /** deletes document with respect to input osid from ES
+    /** deletes document with respect to input uuidPropertyValue from ES
      * @param index - ElasticSearch Index
-     * @param osid - which maps to document
+     * @param uuidPropertyValue - which maps to document
      */
-    RestStatus deleteEntity(String index, String osid);
+    RestStatus deleteEntity(String index, String uuidPropertyValue);
 
     /** searches documents from ES based on query
      * @param index - ElasticSearch Index

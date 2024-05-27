@@ -47,7 +47,7 @@ public class MessageFactory {
         return msgBuilder.build();
     }
 
-    public MessageProtos.Message createOSActorMessage(boolean esEnabled, String operation, String index, String osid, JsonNode latestNode,
+    public MessageProtos.Message createOSActorMessage(boolean esEnabled, String operation, String index, String uuidPropertyValue, JsonNode latestNode,
                                                       AuditRecord auditRecord) throws JsonProcessingException {
         MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
         msgBuilder.setPerformOperation(operation);
@@ -55,7 +55,7 @@ public class MessageFactory {
         Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
         ESMessage esMessage = new ESMessage();
         esMessage.setIndexName(index);
-        esMessage.setOsid(osid);
+        esMessage.setUuidPropertyValue(uuidPropertyValue);
         esMessage.setInput(latestNode);
         ObjectMapper objectMapper = new ObjectMapper();
         OSEvent osEvent = new OSEvent();
