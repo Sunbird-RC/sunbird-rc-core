@@ -84,6 +84,12 @@ public class NativeSearchService implements ISearchService {
 	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
 	private boolean removeNonPublicFieldsForNativeSearch;
 
+	@Autowired(required = false)
+	private DecryptionHelper decryptionHelper;
+
+	@Value("${encryption.enabled}")
+	private boolean encryptionEnabled;
+
 	@Override
 	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
 		return search(inputQueryNode, userId, false);
@@ -166,6 +172,10 @@ public class NativeSearchService implements ISearchService {
 			if (removeNonPublicFieldsForNativeSearch && !skipRemoveNonPublicFields) {
 				for(JsonNode node : arrayNode) {
 					data.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+				}
+			} else if (encryptionEnabled) {
+				for(JsonNode node : arrayNode) {
+					data.add(decryptionHelper.getDecryptedJson(entityType, node));
 				}
 			} else {
 				data = arrayNode;
