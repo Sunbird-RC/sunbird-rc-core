@@ -185,6 +185,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - REGISTRY_URL=http://registry:8081
+      - UUID_PROPERTY_NAME=osid
     ports:
       - '8082:8082'
     depends_on:

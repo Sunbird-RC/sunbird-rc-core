@@ -62,7 +62,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     @Value("${signature.v2.issuer-did-method}")
     private String credentialIssuerMethod;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
     @Autowired
