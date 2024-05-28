@@ -48,7 +48,7 @@ public class PluginResponseActor extends BaseActor {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<PluginResponseMessage> entity = new HttpEntity<>(pluginResponseMessage, headers);
-        String uri = String.format(SYSTEM_PROPERTY_URL, pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getSourceOSID(), pluginResponseMessage.getPolicyName(), pluginResponseMessage.getAttestationOSID());
+        String uri = String.format(SYSTEM_PROPERTY_URL, pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getSourceUUID(), pluginResponseMessage.getPolicyName(), pluginResponseMessage.getAttestationUUID());
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<ResponseParams> responseEntity = restTemplate.exchange(REGISTRY_HOST_URL + uri, HttpMethod.PUT, entity, ResponseParams.class);
         logger.info("Update status api call's status {}", responseEntity.getStatusCode());

@@ -263,7 +263,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             if (isElasticSearchEnabled()) {
                 if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
-                    // Replace osid with shard details
+                    // Replace uuid property value with shard details
                     String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                     JSONUtil.addPrefix((ObjectNode) rootNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                 }
@@ -343,20 +343,6 @@ public class RegistryServiceImpl implements RegistryService {
                 logger.debug("After merge the payload is " + mergedNode.toString());
                 // TODO: need to revoke and re-sign the entity
                 // Re-sign, i.e., remove and add entity signature again
-/*
-            if (signatureEnabled) {
-                logger.debug("Removing earlier signature and adding new one");
-                String entitySignUUID = signatureHelper.removeEntitySignature(parentEntityType, (ObjectNode) mergedNode);
-                JsonNode newSignature = signatureHelper.signJson(mergedNode);
-                String rootOsid = mergedNode.get(entityType).get(uuidPropertyName).asText();
-                ObjectNode objectSignNode = (ObjectNode) newSignature;
-                objectSignNode.put(uuidPropertyName, entitySignUUID);
-                objectSignNode.put(Constants.ROOT_KEYWORD, rootOsid);
-                Vertex oldEntitySignatureVertex = uuidVertexMap.get(entitySignUUID);
-
-                registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature, entityType);
-            }
-*/
 
                 // TODO - Validate before update
                 JsonNode validationNode = mergedNode.deepCopy();
@@ -370,7 +356,7 @@ public class RegistryServiceImpl implements RegistryService {
                 // Finally update
                 // Input nodes have shard labels
                 if (!shard.getShardLabel().isEmpty()) {
-                    // Replace osid without shard details
+                    // Replace uuid property value without shard details
                     String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
@@ -394,7 +380,7 @@ public class RegistryServiceImpl implements RegistryService {
 
                 if (isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                     if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
-                        // Replace osid with shard details
+                        // Replace uuid property value with shard details
                         String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                         JSONUtil.addPrefix((ObjectNode) mergedNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                     }
@@ -508,11 +494,11 @@ public class RegistryServiceImpl implements RegistryService {
         // Simple object - just update that object (new uuid will not be issued)
         // Simple NEW object - need to update the root
         // Array object - need to delete and then add new one
-        JsonNode parentOsidNode = userInputNode.get(uuidPropertyName);
+        JsonNode parentUuidNode = userInputNode.get(uuidPropertyName);
         Vertex existingVertex = null;
         try {
-            String parentOsid = (parentOsidNode == null) ? "" : parentOsidNode.textValue();
-            existingVertex = uuidVertexMap.getOrDefault(parentOsid, null);
+            String parentUuid = (parentUuidNode == null) ? "" : parentUuidNode.textValue();
+            existingVertex = uuidVertexMap.getOrDefault(parentUuid, null);
         } catch (IllegalStateException propException) {
             logger.debug("Root vertex {} doesn't have any property named {}",
                     shard.getDatabaseProvider().getId(rootVertex), uuidPropertyName);

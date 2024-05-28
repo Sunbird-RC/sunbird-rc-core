@@ -1,6 +1,5 @@
 package dev.sunbirdrc.plugin.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.plugin.constant.Constants;
 import dev.sunbirdrc.plugin.dto.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -157,8 +155,8 @@ public class MosipServices {
                 .id(Constants.MOSIP_IDENTITY_OTP_INTERNAL)
                 .request(CredentialsRequestDto.builder()
                         .additionalData(new HashMap(){{
-                            put("osid", fetchCredentialsDto.getOsid());
-                            put("attestationOsid", fetchCredentialsDto.getAttestationOsid());
+                            put("osid", fetchCredentialsDto.getUuidPropertyValue());
+                            put("attestationOsid", fetchCredentialsDto.getAttestationUuid());
                         }})
                         .individualId(fetchCredentialsDto.getUid())
                         .issuer(issuer)

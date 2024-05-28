@@ -53,7 +53,7 @@ public class NativeReadService implements IReadService {
 	/**
 	 * This method interacts with the native db and reads the record
 	 *
-	 * @param id           - osid
+	 * @param id           - UUID Property Value
 	 * @param entityType
 	 * @param configurator
 	 * @return
@@ -69,7 +69,7 @@ public class NativeReadService implements IReadService {
 				JsonNode result = registryDao.getEntity(graph, entityType, id, configurator);
 
 				if (!shard.getShardLabel().isEmpty()) {
-					// Replace osid with shard details
+					// Replace uuid property value with shard details
 					String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 					JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
 				}

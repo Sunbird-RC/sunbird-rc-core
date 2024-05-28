@@ -84,6 +84,12 @@ public class NativeSearchService implements ISearchService {
 	@Value("${search.remove-non-public-fields-for-native-search:true}")
 	private boolean removeNonPublicFieldsForNativeSearch;
 
+	@Autowired(required = false)
+	private DecryptionHelper decryptionHelper;
+
+	@Value("${encryption.enabled}")
+	private boolean encryptionEnabled;
+
 	@Override
 	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
 		return search(inputQueryNode, userId, false);
@@ -125,7 +131,7 @@ public class NativeSearchService implements ISearchService {
 					try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
 						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery, expandInternal);
 						if (!shard.getShardLabel().isEmpty()) {
-							// Replace osid with shard details
+							// Replace uuidPropertyValue with shard details
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}
@@ -166,6 +172,10 @@ public class NativeSearchService implements ISearchService {
 			if (removeNonPublicFieldsForNativeSearch && !skipRemoveNonPublicFields) {
 				for(JsonNode node : arrayNode) {
 					data.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+				}
+			} else if (encryptionEnabled) {
+				for(JsonNode node : arrayNode) {
+					data.add(decryptionHelper.getDecryptedJson(entityType, node));
 				}
 			} else {
 				data = arrayNode;

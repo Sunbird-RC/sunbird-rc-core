@@ -71,8 +71,8 @@ public class ClaimPluginActor extends BaseActor {
         );
         ClaimDTO claimDTO = Objects.requireNonNull(responseEntity.getBody());
         pluginRequestMessage.setSourceEntity(claimDTO.getEntity());
-        pluginRequestMessage.setSourceOSID(claimDTO.getEntityId());
-        pluginRequestMessage.setAttestationOSID(claimDTO.getAttestationId());
+        pluginRequestMessage.setSourceUUID(claimDTO.getEntityId());
+        pluginRequestMessage.setAttestationUUID(claimDTO.getAttestationId());
         pluginRequestMessage.setPolicyName(claimDTO.getAttestationName());
         pluginRequestMessage.setPropertyData(claimDTO.getPropertyData());
         callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
@@ -96,12 +96,12 @@ public class ClaimPluginActor extends BaseActor {
 
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(pluginRequestMessage.getSourceEntity());
-        claimDTO.setEntityId(pluginRequestMessage.getSourceOSID());
+        claimDTO.setEntityId(pluginRequestMessage.getSourceUUID());
         claimDTO.setPropertyURI("");
         claimDTO.setPropertyData(pluginRequestMessage.getPropertyData());
         claimDTO.setConditions(pluginRequestMessage.getConditions());
         claimDTO.setAttestorEntity(pluginRequestMessage.getAttestorEntity());
-        claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
+        claimDTO.setAttestationId(pluginRequestMessage.getAttestationUUID());
         claimDTO.setNotes(notes);
         claimDTO.setAttestationName(pluginRequestMessage.getPolicyName());
         claimDTO.setRequestorName(pluginRequestMessage.getUserId());

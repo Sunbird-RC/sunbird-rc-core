@@ -9,6 +9,6 @@ public class FetchCredentialsDto {
     String otp;
     String uid;
     String transactionId;
-    String osid;
-    String attestationOsid;
+    String uuidPropertyValue;
+    String attestationUuid;
 }

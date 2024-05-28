@@ -211,17 +211,17 @@ public class ElasticServiceImpl implements IElasticService {
      * Reads the document from Elastic search
      *
      * @param index - ElasticSearch Index
-     * @param osid  - which maps to document
+     * @param uuidPropertyValue  - which maps to document
      * @return
      */
     @Override
     @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
-    public Map<String, Object> readEntity(String index, String osid) throws IOException {
-        logger.debug("readEntity starts with index {} and entityId {}", index, osid);
+    public Map<String, Object> readEntity(String index, String uuidPropertyValue) throws IOException {
+        logger.debug("readEntity starts with index {} and entityId {}", index, uuidPropertyValue);
         
         GetResponse response = null;
-        response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
+        response = getClient(index).get(new GetRequest(index, searchType, uuidPropertyValue), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
     
@@ -230,19 +230,19 @@ public class ElasticServiceImpl implements IElasticService {
      * Updates the document with updated inputEntity
      *
      * @param index       - ElasticSearch Index
-     * @param osid        - which maps to document
+     * @param uuidPropertyValue        - which maps to document
      * @param inputEntity - input json document for updating
      * @return
      */
     @Override
-    public RestStatus updateEntity(String index, String osid, JsonNode inputEntity) {
-        logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
+    public RestStatus updateEntity(String index, String uuidPropertyValue, JsonNode inputEntity) {
+        logger.debug("updateEntity starts with index {} and entityId {}", index, uuidPropertyValue);
         UpdateResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
-            response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
+            response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, uuidPropertyValue).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch: {}", ExceptionUtils.getStackTrace(e));
         }
@@ -253,20 +253,20 @@ public class ElasticServiceImpl implements IElasticService {
      * Updates the document status to inactive into elastic-search
      *
      * @param index - ElasticSearch Index
-     * @param osid  - which maps to document
+     * @param uuidPropertyValue  - which maps to document
      * @return
      */
     @Override
-    public RestStatus deleteEntity(String index, String osid) {
+    public RestStatus deleteEntity(String index, String uuidPropertyValue) {
         DocWriteResponse response = null;
         try {
             String indexL = index.toLowerCase();
-            Map<String, Object> readMap = readEntity(indexL, osid);
+            Map<String, Object> readMap = readEntity(indexL, uuidPropertyValue);
             if (isHardDeleteEnabled) {
-                response = getClient(indexL).delete(new DeleteRequest(indexL, searchType, osid), RequestOptions.DEFAULT);
+                response = getClient(indexL).delete(new DeleteRequest(indexL, searchType, uuidPropertyValue), RequestOptions.DEFAULT);
             } else {
                 readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
-                response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
+                response = getClient(indexL).update(new UpdateRequest(indexL, searchType, uuidPropertyValue).doc(readMap), RequestOptions.DEFAULT);
             }
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", ExceptionUtils.getStackTrace(e));

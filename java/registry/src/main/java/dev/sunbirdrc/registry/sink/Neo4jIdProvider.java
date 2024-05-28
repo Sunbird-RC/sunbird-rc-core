@@ -16,7 +16,7 @@ public class Neo4jIdProvider implements Neo4JElementIdProvider<String> {
 
     /**
      * When read back using labels, the library gives back only the id.
-     * Here we are loading only the extra osid for our convenience.
+     * Here we are loading only the extra uuidPropertyValue for our convenience.
      * @param entity
      * @return
      */

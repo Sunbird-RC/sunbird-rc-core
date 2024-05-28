@@ -9,9 +9,7 @@ import dev.sunbirdrc.plugin.services.MosipServices;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 
@@ -28,8 +26,8 @@ public class MosipActor extends BaseActor {
         logger.info("Received request message {} ", pluginRequestMessage);
         JsonNode additionalInput = pluginRequestMessage.getAdditionalInputs();
         FetchCredentialsDto fetchCredentialsDto = FetchCredentialsDto.builder()
-                .osid(pluginRequestMessage.getSourceOSID())
-                .attestationOsid(pluginRequestMessage.getAttestationOSID())
+                .uuidPropertyValue(pluginRequestMessage.getSourceUUID())
+                .attestationUuid(pluginRequestMessage.getAttestationUUID())
                 .uid(additionalInput.get("uid").asText())
                 .otp(additionalInput.get("otp").asText())
                 .transactionId(additionalInput.get("transactionId").asText())

@@ -185,8 +185,8 @@ public class Claim {
         return attestationId;
     }
 
-    public void setAttestationId(String attestationOSID) {
-        this.attestationId = attestationOSID;
+    public void setAttestationId(String attestationUUID) {
+        this.attestationId = attestationUUID;
     }
 
     public String getAttestationName() {

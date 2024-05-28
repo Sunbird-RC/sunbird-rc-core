@@ -31,7 +31,7 @@ public class AutoAttestorActor extends BaseActor {
     private static final Logger logger = LoggerFactory.getLogger(AutoAttestorActor.class);
     private static final String SYSTEM_PROPERTY_URL = "/api/v1/system/%s/%s";
     private static final String VALUE = "value";
-    private static final String UUID_PROPERTY_NAME = "osid";
+    private static final String UUID_PROPERTY_NAME = System.getenv().getOrDefault("uuid_property_name", "osid");
     private static final String VALID_PROPERTY = "valid";
 
     @Override

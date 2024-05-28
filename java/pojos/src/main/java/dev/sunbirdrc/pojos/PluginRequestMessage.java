@@ -23,8 +23,8 @@ public class PluginRequestMessage {
     private JsonNode additionalInputs;
     private String propertyData;
     private String sourceEntity;
-    private String sourceOSID;
-    private String attestationOSID;
+    private String sourceUUID;
+    private String attestationUUID;
     private String attestationType;
     private String attestorPlugin;
     private String attestorEntity;
@@ -33,7 +33,7 @@ public class PluginRequestMessage {
     private String status;
     @Nullable
     private String userId;
-    private Map<String, List<String>> propertiesOSID;
+    private Map<String, List<String>> propertiesUUID;
     private String emailId;
 
     public Optional<String> getActorName() {

@@ -14,17 +14,15 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -40,6 +38,9 @@ public class MosipCallbackController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Value("${database.uuidPropertyName}")
+    private String uuidPropertyName;
+
     @RequestMapping(value = "/plugin/mosip/callback", method = RequestMethod.POST)
     public ResponseEntity callbackHandler(@RequestHeader Map<String, String> headers, @RequestParam Map queryParams, @RequestBody String request) throws JsonProcessingException {
         try {
@@ -49,16 +50,16 @@ public class MosipCallbackController {
             byte[] bytes = mosipServices.fetchMosipPdf(headers, request);
             if (bytes != null) {
 
-                String attestationOSID = requestBody.get("event").get("data").get("attestationOsid").asText();
+                String attestationUUID = requestBody.get("event").get("data").get("attestationOsid").asText();
                 PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName("attestation-MOSIP")
                         .sourceEntity("User")
-                        .sourceOSID(requestBody.get("event").get("data").get("osid").asText())
-                        .attestationOSID(attestationOSID)
+                        .sourceUUID(requestBody.get("event").get("data").get(uuidPropertyName).asText())
+                        .attestationUUID(attestationUUID)
                         .attestorPlugin("did:external:MosipActor")
                         .additionalData(JsonNodeFactory.instance.nullNode())
                         .date(new Date())
                         .validUntil(new Date())
-                        .version("").files(Collections.singletonList(PluginFile.builder().file(bytes).fileName(String.format("%s.pdf",attestationOSID)).build())).build();
+                        .version("").files(Collections.singletonList(PluginFile.builder().file(bytes).fileName(String.format("%s.pdf",attestationUUID)).build())).build();
                 pluginResponseMessage.setStatus(Action.GRANT_CLAIM.name());
                 pluginResponseMessage.setResponse(requestBody.get("event").get("data").toString());
                 LOGGER.info("{}", pluginResponseMessage);

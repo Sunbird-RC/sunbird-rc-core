@@ -37,8 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import static dev.sunbirdrc.registry.Constants.HTTPS_URI_PREFIX;
-import static dev.sunbirdrc.registry.Constants.HTTP_URI_PREFIX;
+import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
 @Component
@@ -62,6 +61,9 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     private String credentialMethod;
     @Value("${signature.v2.issuer-did-method}")
     private String credentialIssuerMethod;
+
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
 
     @Autowired
     protected RetryRestTemplate retryRestTemplate;
@@ -167,7 +169,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         node.set("method", JsonNodeFactory.instance.textNode(credentialMethod));
         ArrayNode tags = JsonNodeFactory.instance.arrayNode();
         tags.add(title);
-        if(input.get("osid") != null) tags.add(input.get("osid"));
+        if(input.get(uuidPropertyName) != null) tags.add(input.get(uuidPropertyName));
         node.set("tags", tags);
 
         // send the request and issue credential
@@ -191,7 +193,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     public byte[] getCredentialById(String credentialId, String format, String templateId, String template) throws IOException, NotFoundException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("templateId", templateId);
-        if(template != null) headers.set("template", template.trim());
+        if(template != null) headers.set(Template, template.trim());
         headers.setAccept(Collections.singletonList(MediaType.valueOf(format)));
         ResponseEntity<byte[]> response = retryRestTemplate.getForObject(getCredentialByIdURL, headers, byte[].class, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {
