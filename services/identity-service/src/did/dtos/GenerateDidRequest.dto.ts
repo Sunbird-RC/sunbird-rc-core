@@ -8,6 +8,7 @@ export class GenerateDidDTO {
       'AlsoKnownAs property is a unique combination aadhaar and username.',
     type: String,
     isArray: true,
+    required: false,
   })
   alsoKnownAs?: string[];
 
@@ -15,11 +16,26 @@ export class GenerateDidDTO {
     description:
       'An array of services that are used, for example a user registration service.',
     isArray: true,
+    required: false,
+    type: Service
   })
   services?: Service[];
   @ApiProperty({
     description: 'The method of DID.',
   })
   method: string;
+  @ApiProperty({
+    required: false,
+    description: 'Specific ID to generate DID document with.',
+  })
   id?: string;
+}
+
+export class GenerateDidRequestDTO {
+  @ApiProperty({
+    type: GenerateDidDTO,
+    description: 'List of generate did requests',
+    isArray: true
+  })
+  content: GenerateDidDTO[]
 }

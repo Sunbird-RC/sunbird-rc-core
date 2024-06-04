@@ -1,26 +1,23 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
-const { DIDDocument } = require('did-resolver');
-type DIDDocument = typeof DIDDocument;
 import { v4 as uuid } from 'uuid';
-import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
-import { RSAKeyPair } from "crypto-ld";
+import { RSAKeyPair } from 'crypto-ld';
+import { GenerateDidDTO } from './dtos/GenerateDidRequest.dto';
+
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
+
 @Injectable()
 export class DidService {
   keys = {}
-  webDidBaseUrl: string;
+  webDidPrefix: string;
   signingAlgorithm: string;
   didResolver: any;
   constructor(private prisma: PrismaService, private vault: VaultService) {
     let baseUrl: string = process.env.WEB_DID_BASE_URL;
-    if(baseUrl && typeof baseUrl === "string") {
-      baseUrl = baseUrl.replace("https://", "")
-      .replace(/:/g, "%3A")
-      .replace(/\//g, ":");
-      this.webDidBaseUrl = `did:web:${baseUrl}:`;
-    }
+    this.webDidPrefix = this.getDidPrefixForBaseUrl(baseUrl);
     this.signingAlgorithm = process.env.SIGNING_ALGORITHM;
     this.init();
   }
@@ -40,7 +37,16 @@ export class DidService {
     });
   }
 
-  generateDidUri(method: string, id: string): string {
+  getDidPrefixForBaseUrl(baseUrl: string): string {
+    if(!baseUrl || typeof baseUrl !== "string") return '';
+    baseUrl = baseUrl.split("?")[0]
+      .replace("https://", "")
+      .replace(/:/g, "%3A")
+      .replace(/\//g, ":");
+    return `did:web:${baseUrl}:`;
+  }
+
+  generateDidUri(method: string, id?: string): string {
     if(id) return id;
     if (method === 'web') {
       return this.getWebDidIdForId(uuid());
@@ -48,9 +54,13 @@ export class DidService {
     return `did:${(method && method.trim() !== '') ? method.trim() : 'rcw'}:${uuid()}`;
   }
 
-  getWebDidIdForId(id: string): string {
-    if(!this.webDidBaseUrl) throw new NotFoundException("Web did base url not found");
-    return `${this.webDidBaseUrl}${id}`;
+  getWebDidIdForId(id: string, webDidBaseUrl?: string): string {
+    if(!this.webDidPrefix && !webDidBaseUrl) throw new NotFoundException("Web did base url not found");
+    if(webDidBaseUrl) {
+      const webDidBasePrefix = this.getDidPrefixForBaseUrl(webDidBaseUrl);
+      return `${webDidBasePrefix}${id}`;
+    }
+    return `${this.webDidPrefix}${id}`;
   }
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
@@ -149,7 +159,7 @@ export class DidService {
       throw new InternalServerErrorException(`Error fetching DID: ${id} from db`);
     }
 
-    if(!artifact && id?.startsWith("did:web") && !id?.startsWith(this.webDidBaseUrl)) {
+    if(!artifact && id?.startsWith("did:web") && !id?.startsWith(this.webDidPrefix)) {
       try {
         return (await this.didResolver.resolve(id)).didDocument;
       } catch (err) {
