@@ -29,6 +29,11 @@ export class GenerateDidDTO {
     description: 'Specific ID to generate DID document with.',
   })
   id?: string;
+  @ApiProperty({
+    required: false,
+    description: 'In case of method "web" the web url path to access the did document. It would be appended by generated uuid',
+  })
+  webDidBaseUrl?: string;
 }
 
 export class GenerateDidRequestDTO {

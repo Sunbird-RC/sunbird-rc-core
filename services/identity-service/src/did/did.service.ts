@@ -46,10 +46,10 @@ export class DidService {
     return `did:web:${baseUrl}:`;
   }
 
-  generateDidUri(method: string, id?: string): string {
+  generateDidUri(method: string, id?: string, webDidBaseUrl?: string): string {
     if(id) return id;
     if (method === 'web') {
-      return this.getWebDidIdForId(uuid());
+      return this.getWebDidIdForId(uuid(), webDidBaseUrl);
     }
     return `did:${(method && method.trim() !== '') ? method.trim() : 'rcw'}:${uuid()}`;
   }
@@ -65,7 +65,7 @@ export class DidService {
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
     // Create a UUID for the DID using uuidv4
-    const didUri: string = this.generateDidUri(doc?.method, doc?.id);
+    const didUri: string = this.generateDidUri(doc?.method, doc?.id, doc?.webDidBaseUrl);
 
     // Create private/public key pair
     let authnKeys;
