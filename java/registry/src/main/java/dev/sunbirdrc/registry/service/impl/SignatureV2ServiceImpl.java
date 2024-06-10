@@ -134,6 +134,9 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
             ResponseEntity<String> response = this.retryRestTemplate.getForEntity(URLDecoder.decode(template, "UTF-8"));
             template = response.getBody();
         }
+        if (template != null) {
+            template = template.replaceAll("\n", "");
+        }
         return getCredentialById(credentialId.asText(), mediaType, templateId, template);
     }
 
