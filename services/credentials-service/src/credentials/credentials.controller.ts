@@ -22,6 +22,7 @@ import { Credential } from 'src/app.interface';
 import { GetCredentialsByTagsResponseDTO } from './dto/getCredentialsByTags.dto';
 import { GetCredentialByIdResponseDTO } from './dto/getCredentialById.dto';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
+import { VerifyCredentialDTO } from './dto/verify-credential.dto';
 
 @Controller('credentials')
 export class CredentialsController {
@@ -115,8 +116,13 @@ export class CredentialsController {
   }
 
   @Get(':id/verify')
-  verifyCredential(@Param('id') credId: string) {
-    return this.credentialsService.verifyCredential(credId);
+  verifyCredentialById(@Param('id') credId: string) {
+    return this.credentialsService.verifyCredentialById(credId);
+  }
+
+  @Post('/verify')
+  verifyCredential(@Body() verifyRequest: VerifyCredentialDTO) {
+    return this.credentialsService.verifyCredential(verifyRequest.verifiableCredential);
   }
 
   @Get('revocation-list')

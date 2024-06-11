@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -113,27 +114,38 @@ public class SignatureV2ServiceImplTest {
     public void testVerify_Success() throws SignatureException.VerificationException, SignatureException.UnreachableException, IOException {
         // Prepare test data
         ObjectNode credential = JsonNodeFactory.instance.objectNode();
-        credential.put("credentialId", "12345");
+        credential.put("signedCredentials", "12345");
 
         ObjectNode result = JsonNodeFactory.instance.objectNode();
-        result.put("verified", "true");
+        result.put("status", "ISSUED");
+        result.set("checks", JsonNodeFactory.instance.arrayNode()
+                .add(JsonNodeFactory.instance.objectNode()
+                        .put("revoked", "ok")
+                        .put("expired", "ok")
+                ));
+        ReflectionTestUtils.setField(signatureServiceMock, "objectMapper", new ObjectMapper());
+        doReturn(result).when(signatureServiceMock).verifyCredentialById(any());
+        assertTrue(signatureServiceMock.verify(Collections.singletonMap("signedCredentials", "12345")));
 
-        doReturn(result).when(signatureServiceMock).verifyCredential(any());
-        assertTrue(signatureServiceMock.verify(Collections.singletonMap("credentialId", "12345")));
-
-        result.put("verified", "false");
-        assertFalse(signatureServiceMock.verify(Collections.singletonMap("credentialId", "12345")));
+        result.put("status", "REVOKED");
+        assertFalse(signatureServiceMock.verify(Collections.singletonMap("signedCredentials", "12345")));
     }
 
     @Test
     public void testVerify_Exception() throws Exception {
         // Prepare test data
         ObjectNode credential = JsonNodeFactory.instance.objectNode();
-        credential.put("credentialId", "12345");
+        credential.put("signedCredentials", "12345");
 
-        doThrow(new IOException()).when(signatureServiceMock).verifyCredential(any());
+        ObjectNode result = JsonNodeFactory.instance.objectNode();
+        result.put("status", "ISSUED");
+        result.set("errors", JsonNodeFactory.instance.arrayNode()
+                .add(JsonNodeFactory.instance.textNode("Exception while fetching the did")
+                ));
+        ReflectionTestUtils.setField(signatureServiceMock, "objectMapper", new ObjectMapper());
+        doReturn(result).when(signatureServiceMock).verifyCredentialById(any());
         try {
-            signatureServiceMock.verify(Collections.singletonMap("credentialId", "12345"));
+            signatureServiceMock.verify(Collections.singletonMap("signedCredentials", "12345"));
             fail("Exception should be thrown");
         } catch (Exception e) {
             assertTrue(true);
