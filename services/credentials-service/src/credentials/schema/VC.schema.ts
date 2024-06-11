@@ -2,9 +2,7 @@ export class IssuedVerifiableCredential {
   '@context': ReadonlyArray<string>;
   id: string;
   type: ReadonlyArray<string>;
-  issuer: {
-    id: string;
-  };
+  issuer: string | { id: string };
   issuanceDate: string;
   expirationDate: string;
   credentialSubject: JSON;
