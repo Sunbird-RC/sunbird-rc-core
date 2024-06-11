@@ -8,10 +8,16 @@ import { GenerateDidDTO } from './dtos/GenerateDidRequest.dto';
 
 const { DIDDocument } = require('did-resolver');
 type DIDDocument = typeof DIDDocument;
-
+type KeysType = {
+  [key: string]: {
+    name: string;
+    key: any;
+  };
+};
 @Injectable()
 export class DidService {
-  keys = {}
+  keys: KeysType = {
+  }
   webDidPrefix: string;
   signingAlgorithm: string;
   didResolver: any;
@@ -25,9 +31,18 @@ export class DidService {
   async init() {
     const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
     const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
-    this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
-    this.keys['Ed25519Signature2018'] = Ed25519VerificationKey2018;
-    this.keys['RsaSignature2018'] = RSAKeyPair;
+    this.keys['Ed25519Signature2020'] = {
+      name: 'Ed25519VerificationKey2020',
+      key: Ed25519VerificationKey2020
+    };
+    this.keys['Ed25519Signature2018'] = {
+      name: 'Ed25519VerificationKey2018',
+      key: Ed25519VerificationKey2018
+    };
+    this.keys['RsaSignature2018'] = {
+      name: 'RsaVerificationKey2018',
+      key: RSAKeyPair
+    };
     const { Resolver } = await import('did-resolver');
     const { getResolver } = await import('web-did-resolver');
     const webResolver = getResolver();
@@ -63,6 +78,26 @@ export class DidService {
     return `${this.webDidPrefix}${id}`;
   }
 
+  async getVerificationKey(signingAlgorithm?: string): Promise<any> {
+    if(!this.keys[signingAlgorithm]) {
+      await this.init();
+    }
+    if(!this.keys[signingAlgorithm]) {
+      throw new NotFoundException("Signature suite not supported")
+    }
+    return this.keys[signingAlgorithm];
+  }
+
+  async getVerificationKeyByName(name?: string) {
+    let verificationKey = Object.values(this.keys).find((d: {name: string, key: any}) => d.name === name);
+    if(!verificationKey) {
+      await this.init();
+      verificationKey = Object.values(this.keys).find((d: {name: string, key: any}) => d.name === name);
+    }
+    if(name && !verificationKey) throw new NotFoundException("Verification Key '" + name + "' not found");
+    return verificationKey;
+  }
+
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
     // Create a UUID for the DID using uuidv4
     const didUri: string = this.generateDidUri(doc?.method, doc?.id, doc?.webDidBaseUrl);
@@ -70,15 +105,10 @@ export class DidService {
     // Create private/public key pair
     let authnKeys;
     let privateKeys: object;
-    let signingAlgorithm: string = this.signingAlgorithm;
+    let verificationKey =  await this.getVerificationKeyByName(doc?.keyPairType);
+    if(!verificationKey) verificationKey = await this.getVerificationKey(this.signingAlgorithm);
     try {
-      if(!this.keys[signingAlgorithm]) {
-        await this.init();
-      }
-      if(!this.keys[signingAlgorithm]) {
-        throw new NotFoundException("Signature suite not supported")
-      }
-      const keyPair = await this.keys[signingAlgorithm].generate({
+      const keyPair = await (verificationKey as any)?.key.generate({
         id: `${didUri}#key-0`,
         controller: didUri
       });
@@ -86,27 +116,27 @@ export class DidService {
         publicKey: true, privateKey: true, includeContext: true
       });
       let privateKey = {};
-      if(signingAlgorithm === "Ed25519Signature2020") {
+      if(verificationKey?.name === "Ed25519VerificationKey2020") {
         const {privateKeyMultibase, ...rest } = exportedKey;
         authnKeys = rest;
         privateKey = {privateKeyMultibase};
-      } else if(signingAlgorithm === "Ed25519Signature2018") {
+      } else if(verificationKey?.name === "Ed25519VerificationKey2018") {
         const {privateKeyBase58, ...rest } = exportedKey;
         authnKeys = rest;
         privateKey = {privateKeyBase58};
-      } else if(signingAlgorithm === "RsaSignature2018") {
+      } else if(verificationKey?.name === "RsaVerificationKey2018") {
         const {privateKeyPem, ...rest } = exportedKey;
         authnKeys = {...rest};
         privateKey = {privateKeyPem};
       } else {
-        throw new NotFoundException("Signature type not found");
+        throw new NotFoundException("VerificationKey type not found");
       }
       privateKeys = {
         [authnKeys.id]: privateKey
       };
     } catch (err: any) {
             Logger.error(`Error generating key pair: ${err}`);
-      throw new InternalServerErrorException('Error generating key pair');
+      throw new InternalServerErrorException('Error generating key pair: ' + err.message);
     }
 
     const keyId = authnKeys?.id;

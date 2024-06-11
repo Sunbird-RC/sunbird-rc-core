@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 const { Service } = require('did-resolver');
 type Service = typeof Service;
 
+enum VerificationKeyType {
+  Ed25519VerificationKey2020 = "Ed25519VerificationKey2020",
+  Ed25519VerificationKey2018 = "Ed25519VerificationKey2018",
+  RsaVerificationKey2018 = "RsaVerificationKey2018"
+}
+
 export class GenerateDidDTO {
   @ApiProperty({
     description:
@@ -34,6 +40,11 @@ export class GenerateDidDTO {
     description: 'In case of method "web" the web url path to access the did document. It would be appended by generated uuid',
   })
   webDidBaseUrl?: string;
+  @ApiProperty({
+    description: 'The keypair type to be generated',
+    enum: VerificationKeyType
+  })
+  keyPairType?: VerificationKeyType;
 }
 
 export class GenerateDidRequestDTO {
@@ -42,5 +53,5 @@ export class GenerateDidRequestDTO {
     description: 'List of generate did requests',
     isArray: true
   })
-  content: GenerateDidDTO[]
+  content: GenerateDidDTO[];
 }
