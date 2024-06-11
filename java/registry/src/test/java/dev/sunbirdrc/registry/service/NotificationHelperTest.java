@@ -38,7 +38,7 @@ public class NotificationHelperTest {
     private DefinitionsManager definitionsManager;
 
     private ObjectMapper objectMapper;
-    @Value("${notification.service.enabled}")
+    @Value("${notification.enabled}")
     boolean notificationEnabled;
     private NotificationHelper notificationHelper;
     @Mock

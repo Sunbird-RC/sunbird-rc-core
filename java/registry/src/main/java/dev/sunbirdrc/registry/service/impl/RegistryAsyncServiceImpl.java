@@ -28,7 +28,7 @@ import java.util.UUID;
 @Qualifier("async")
 public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements RegistryService {
 	private static final Logger logger = LoggerFactory.getLogger(RegistryAsyncServiceImpl.class);
-	@Value("${kafka.createEntityTopic:create_entity}")
+	@Value("${kafka.create-entity-topic:create_entity}")
 	String createEntityTopic;
 	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;

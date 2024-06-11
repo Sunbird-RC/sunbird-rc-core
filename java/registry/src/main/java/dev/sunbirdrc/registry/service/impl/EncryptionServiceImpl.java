@@ -37,19 +37,19 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	@Value("${encryption.enabled}")
 	private boolean encryptionEnabled;
-	@Value("${encryption.tenant.id}")
+	@Value("${encryption.tenant-id}")
 	private String encryptionTenantId;
 	@Value("${encryption.method}")
 	private String encryptionMethod;
-	@Value("${encryption.uri}")
+	@Value("${encryption.url}")
 	private String encryptionUri;
-	@Value("${decryption.uri}")
+	@Value("${decryption.url}")
 	private String decryptionUri;
-	@Value("${encryption.batch.uri}")
+	@Value("${encryption.batch-url}")
 	private String encryptionBatchUri;
-	@Value("${decryption.batch.uri}")
+	@Value("${decryption.batch-url}")
 	private String decryptionBatchUri;
-	@Value("${encryption.healthCheckURL}")
+	@Value("${encryption.health-check-url}")
 	private String encryptionServiceHealthCheckUri;
 	@Autowired
 	private RetryRestTemplate retryRestTemplate;

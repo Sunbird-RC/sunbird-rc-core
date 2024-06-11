@@ -34,7 +34,7 @@ public class AuditDBWriter {
     @Value("${persistence.commit.enabled:true}")
     private boolean commitEnabled;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
     @Autowired
@@ -42,7 +42,7 @@ public class AuditDBWriter {
 
     @Autowired
     private EntityParenter entityParenter;
-    @Value("${registry.expandReference}")
+    @Value("${registry.expand-reference}")
     private boolean expandReferenceObj;
 
     public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {

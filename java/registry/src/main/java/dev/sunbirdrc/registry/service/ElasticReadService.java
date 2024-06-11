@@ -30,7 +30,7 @@ import dev.sunbirdrc.registry.util.ReadConfigurator;
  *
  */
 @Component
-@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
+@ConditionalOnProperty(name = "search.provider-name", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 public class ElasticReadService implements IReadService {
 
     private static Logger logger = LoggerFactory.getLogger(ElasticReadService.class);
