@@ -76,7 +76,22 @@ export const generateCredentialRequestPayload = (
     credential: {
       '@context': [
         'https://www.w3.org/2018/credentials/v1',
-        'https://www.w3.org/2018/credentials/examples/v1',
+        {
+          "schema": "https://schema.org/",
+          "UniversityDegreeCredential": {
+            "@id": "urn:UniversityDegreeCredential",
+            "@context": {
+              "@version": 1.1,
+              "@protected": true,
+              "id": "@id",
+              "type": "@type",
+              "grade": "schema:grade",
+              "programme": "schema:programme",
+              "certifyingInstitute": "schema:certifyingInstitute",
+              "evaluatingInstitute": "schema:evaluatingInstitute"
+            }
+          }
+        }
       ],
       type: ['VerifiableCredential', 'UniversityDegreeCredential'],
       issuer: issuerid,
@@ -84,6 +99,7 @@ export const generateCredentialRequestPayload = (
       expirationDate: '2023-02-08T11:56:27.259Z',
       credentialSubject: {
         id: subjectid,
+        type: "UniversityDegreeCredential",
         grade: '9.23',
         programme: 'B.Tech',
         certifyingInstitute: 'IIIT Sonepat',
@@ -156,8 +172,8 @@ export const issueCredentialReturnTypeSchema = {
       ],
     },
     credentialSchemaId: { type: 'string' },
-    createdAt: { type: 'object', format: 'custom-date-time' },
-    updatedAt: { type: 'object', format: 'custom-date-time' },
+    createdAt: { type: 'string', format: 'date-time' },
+    updatedAt: { type: 'string', format: 'date-time' },
     createdBy: { type: 'string' },
     updatedBy: { type: 'string' },
     tags: {

@@ -62,9 +62,21 @@ export class SchemaUtilsSerivce {
 
   async verifyCredentialSubject(credential, schema) {
     const ajv = new Ajv2019({ strictTuples: false });
-    ajv.addFormat('custom-date-time', function (dateTimeString) {
-      return typeof dateTimeString === typeof new Date();
-    });
+    ajv.addFormat('date-time', function isValidDateTime(dateTimeString) {
+        // Regular expression for ISO 8601 date-time format
+        const iso8601Regex = /^(\d{4}-[01]\d-[0-3]\d[T\s](?:[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d+)?|23:59:60)(?:Z|[+-][0-2]\d:[0-5]\d)?)$/;
+
+        // Check if the string matches the ISO 8601 format
+        if (!iso8601Regex.test(dateTimeString)) {
+          return false;
+        }
+
+        // Check if the string can be parsed into a valid date
+        const date = new Date(dateTimeString);
+        return !isNaN(date.getTime());
+      }
+    );
+
     const validate = ajv.compile(schema);
     return {
       valid: validate(credential?.credentialSubject),
