@@ -1078,7 +1078,7 @@ public class RegistryHelper {
             } else if (attestation.get(_osState.name()).asText().equals(States.ATTESTATION_REQUESTED.name())) {
                 JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(uuidPropertyName, entity, attestationPolicy.getAttestationProperties(),  null);
                 if (attestation.has(propertiesUUIDKey)) {
-                    ObjectNode propertiesUUIDs = attestations.get(propertiesUUIDKey).deepCopy();
+                    ObjectNode propertiesUUIDs = attestation.get(propertiesUUIDKey).deepCopy();
                     Map<String, List<String>> propertiesUUIDMapper = new HashMap<>();
                     ObjectReader reader = objectMapper.readerFor(new TypeReference<List<String>>() {
                     });
