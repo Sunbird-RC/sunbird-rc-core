@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -517,7 +518,7 @@ public class RegistryServiceImpl implements RegistryService {
                         oneElementNode.isValueNode() || oneElementNode.isArray()) {
                     logger.info("Value or array node, going to update {}", oneElement.getKey());
 
-                    if (oneElementNode.isArray()) {
+                    if (oneElementNode.isArray() && (oneElementNode.isEmpty() || oneElementNode.get(0).getNodeType().equals(JsonNodeType.OBJECT))) {
                         // Arrays are treated specially - we create a blank node and then
                         // individual items
                         String arrayRefLabel = RefLabelHelper.getArrayLabel(oneElement.getKey(), uuidPropertyName);
