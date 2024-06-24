@@ -483,7 +483,11 @@ public class RegistryServiceImpl implements RegistryService {
             itemUuid = ArrayHelper.unquoteString(itemUuid);
             if (!updatedUuids.contains(itemUuid)) {
                 // delete this item
-                registryDao.deleteEntity(uuidVertexMap.get(itemUuid));
+                if(isHardDeleteEnabled) {
+                    registryDao.hardDeleteEntity(uuidVertexMap.get(itemUuid));
+                } else {
+                    registryDao.deleteEntity(uuidVertexMap.get(itemUuid));
+                }
             }
         }
     }
