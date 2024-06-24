@@ -357,7 +357,7 @@ public class VertexReader {
                         if (expandChildObject.size() == 0 && entityNode.get(field).size() == 0) {
                             entityNode.remove(field);
                         }
-                        if (expandChildObject != null && expandChildObject.size() > 0) {
+                        if (expandChildObject != null && entityNode.get(field).size() == 1) {
                             entityNode.set(field, expandChildObject);
                         }
                     }
