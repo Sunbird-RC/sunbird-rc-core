@@ -1,9 +1,11 @@
 package dev.sunbirdrc.registry.middleware.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -44,6 +46,12 @@ public enum OSSystemFields {
       public void setOsOwner(JsonNode node, List<String> owners) {
           JSONUtil.addField((ObjectNode) node, osOwner.toString(), ListUtils.emptyIfNull(owners));
       }
+    },
+    osAttestationStatus {
+        @Override
+        public void setAttestationStatus (JsonNode node, ObjectNode attestationStatus) {
+            JSONUtil.addNode((ObjectNode) node, osAttestationStatus.toString(), attestationStatus !=  null ? attestationStatus :  new ObjectMapper().createObjectNode());
+        }
     },
     credentials {
         private String getCredentialPropertyName(String signatureProvider) {
@@ -116,6 +124,8 @@ public enum OSSystemFields {
     public void updatedAt(JsonNode node, String timeStamp){};
 
     public void setOsOwner(JsonNode node, List<String> owner) {};
+
+    public void setAttestationStatus(JsonNode node, ObjectNode attestation_status) {};
 
     public static OSSystemFields getByValue(String value) {
         for (final OSSystemFields element : EnumSet.allOf(OSSystemFields.class)) {

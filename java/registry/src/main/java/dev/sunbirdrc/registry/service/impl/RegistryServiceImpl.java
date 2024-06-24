@@ -13,6 +13,7 @@ import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
@@ -227,6 +228,9 @@ public class RegistryServiceImpl implements RegistryService {
 
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
+        List<AttestationPolicy> attestationPolicies=  definitionsManager.getAttestationPolicies(vertexLabel);
+        generateAttestationStatus(vertexLabel, rootNode.get(vertexLabel), userId, attestationPolicies);
+
         if (!skipSignature) {
             generateCredentials(rootNode, null, vertexLabel);
         }
@@ -287,7 +291,13 @@ public class RegistryServiceImpl implements RegistryService {
         return entityId;
     }
 
-
+    private void generateAttestationStatus( String title, JsonNode node, String userId, List<AttestationPolicy> attestationPolicies ) {
+        ObjectNode attestationStatus = new ObjectMapper().createObjectNode();
+        for (AttestationPolicy policy : attestationPolicies) {
+            attestationStatus.put(policy.getName(), "" );
+        }
+        OSSystemFields.osAttestationStatus.setAttestationStatus(node, attestationStatus);
+    };
     private void generateCredentials(JsonNode rootNode, JsonNode inputNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
         Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
         if (signatureEnabled && credentialTemplate != null) {

@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 
 import java.util.*;
 
@@ -79,6 +80,7 @@ public interface IDefinitionsManager {
         return excludeFields;
     }
     List<OwnershipsAttributes> getOwnershipAttributes(String entity);
+    List<AttestationPolicy> getAttestationPolicies(String entity);
     default Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }

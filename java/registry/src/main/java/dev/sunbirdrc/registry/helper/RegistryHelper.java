@@ -527,7 +527,25 @@ public class RegistryHelper {
         } catch (MiddlewareHaltException me) {
             // try a field node since array validation failed
             parentNode.set(propertyName, inputJson);
+
         }
+        updateAttestationStatusInEntity( parentNode, propertyName, inputJson, States.ATTESTATION_REQUESTED.name());
+    }
+
+    private void updateAttestationStatusInEntity (ObjectNode parentNode, String propertyName, JsonNode inputNode , String status) {
+
+        try {
+            ObjectNode attestationStatus = (ObjectNode) parentNode.get(osAttestationStatus.toString());
+            logger.debug( "value" + attestationStatus);
+            if (attestationStatus == null) {
+                attestationStatus = new ObjectMapper().createObjectNode();
+            }
+            attestationStatus.put( propertyName, status);
+            parentNode.set(osAttestationStatus.toString(), attestationStatus) ;
+        } catch ( Exception e) {
+            logger.info(String.format("Exception while updating the entity attesttaino status :%s", e.getMessage()));
+        }
+
     }
 
     private void updateProperty(JsonNode inputJson, String propertyName, ObjectNode parentNode, JsonNode propertyNode) {
@@ -540,6 +558,7 @@ public class RegistryHelper {
         } else {
             parentNode.set(propertyName, inputJson);
         }
+        updateAttestationStatusInEntity( parentNode, propertyName, inputJson, States.ATTESTATION_REQUESTED.name());
     }
 
     private JsonNode getParentNode(String entityName, JsonNode jsonNode, String parentURIPointer) throws Exception {
@@ -649,6 +668,11 @@ public class RegistryHelper {
         String propertyURI = attestationName + "/" + attestationUUID;
         uploadAttestedFiles(pluginResponseMessage, metaData);
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
+        JsonNode osAttestationStatusNode = nodeToUpdate.path(sourceEntity).path(osAttestationStatus.toString());
+        String osState = nodeToUpdate.path(sourceEntity).path(attestationName).get(0).path(_osState.name()).asText();
+        if (osAttestationStatusNode.isObject()) {
+          ((ObjectNode) nodeToUpdate.path(sourceEntity).path(osAttestationStatus.toString())).put(attestationName, osState.toString());
+        }
         updateEntity(nodeToUpdate, userId, true);
         triggerNextFLowIfExists(pluginResponseMessage, sourceEntity, attestationPolicy, action, nodeToUpdate, userId);
     }
