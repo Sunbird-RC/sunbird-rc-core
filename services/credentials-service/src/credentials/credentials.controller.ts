@@ -75,8 +75,8 @@ export class CredentialsController {
     const requestedTemplateId: string = req.headers['templateid'] as string;
     const externalTemplate: string = req.headers['template'] as string;
 
-    if (!requestedTemplateId && !externalTemplate && accept !== 'application/json')
-      throw new BadRequestException('Template id is required');
+    if (!requestedTemplateId && !externalTemplate && ['application/pdf', 'text/html'].indexOf(accept) > -1)
+      throw new BadRequestException('Template id or template is required');
     else if (!requestedTemplateId && !externalTemplate && accept === 'application/json')
       return this.credentialsService.getCredentialById(
         id,
