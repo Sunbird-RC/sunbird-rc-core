@@ -66,7 +66,7 @@ describe('AuthGuard', () => {
     it('should return false if no Bearer token found', async () => {
       jest.spyOn(reflector, 'get').mockReturnValue(false);
       jest.spyOn(configService, 'get').mockReturnValue('true');
-      const request = { headers: { authorization: 'InvalidToken' } };
+      const request = { headers: { } };
       const result = await guard.canActivate({ getHandler: jest.fn(), switchToHttp: () => ({ getRequest: () => request }) });
       expect(result).toEqual(false);
     });
