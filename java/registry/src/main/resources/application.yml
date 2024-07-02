@@ -474,12 +474,12 @@ signature:
 # suffixSeperator : specifies the separator used between entity name and suffix. If audit schema name is Teacher_Audit.json, the suffixSeperator is _.
 
 audit:
-  enabled: ${audit_enabled:false}
-  vc-enabled: ${audit_vc_enabled:false}
+  enabled: true
+  vc-enabled: true
   frame:
-    store: ${audit_frame_store:DATABASE}
-    suffix: ${audit_suffix:Audit}
-    suffixSeparator: ${audit_suffixSeparator:_}
+    store: DATABASE
+    suffix: Audit
+    suffixSeparator: _
 
 authentication:
   enabled: ${authentication_enabled:true}
