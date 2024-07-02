@@ -527,7 +527,25 @@ public class RegistryHelper {
         } catch (MiddlewareHaltException me) {
             // try a field node since array validation failed
             parentNode.set(propertyName, inputJson);
+
         }
+        updateAttestationStatusInEntity( parentNode, propertyName, inputJson, States.ATTESTATION_REQUESTED.name());
+    }
+
+    private void updateAttestationStatusInEntity (ObjectNode parentNode, String propertyName, JsonNode inputNode , String status) {
+
+        try {
+            ObjectNode attestationStatus = (ObjectNode) parentNode.get(osAttestationStatus.toString());
+            logger.debug( "value" + attestationStatus);
+            if (attestationStatus == null) {
+                attestationStatus = new ObjectMapper().createObjectNode();
+            }
+            attestationStatus.put( propertyName, status);
+            parentNode.set(osAttestationStatus.toString(), attestationStatus) ;
+        } catch ( Exception e) {
+            logger.info(String.format("Exception while updating the entity attesttaino status :%s", e.getMessage()));
+        }
+
     }
 
     private void updateProperty(JsonNode inputJson, String propertyName, ObjectNode parentNode, JsonNode propertyNode) {
@@ -540,6 +558,7 @@ public class RegistryHelper {
         } else {
             parentNode.set(propertyName, inputJson);
         }
+        updateAttestationStatusInEntity( parentNode, propertyName, inputJson, States.ATTESTATION_REQUESTED.name());
     }
 
     private JsonNode getParentNode(String entityName, JsonNode jsonNode, String parentURIPointer) throws Exception {
@@ -604,9 +623,11 @@ public class RegistryHelper {
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         JsonNode additionalData = pluginResponseMessage.getAdditionalData();
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
+        String osState = new String();
         boolean skipSignature = true;
         switch (action) {
             case GRANT_CLAIM:
+                osState = States.PUBLISHED.name();
                 Object credentialTemplate = attestationPolicy.getCredentialTemplate();
                 // checking size greater than 1, bcz empty template contains uuid property field
                 if (credentialTemplate != null && !credentialTemplate.toString().isEmpty()) {
@@ -633,6 +654,7 @@ public class RegistryHelper {
                 skipSignature = false;
                 break;
             case SELF_ATTEST:
+                osState = States.PUBLISHED.name();
                 String hashOfTheFile = pluginResponseMessage.getResponse();
                 metaData.put(
                         ATTESTED_DATA,
@@ -641,6 +663,7 @@ public class RegistryHelper {
                 skipSignature = false;
                 break;
             case RAISE_CLAIM:
+                osState = States.ATTESTATION_REQUESTED.name();
                 metaData.put(
                         CLAIM_ID,
                         additionalData.get(CLAIM_ID).asText("")
@@ -649,6 +672,15 @@ public class RegistryHelper {
         String propertyURI = attestationName + "/" + attestationUUID;
         uploadAttestedFiles(pluginResponseMessage, metaData);
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
+        if (nodeToUpdate.path(sourceEntity).path(attestationName).isArray() && nodeToUpdate.path(sourceEntity).path(attestationName).size() > 0) {
+            osState =  nodeToUpdate.path(sourceEntity).path(attestationName).get(0).path(_osState.name()).asText();
+        }
+        if (nodeToUpdate.path(sourceEntity).has(osAttestationStatus.toString())) {
+            JsonNode osAttestationStatusNode = nodeToUpdate.path(sourceEntity).path(osAttestationStatus.toString());
+            if (osAttestationStatusNode.isObject()) {
+                ((ObjectNode) nodeToUpdate.path(sourceEntity).path(osAttestationStatus.toString())).put(attestationName, osState.toString());
+            }
+        }
         updateEntity(nodeToUpdate, userId, true);
         triggerNextFLowIfExists(pluginResponseMessage, sourceEntity, attestationPolicy, action, nodeToUpdate, userId);
     }
