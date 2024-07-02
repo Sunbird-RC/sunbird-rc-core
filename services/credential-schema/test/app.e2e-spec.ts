@@ -206,7 +206,40 @@ describe('AppController (e2e)', () => {
     expect(res.schema.version).toBe('1.0.0');
   });
 
-  it('should create a schema, publish it, update it, deprecate it', () => {
-    return;
+  it('should create a schema, publish it, update it, deprecate it', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: resPublish } = await request(httpServer)
+      .put(
+        `/credential-schema/publish/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(resPublish.status).toBe('PUBLISHED');
+    expect(resPublish.schema.version).toBe('1.0.0');
+    const newSchemaPayload = generateCredentialSchemaTestBody();
+    newSchemaPayload.schema.id = resPublish.schema.id;
+    newSchemaPayload.schema.author = resPublish.schema.author;
+    const { body: newSchema } = await request(httpServer)
+      .put(
+        `/credential-schema/${resPublish.schema.id}/${resPublish.schema.version}`,
+      )
+      .send(newSchemaPayload)
+      .expect(200);
+    expect(newSchema.schema.id).toBe(resPublish.schema.id);
+    expect(newSchema.schema.version).toEqual('2.0.0');
+    expect(newSchema.schema.author).toEqual(resPublish.schema.author);
+    expect(newSchema.status).toEqual('DRAFT');
+    const { body: res } = await request(httpServer)
+      .put(
+        `/credential-schema/deprecate/${newSchema.schema.id}/${newSchema.schema.version}`,
+      )
+      .expect(200);
+    expect(res.status).toBe('DEPRECATED');
+    expect(res.schema.version).toBe('2.0.0');
   });
 });

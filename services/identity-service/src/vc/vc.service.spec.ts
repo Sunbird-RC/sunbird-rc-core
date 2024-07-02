@@ -3,7 +3,6 @@ import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 import { VaultService } from '../utils/vault.service';
-import { setupTestValue } from './test-setup';
 
 describe('DidService', () => {
   let service: VcService;
@@ -16,12 +15,7 @@ describe('DidService', () => {
     "name": "Hello!"
   }
 
-  // beforeAll(async () => {
-  //   // Seed the test value before running the tests
-  //   await setupTestValue();
-  // });
-
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [VcService, PrismaService, DidService, VaultService],
     }).compile();
@@ -34,6 +28,7 @@ describe('DidService', () => {
       method: 'test'
     });
     signingDID = testDidDoc.id;
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {

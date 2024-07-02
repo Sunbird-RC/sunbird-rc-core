@@ -83,7 +83,7 @@ export class DidService {
       await this.init();
     }
     if(!this.keys[signingAlgorithm]) {
-      throw new NotFoundException("Signature suite not supported")
+      throw new NotFoundException("Signature algorithm not found")
     }
     return this.keys[signingAlgorithm];
   }
@@ -191,7 +191,9 @@ export class DidService {
 
     if(!artifact && id?.startsWith("did:web") && !id?.startsWith(this.webDidPrefix)) {
       try {
-        return (await this.didResolver.resolve(id)).didDocument;
+        let doc = (await this.didResolver.resolve(id)).didDocument;
+        if(!doc) throw new Error("DID document is null");
+        return doc;
       } catch (err) {
         Logger.error(`Error fetching DID: ${id} from web, ${err}`);
         throw new InternalServerErrorException(`Error fetching DID: ${id} from web`);

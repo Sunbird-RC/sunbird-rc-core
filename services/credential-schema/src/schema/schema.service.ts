@@ -58,7 +58,7 @@ export class SchemaService {
         createdBy: schema.createdBy,
         updatedBy: schema.updatedBy,
         deprecatedId: schema.deprecatedId,
-      };
+      } as GetCredentialSchemaDTO;
     } else {
       this.logger.error('schema not found for userInput', userWhereUniqueInput);
       throw new NotFoundException('Schema not found');
@@ -186,7 +186,7 @@ export class SchemaService {
             authored: credSchema.schema.authored,
             schema: credSchema.schema.schema as Prisma.JsonValue,
             status: credSchema.status as SchemaStatus,
-            proof: credSchema.schema.proof as Prisma.JsonValue,
+            proof: credSchema.schema.proof as Prisma.JsonValue || undefined,
             tags: credSchema.tags as string[],
             deprecatedId: deprecatedId,
           },
@@ -425,46 +425,5 @@ export class SchemaService {
     }
 
     return newSchema;
-  }
-
-  async deprecateSchema(id: string, version: string) {
-    let schema: VerifiableCredentialSchema;
-    try {
-      schema = await this.prisma.verifiableCredentialSchema.findUniqueOrThrow({
-        where: {
-          id_version: {
-            id,
-            version,
-          },
-        },
-      });
-    } catch (err) {
-      this.logger.error('Error fetching schema from the db', err);
-      throw new InternalServerErrorException(
-        'Error fetching schema from the db',
-      );
-    }
-
-    if (!schema) {
-      throw new NotFoundException(
-        `No schema found with the given id: ${id} and version: ${version}`,
-      );
-    }
-
-    try {
-      const deprecatedSchema = await this.updateSchemaStatus(
-        {
-          id_version: {
-            id,
-            version,
-          },
-        },
-        'DEPRECATED',
-      );
-      return this.formatResponse(deprecatedSchema);
-    } catch (err) {
-      this.logger.error('Error in updating schema status', err);
-      throw new InternalServerErrorException('Error in updating schema status');
-    }
   }
 }

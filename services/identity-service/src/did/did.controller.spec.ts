@@ -8,7 +8,8 @@ import { ConfigService } from '@nestjs/config';
 
 describe('DidController', () => {
   let controller: DidController;
-  const content = {
+  let content: any;
+  const defaultContent = {
     "content": [
       {
         "alsoKnownAs": [
@@ -43,6 +44,11 @@ describe('DidController', () => {
     controller = module.get<DidController>(DidController);
   });
 
+  beforeEach(async () => {
+    content = JSON.parse(JSON.stringify(defaultContent));
+    jest.restoreAllMocks();
+  })
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
@@ -53,6 +59,26 @@ describe('DidController', () => {
     expect(dids).toHaveLength(1);
     expect(dids[0].id).toBeDefined();
     expect(dids[0].verificationMethod).toBeDefined();
+  });
+
+  it('should test throw DID generation Exception', async () => {
+    jest.spyOn((controller as any).didService, "generateDID")
+      .mockRejectedValue(new Error('generate failed'));
+    await expect(controller.generateDID(content)).rejects.toThrow(new InternalServerErrorException("generate failed"));
+  });
+
+  it('should test resolveDID', async () => {
+    jest.spyOn((controller as any).didService, "resolveDID")
+      .mockResolvedValue({ id: "1234"});
+    const result = await controller.resolveDID("1234");
+    expect(result.id).toEqual("1234");
+  });
+
+  it('should test resolveWebDID', async () => {
+    jest.spyOn((controller as any).didService, "resolveWebDID")
+      .mockResolvedValue({ id: "1234"});
+    const result = await controller.resolveWebDID("1234");
+    expect(result.id).toEqual("1234");
   });
 
   it('should test bulk DID generation', async () => {

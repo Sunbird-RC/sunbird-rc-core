@@ -1,8 +1,7 @@
-import { HttpModule, HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CredentialsService } from './credentials.service';
 import Ajv2019 from 'ajv/dist/2019';
-import { UnsignedVCValidator, VCValidator } from './types/validators/index';
+import { UnsignedVCValidator, VCValidator } from './types/validators';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
@@ -15,12 +14,25 @@ import {
   generateRenderingTemplatePayload,
 } from './credentials.fixtures';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
+import { TerminusModule } from '@nestjs/terminus';
+import { HttpModule, HttpService } from '@nestjs/axios';
 
 // setup ajv
 const ajv = new Ajv2019({ strictTuples: false });
-ajv.addFormat('custom-date-time', function (dateTimeString) {
-  return typeof dateTimeString === typeof new Date();
-});
+ajv.addFormat('date-time', function isValidDateTime(dateTimeString) {
+    // Regular expression for ISO 8601 date-time format
+    const iso8601Regex = /^(\d{4}-[01]\d-[0-3]\d[T\s](?:[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d+)?|23:59:60)(?:Z|[+-][0-2]\d:[0-5]\d)?)$/;
+
+    // Check if the string matches the ISO 8601 format
+    if (!iso8601Regex.test(dateTimeString)) {
+      return false;
+    }
+
+    // Check if the string can be parsed into a valid date
+    const date = new Date(dateTimeString);
+    return !isNaN(date.getTime());
+  }
+);
 
 describe('CredentialsService', () => {
   let service: CredentialsService;
@@ -35,9 +47,9 @@ describe('CredentialsService', () => {
   let credentialSchemaID;
   let sampleCredReqPayload;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [HttpModule],
+      imports: [TerminusModule, HttpModule],
       providers: [
         CredentialsService,
         PrismaClient,
@@ -77,6 +89,10 @@ describe('CredentialsService', () => {
     );
   });
 
+  beforeEach(async () => {
+    jest.restoreAllMocks();
+  })
+
   it('service should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -87,59 +103,62 @@ describe('CredentialsService', () => {
     expect(validate(newCred)).toBe(true);
   });
 
-  it('should get a credential in JSON', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const cred = await service.getCredentialById(newCred.credential?.id);
-    UnsignedVCValidator.parse(cred);
-    expect(getCredReqValidate(cred)).toBe(true);
-  });
+  describe("getCredentialById", () => {
+    let newCred: any;
+    beforeAll(async () => {
+      newCred = await service.issueCredential(sampleCredReqPayload);
+    })
 
-  it('should get a credential in QR', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const dataURL = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.QR);
-    expect(dataURL).toBeDefined(); // Assert that the dataURL is defined
-    expect(dataURL).toContain('data:image/png;base64,');
-  });
+    it('should get a credential in JSON', async () => {
+      const cred = await service.getCredentialById(newCred.credential?.id);
+      UnsignedVCValidator.parse(cred);
+      expect(getCredReqValidate(cred)).toBe(true);
+    });
 
+    it('should get a credential in QR', async () => {
+      const dataURL = await service.getCredentialById(newCred.credential?.id, null, null, RENDER_OUTPUT.QR);
+      expect(dataURL).toBeDefined(); // Assert that the dataURL is defined
+      expect(dataURL).toContain('data:image/png;base64,');
+    });
 
-  it('should get a credential in HTML', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
-    const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
-    const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, RENDER_OUTPUT.HTML);
-    expect(cred).toContain('</html>')
-    expect(cred).toContain('IIIT Sonepat, NIT Kurukshetra')
-    expect(cred).toBeDefined()
-  });
+    it('should get a credential in HTML', async () => {
+      const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
+      const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
+      const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, null, RENDER_OUTPUT.HTML);
+      expect(cred).toContain('</html>')
+      expect(cred).toContain('IIIT Sonepat, NIT Kurukshetra')
+      expect(cred).toBeDefined()
+    });
 
-  it('should get a credential in PDF', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
-    const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
-    const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, RENDER_OUTPUT.PDF);
-    expect(cred).toBeDefined()
-  });
+    it('should get a credential in PDF', async () => {
+      const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
+      const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
+      const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, null, RENDER_OUTPUT.PDF);
+      expect(cred).toBeDefined()
+    });
 
+    it('should get a credential in STRING', async () => {
+      const cred = await service.getCredentialById(newCred.credential?.id, null, null, RENDER_OUTPUT.STRING);
+      expect(cred).toBeDefined()
+    });
 
-  it('should get a credential in STRING', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const cred = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.STRING);
-    expect(cred).toBeDefined()
-  });
-
-  it('should throw because no credential is present to be searched by ID', async () => {
-    await expect(service.getCredentialById('did:ulp:123')).rejects.toThrow();
-  });
+    it('should throw because no credential is present to be searched by ID', async () => {
+      await expect(service.getCredentialById('did:ulp:123')).rejects.toThrow();
+    });
+  })
 
   it('should throw because credential not present to be verified', async () => {
-    await expect(service.verifyCredential('did:ulp:123')).rejects.toThrow();
+    await expect(service.verifyCredentialById('did:ulp:123')).rejects.toThrow();
   });
 
   it('should verify an issued credential', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
-    const res = {checks: [{active: "OK", expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
-    const verifyRes = await service.verifyCredential((newCred.credential as any)['id']);
-    expect(verifyRes).toEqual(res);
+    const res = {checks: [{expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
+    const verifyRes = await service.verifyCredentialById((newCred.credential as any)['id']);
+    expect(verifyRes.status).toEqual("ISSUED");
+    expect(verifyRes.checks[0].expired).toEqual("NOK");
+    expect(verifyRes.checks[0].proof).toEqual("NOK");
+    expect(verifyRes.checks[0].revoked).toEqual("OK");
   });
 
   it('should return an empty revocation list', async () => {
@@ -193,6 +212,7 @@ describe('CredentialsService', () => {
 
   it('should give revockedList by issuerId', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
+    expect((newCred.credential as any).id).toBeDefined();
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     expect(
       await service.getRevocationList(
@@ -203,6 +223,7 @@ describe('CredentialsService', () => {
 
   it('should give revockedList of all creds', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
+    expect((newCred.credential as any).id).toBeDefined();
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     expect(
       await service.getRevocationList(undefined)
@@ -212,6 +233,7 @@ describe('CredentialsService', () => {
 
   it('should throw error by saying enter a valid issuer Id', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
+    expect((newCred.credential as any).id).toBeDefined();
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     await expect(
       service.getRevocationList("")
