@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 const { Service } = require('did-resolver');
 type Service = typeof Service;
 
-enum VerificationKeyType {
+export enum VerificationKeyType {
   Ed25519VerificationKey2020 = "Ed25519VerificationKey2020",
   Ed25519VerificationKey2018 = "Ed25519VerificationKey2018",
   RsaVerificationKey2018 = "RsaVerificationKey2018"

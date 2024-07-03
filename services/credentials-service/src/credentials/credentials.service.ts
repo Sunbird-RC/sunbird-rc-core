@@ -343,8 +343,8 @@ export class CredentialsService {
     return {
       credential: res,
       credentialSchemaId: newCred.credential_schema,
-      createdAt: newCred.created_at,
-      updatedAt: newCred.updated_at,
+      createdAt: newCred.updated_at.toISOString(),
+      updatedAt: newCred.updated_at.toISOString(),
       createdBy: '',
       updatedBy: '',
       tags: newCred.tags,
