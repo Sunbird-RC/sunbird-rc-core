@@ -309,9 +309,6 @@ public class RegistryServiceImpl implements RegistryService {
     public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
-        if (encryptionEnabled) {
-            inputNode = encryptionHelper.getEncryptedJson(inputNode);
-        }
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
@@ -367,6 +364,10 @@ public class RegistryServiceImpl implements RegistryService {
 
                 if (!skipSignature) {
                     generateCredentials(mergedNode, inputNode, entityType);
+                }
+
+                if (encryptionEnabled) {
+                    inputNode = encryptionHelper.getEncryptedJson(inputNode);
                 }
 
                 if (entityType.equals(Schema)) {
