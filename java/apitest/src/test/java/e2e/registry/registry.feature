@@ -574,7 +574,7 @@ Feature: Registry api tests
     And header viewTemplateId = 'student_view_template.json'
     When method get
     Then status 200
-    * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present' }
+    * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present', osAttestationStatus : '#present' }
 
   @envnot=fusionauth
   Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
