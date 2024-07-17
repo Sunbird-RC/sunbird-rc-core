@@ -23,7 +23,7 @@ public class SunbirdRCClient {
     private final String sunbirdRCUrl;
     RestTemplate restTemplate = new RestTemplate();
 
-    public SunbirdRCClient(@Value("${sunbirdrc.url}")String sunbirdRCUrl) {
+    public SunbirdRCClient(@Value("${registry.url}")String sunbirdRCUrl) {
         this.sunbirdRCUrl = sunbirdRCUrl;
     }
 

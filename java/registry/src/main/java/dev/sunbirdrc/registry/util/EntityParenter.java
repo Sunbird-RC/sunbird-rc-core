@@ -35,7 +35,7 @@ public class EntityParenter {
     @Autowired
     private IndexHelper indexHelper;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
     @Autowired

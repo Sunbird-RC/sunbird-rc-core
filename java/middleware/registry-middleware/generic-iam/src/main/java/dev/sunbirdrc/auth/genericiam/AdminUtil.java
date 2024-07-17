@@ -22,20 +22,16 @@ public class AdminUtil implements IdentityManager {
 
 	private final RestTemplate restTemplate;
 
-	private final String iamServiceURL;
-
 	public AdminUtil(IdentityProviderConfiguration identityProviderConfiguration) {
 		this.identityProviderConfiguration = identityProviderConfiguration;
 		this.restTemplate = new RestTemplate();
-		this.iamServiceURL = System.getenv()
-				.getOrDefault("sunbird_sso_url", "http://localhost:3990/fusionauth/api/v1/user");
 	}
 
 
 	@Override
 	public String createUser(CreateUserRequest createUserRequest) throws IdentityException {
 		logger.info("Creating user with mobile_number : " + createUserRequest.getUserName());
-		ResponseEntity<CreateUserResponse> response = this.restTemplate.postForEntity(this.iamServiceURL,
+		ResponseEntity<CreateUserResponse> response = this.restTemplate.postForEntity(identityProviderConfiguration.getCreateUserUrl(),
 				createUserRequest, CreateUserResponse.class);
 		if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null &&
 				!StringUtils.isEmpty(response.getBody().getUserId())) {

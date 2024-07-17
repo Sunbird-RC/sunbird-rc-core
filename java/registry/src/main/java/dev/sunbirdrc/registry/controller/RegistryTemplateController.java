@@ -16,7 +16,7 @@ import java.nio.file.Files;
 public class RegistryTemplateController{
     private static final Logger logger = LoggerFactory.getLogger(RegistryTemplateController.class);
 
-    @Value("${certificate.templateFolderPath}")
+    @Value("${template.folder-path}")
     private String templatesFolderPath;
 
     @RequestMapping(value = "/api/v1/templates/{fileName}", method = RequestMethod.GET)

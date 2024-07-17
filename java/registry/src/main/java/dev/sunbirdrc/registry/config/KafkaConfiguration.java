@@ -33,11 +33,11 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KAFKA_SER
 @ConditionalOnExpression("${async.enabled} or ${event.enabled} or (${notification.service.enabled:false} and ${notification.async.enabled})")
 @EnableKafka
 public class KafkaConfiguration {
-	@Value("${kafka.createEntityTopic:create_entity}")
+	@Value("${kafka.create-entity-topic:create_entity}")
 	String createEntityTopic;
-	@Value("${kafka.postCreateEntityTopic:post_create_entity}")
+	@Value("${kafka.post-create-entity-topic:post_create_entity}")
 	String postCreateEntityTopic;
-	@Value(value = "${kafka.bootstrapAddress}")
+	@Value(value = "${kafka.bootstrap-address}")
 	private String bootstrapAddress;
 	@Value(value = "${event.topic}")
 	private String eventTopic;

@@ -62,7 +62,7 @@ public class SearchDaoImplTest {
     private final static int limit = 1;
     private final static boolean expandInternal = true;
     private List<String> entities = new ArrayList<>();
-    @Value("${registry.expandReference}")
+    @Value("${registry.expand-reference}")
     private boolean expandReferenceObj;
 
 

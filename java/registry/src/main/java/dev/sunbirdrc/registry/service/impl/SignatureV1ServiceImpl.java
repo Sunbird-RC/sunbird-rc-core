@@ -22,16 +22,16 @@ import java.util.Map;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_SIGNATURE_SERVICE_NAME;
 
 @Component
-@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
+@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider-name}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
 public class SignatureV1ServiceImpl implements SignatureService {
     private static Logger logger = LoggerFactory.getLogger(SignatureV1ServiceImpl.class);
-    @Value("${signature.v1.healthCheckURL}")
+    @Value("${signature.v1.health-check-url}")
     private String healthCheckURL;
-    @Value("${signature.v1.signURL}")
+    @Value("${signature.v1.sign-url}")
     private String signURL;
-    @Value("${signature.v1.verifyURL}")
+    @Value("${signature.v1.verify-url}")
     private String verifyURL;
-    @Value("${signature.v1.keysURL}")
+    @Value("${signature.v1.keys-url}")
     private String keysURL;
     @Autowired
     private RetryRestTemplate retryRestTemplate;

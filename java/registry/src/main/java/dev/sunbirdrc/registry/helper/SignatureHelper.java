@@ -26,7 +26,7 @@ public class SignatureHelper {
 	@Autowired
 	private SignatureService signatureService;
 
-	@Value("${filestorage.enabled}")
+	@Value("${file-storage.enabled}")
 	private boolean fileStorageEnabled;
 	@Autowired(required = false)
 	private FileStorageService fileStorageService;

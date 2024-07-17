@@ -32,26 +32,26 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_CERTIFICATE_SERVICE_NAME;
 
 @Component
-@ConditionalOnExpression("${certificate.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
+@ConditionalOnExpression("${certificate.enabled:false} && ('${signature.provider-name}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
 public class CertificateServiceImpl implements ICertificateService {
     private final String templateBaseUrl;
     private final String certificateUrl;
     private final String certificateHealthCheckURL;
     private final RestTemplate restTemplate;
 
-    private boolean signatureEnabled;
+    private final boolean certificateEnabled;
     private static Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
 
-    public CertificateServiceImpl(@Value("${certificate.templateBaseUrl}") String templateBaseUrl,
-                                  @Value("${certificate.apiUrl}") String certificateUrl,
-                                  @Value("${signature.enabled}") boolean signatureEnabled,
-                                  @Value("${certificate.healthCheckURL}") String certificateHealthCheckURL,
+    public CertificateServiceImpl(@Value("${template.base-url}") String templateBaseUrl,
+                                  @Value("${certificate.pdf-url}") String certificateUrl,
+                                  @Value("${certificate.enabled}") boolean certificateEnabled,
+                                  @Value("${certificate.health-check-url}") String certificateHealthCheckURL,
                                   RestTemplate restTemplate) {
         this.templateBaseUrl = templateBaseUrl;
         this.certificateUrl = certificateUrl;
         this.restTemplate = restTemplate;
         this.certificateHealthCheckURL = certificateHealthCheckURL;
-        this.signatureEnabled = signatureEnabled;
+        this.certificateEnabled = certificateEnabled;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class CertificateServiceImpl implements ICertificateService {
 
     @Override
     public ComponentHealthInfo getHealthInfo() {
-        if (signatureEnabled) {
+        if (certificateEnabled) {
             try {
                 ResponseEntity<String> response = restTemplate.getForEntity(URI.create(certificateHealthCheckURL), String.class);
                 if (!StringUtils.isEmpty(response.getBody()) && Arrays.asList("UP", "OK").contains(response.getBody().toUpperCase())) {

@@ -32,18 +32,18 @@ import java.util.stream.Stream;
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
 @Component
-@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
+@ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider-name}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
 public class CredentialSchemaService implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(CredentialSchemaService.class);
-    @Value("${signature.v2.schema.healthCheckURL}")
+    @Value("${signature.v2.schema.health-check-url}")
     private String healthCheckUrl;
-    @Value("${signature.v2.schema.createSchemaURL}")
+    @Value("${signature.v2.schema.create-url}")
     private String createUrl;
-    @Value("${signature.v2.schema.updateSchemaURL}")
+    @Value("${signature.v2.schema.update-url}")
     private String updateUrl;
-    @Value("${signature.v2.schema.getSchemaByIdAndVersionURL}")
+    @Value("${signature.v2.schema.get-by-id-and-version-url}")
     private String getByIdAndVersionUrl;
-    @Value("${signature.v2.schema.getSchemaByTagsURL}")
+    @Value("${signature.v2.schema.search-by-tags-url}")
     private String getByTagsUrl;
 
     @Autowired(required = false)
@@ -53,7 +53,7 @@ public class CredentialSchemaService implements HealthIndicator {
 
     @Value("${signature.v2.schema.author}")
     private String authorName;
-    @Value("${signature.v2.schema.authorDidMethod}")
+    @Value("${signature.v2.schema.author-did-method}")
     private String authorDidMethod;
 
     @Autowired

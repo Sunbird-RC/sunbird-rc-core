@@ -39,13 +39,13 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ID_GEN_SE
 public class IdGenService implements IIdGenService {
     private static final Logger logger = LoggerFactory.getLogger(IdGenService.class);
 
-    @Value("${idgen.generateURL}")
+    @Value("${idgen.generate-url}")
     private String generateUrl;
-    @Value("${idgen.idFormatURL}")
+    @Value("${idgen.id-format-url}")
     private String idFormatUrl;
-    @Value("${idgen.healthCheckURL}")
+    @Value("${idgen.health-check-url}")
     private String healthCheckUrl;
-    @Value("${idgen.tenantId}")
+    @Value("${idgen.tenant-id}")
     private String tenantId;
     @Value("${idgen.enabled:false}")
     private boolean enabled;

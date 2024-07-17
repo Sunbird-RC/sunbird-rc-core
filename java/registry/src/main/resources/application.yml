@@ -8,22 +8,21 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: ${max_file_size:5MB}
-      max-request-size: ${max_request_size:5MB}
+      max-file-size: ${MAX_FILE_SIZE:5MB}
+      max-request-size: ${MAX_REQUEST_SIZE:5MB}
   output:
     ansi:
       enabled: ALWAYS
 
 
 oauth2:
-  resources:
+  resource:
     - uri: ${oauth2_resource_uri:http://localhost:8080/auth/realms/sunbird-rc}
-      properties:
-        emailPath: ${oauth2_resource_email_path:email}
-        consentPath: ${oauth2_resource_consent_path:consent}
-        rolesPath: ${oauth2_resource_roles_path:realm_access.roles}
-        entityPath: ${oauth2_resource_entity_path:entity}
-        userIdPath: ${oauth2_resource_user_id_path:sub}
+      email-path: ${oauth2_resource_email_path:email}
+      consent-path: ${oauth2_resource_consent_path:consent}
+      roles-path: ${oauth2_resource_roles_path:realm_access.roles}
+      entity-path: ${oauth2_resource_entity_path:entity}
+      user-id-path: ${oauth2_resource_user_id_path:sub}
 
 
 
@@ -32,78 +31,76 @@ environment: default
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:8081}
+  port: 8081
 
 notification:
-  service:
-    enabled: ${notification_enabled:false}
-    connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
-    health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
-  async:
-    enabled: ${notification_async_enabled:false}
-  topic: ${notification_topic:notify}
+  enabled: false
+  url: http://localhost:8765/notification-service/v1/notification
+  health-check-url: http://localhost:8765/notification-service/v1/health
+  async-enabled: false
+  topic: notify
 
 invite:
-  required_validation_enabled: ${invite_required_validation_enabled:true}
-  signature_enabled: ${invite_signature_enabled:true}
+  skip-required-validation: true
+  skip-signature: true
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
   # in production. For example, http://otherservice.com:9090, to allow requests from otherservice.com.
-  allowedOrigin: ${cors_allowedOrigin:*}
+  allowed-origin: '*'
 
 perf:
   monitoring:
-    enabled: ${perf_monitoring_enabled:false}
-
+    enabled: false
 registry:
-  perRequest:
-    indexCreation:
+  per-request:
+    index-creation:
       enabled: ${registry_perRequest_indexCreation_enabled:true}
-  baseAPIS:
-    enable: ${registry_base_apis_enable:false}
-  externalentities: ${external_entities:}
+  base-apis:
+    enabled: ${registry_base_apis_enable:false}
+  external-entities: ${external_entities:}
   context:
-    base: ${registry_context_base:http://localhost:8081/}
+    base: http://localhost:8081/
   system:
-    base: ${registry_system_base:http://localhost:8081/sunbirdrc/}
-  rootEntity:
-    type: ${registry_rootentity_type:Teacher}
+    base: http://localhost:8081/sunbirdrc/
   schema:
-    url: ${registry_schema_url:http://localhost:8081/_schemas/}
-  attestationPolicy:
-    search_enabled: ${search_attestation_db:false}
-    createAccess: ${create_attestation_access_entities:User}
-  manager:
-    type: ${manager_type:DefinitionsManager}
-  redis:
-    host: ${redis_host:localhost}
-    port: ${redis_port:6379}
-  hard_delete_enabled: ${hard_delete_enabled:false}
-  expandReference: ${expand_reference:false}
+    url: http://localhost:8081/_schemas/
+  attestation-policy:
+    search-enabled: ${search_attestation_db:false}
+    create-access: ${create_attestation_access_entities:User}
+  hard-delete-enabled: ${hard_delete_enabled:false}
+  expand-reference: ${expand_reference:false}
+
+definitions:
+  manager-type: ${manager_type:DefinitionsManager}
+
+redis:
+  host: redis
+  port: 6379
 workflow:
   enabled: ${workflow.enable:true}
 
-view_template_decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+view-template:
+  decrypt-private-fields: false
 
 async:
-  enabled: ${async_enabled:false}
+  enabled: false
 
 event:
-  enabled: ${event_enabled:false}
-  topic: ${event_topic:events}
-  providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
+  enabled: false
+  topic: events
+  provider-name: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:
-  bootstrapAddress: ${kafka_bootstrap_address:localhost:9094}
-  createEntityTopic: ${kafka_create_entity_topic:create_entity}
-  postCreateEntityTopic: ${kafka_post_create_entity_topic:post_create_entity}
+  bootstrap-address: kafka:9092
+  create-entity-topic: create_entity
+  post-create-entity-topic: post_create_entity
 
 webhook:
-  enabled: ${webhook_enabled:false}
-  url: ${webhook_url:http://localhost:5001/api/v1/callback}
+  enabled: false
+  url: http://localhost:5001/api/v1/callback
 
-conditionalAccess:
+conditional-access:
   internal: _internal
   private: _private
 
@@ -111,54 +108,54 @@ conditionalAccess:
 # offset: search result starts from value provided as default
 # limits: search result to value provided as default
 search:
-  offset: ${search_offset:0}
-  limit: ${search_limit:2000}
+  offset: 0
+  limit: 2000
   # The search mechanism to use. Values could be either NativeSearchService or ElasticSearchService
   #   If NativeSearchService, then every search API uses the same database as the writes. May
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
-  expandInternal: ${search_expandInternal:true}
-  removeNonPublicFieldsForNativeSearch: ${remove_non_public_fields_for_native_search:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
+  expand-internal: ${search_expandInternal:true}
+  remove-non-public-fields-for-native-search: true
+  provider-name: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
 
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService
-  providerName: dev.sunbirdrc.registry.service.NativeReadService
+  provider-name: dev.sunbirdrc.registry.service.NativeReadService
 
 database:
   # This property is internal and not to be confused with the schema definition.
   # Clients use this property to perform read/update operation.
   # NOTE: Once a name is chosen it must not be changed, unless you're ready to let go the
   #       existing data in the database.
-  uuidPropertyName: ${database_uuidPropertyName:osid}
+  uuid-property-name: ${database_uuidPropertyName:osid}
 
   # Providers available are NEO4J, SQLG, CASSANDRA, ORIENTDB, TINKERGRAPH (in-memory).
   # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:SQLG}
+  provider: SQLG
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
   # has been provided for reference. If you'd like to use it, set value "serialNum" here.
   # Note that "serialNum" must then be part of the payload.
-  shardProperty: ${database_shardProperty:none}
+  shard-property: ${database_shardProperty:none}
 
   # This property is instruction to use the shard advisor.
   # Values could be dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor, OR
   # dev.sunbirdrc.registry.sink.shard.SerialNumberShardAdvisor OR
   # absolute class name of your advisor class.
   # If this property not provided, advisor is set to DefaultShardAdvisor
-  shardAdvisorClassName: dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor
+  shard-advisor-class-name: dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor
 
-  connectionInfo:
+  connection-info:
     - # shardId, shardlabel must be a unique identifier to each connection.
-      shardId: shard1
+      shard-id: shard1
 
       # shardLabel is used as prefix for a uuid. Could be any alpha numeric string
       # Example of a record identifier: 1-60f76147-0acd-4dff-b75a-2d811787d04d
       # Note '1' is the label used for record identifier
       # shardLabel is not stored in the database
-      shardLabel: 1
+      shard-label: 1
 
       # The format of the URI can be learnt from the following links -
       #     * 1. Graph database (Neo4J)
@@ -173,7 +170,7 @@ database:
 
       username: ${connectionInfo_username:postgres}
       password: ${connectionInfo_password:postgres}
-      maxPoolSize: ${connectionInfo_maxPoolSize:200}
+      max-pool-size: ${connectionInfo_maxPoolSize:200}
 
       # Any other shard information follows...
       #-
@@ -187,43 +184,39 @@ database:
 # Uncomment the following section to use Cassandra as backend store              #
 ##################################################################################
 cassandra:
-  graphFactory: org.janusgraph.core.JanusGraphFactory
+  graph-factory: org.janusgraph.core.JanusGraphFactory
   backend: "cql"
-  hostname: ${cassandra_host:localhost}
-  keyspace: ${cassandra_keyspace:registry_db}
-  db.cache.size: ${cassandra_db_cache_size:0.25}
+  hostname: localhost
+  keyspace: registry_db
+  db-cache-size: 0.25
   # wait time in milliseconds to clean the cache
-  db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+  db-cache-clean-wait: 60
   index:
-    storage.backend: ${cassandr_index_storage:elasticsearch}
-    hostname: ${cassandra_index_hostname:localhost}
+    storage-backend: elasticsearch
+    hostname: localhost
 
 # File for framing the entity while reading
 frame:
-  file: ${frame_file:frame.json}
-
+  file: frame.json
 encryption:
-  enabled: ${encryption_enabled:false}
-  healthCheckURL: ${encryption_health_check_url:http://localhost:8013/health}
-  uri: ${encryption_uri:http://localhost:8013/crypto/v1/_encrypt}
-  batch:
-    uri: ${encryption_batch_uri:http://localhost:8013/crypto/v1/_encrypt}
-  method: ${encryption_method:Normal}
-  tenant:
-    id: ${encryption_tenant_id:default}
-
+  enabled: false
+  health-check-url: http://localhost:8013/health
+  url: ${encryption_uri:http://localhost:8013/crypto/v1/_encrypt}
+  batch-url: ${encryption_batch_uri:http://localhost:8013/crypto/v1/_encrypt}
+  method: Normal
+  tenant-id: default
 decryption:
-  uri: ${decryption_uri:http://localhost:8013/crypto/v1/_decrypt}
-  batch:
-    uri: ${decryption_batch_uri:http://localhost:8013/crypto/v1/_decrypt}
+  url: ${decryption_uri:http://localhost:8013/crypto/v1/_decrypt}
+  batch-url: ${decryption_batch_uri:http://localhost:8013/crypto/v1/_decrypt}
 
 certificate:
-  enabled: ${certificate_enabled:true}
-  templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
-  healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
-  apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
-  templateFolderPath: ${template_folder_path:public/_schemas/templates/}
-  enableExternalTemplates: ${enable_external_templates:false}
+  enabled: false
+  health-check-url: http://localhost:8078/health
+  pdf-url: ${pdf_url:http://localhost:8078/api/v1/certificate}
+template:
+  base-url: http://localhost:8081/api/v1/templates/
+  folder-path: public/_schemas/templates/
+  external-enabled: ${enable_external_templates:false}
 
 # This audit configuration will enable audit logging in the system, use audit_frame.json to create a schema for database /elastic storage.
 #  data_store can have following values
@@ -232,161 +225,140 @@ certificate:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-  enabled: ${audit_enabled:true}
-  vc-enabled: ${audit_vc_enabled:false}
-  frame:
-    store: ${audit_frame_store:DATABASE}
-    suffix: ${audit_suffix:Audit}
-    suffixSeparator: ${audit_suffixSeparator:_}
+  enabled: true
+  vc-enabled: false
+  frame-store: DATABASE
+  suffix: Audit
+  suffix-separator: ${audit_suffixSeparator:_}
+
+authentication:
+  enabled: true
 
 identity:
-  provider: ${identity_provider:dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
+  provider-name: ${identity_provider:dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
   url: ${sunbird_sso_url:http://localhost:8080/auth/}
+  create-user-path: /admin/realms/sunbird-rc/users
   realm: ${sunbird_sso_realm:sunbird-rc}
-  client_id: ${sunbird_sso_admin_client_id:admin-api}
-  client_secret: ${sunbird_sso_admin_client_secret:xxx}
-  set_default_password: ${sunbird_keycloak_user_set_password:false}
-  default_password: ${sunbird_keycloak_user_password:abcd@1234}
-  user_actions: ${identity_user_actions:}
-
-keycloak:
-  #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
-  realm: ${sunbird_sso_realm:sunbird-rc}
-  resource: ${sunbird_sso_client_id:client}
-keycloak-admin:
-  client-id: ${sunbird_sso_admin_client_id:admin-api}
-  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
-keycloak-user:
+  admin-client-id: ${sunbird_sso_admin_client_id:admin-api}
+  admin-client-secret: ${sunbird_sso_admin_client_secret:xxx}
   set-default-password: ${sunbird_keycloak_user_set_password:false}
   default-password: ${sunbird_keycloak_user_password:abcd@123}
-  # email actions which will be trigger by keycloak
-  # example email actions: VERIFY_EMAIL, UPDATE_PROFILE, UPDATE_PASSWORD, TERMS_AND_CONDITIONS etc.
-  # email details should be configured in keycloak realm settings
-  email-actions: ${keycloack_user_email_actions:}
-claims:
-  enabled: ${claims_enabled:true}
-  url: ${claims_url:http://localhost:8082}
-authentication:
-  enabled: ${authentication_enabled:true}
-  publicKey:  ${authentication_publickey:}
-  realm:  ${authentication_realm:sunbird-rc}
-  url:  ${authentication_url:localhost:8443/auth}
+  user-actions:
 
+claims:
+  enabled: false
+  url: http://localhost:8082
 
 validation:
-  enabled: ${validation_enabled:true}
-  type: ${validation_type:json}
+  enabled: true
+  type: json
 
 # Sets the service request and retry related configuration
 service:
   connection:
     # Set the connection timeout for the underlying request configuration
-    timeout: ${service_connection_timeout:5000}
+    timeout: 5000
     # Set the timeout in milliseconds used when requesting a connection from the connection manager using the underlying request Configuration
     request:
-      timeout: ${service_connection_request_timeout:5000}
+      timeout: 5000
   # Set the socket read timeout for the underlying request configuration
   read:
-    timeout: ${service_read_timeout:5000}
+    timeout: 5000
   retry:
     # The number of times an attempt must be made to reach to the service.
-    maxAttempts: ${service_retry_maxAttempts:5}
+    max-attempts: ${service_retry_maxAttempts:5}
     backoff:
       # The fixed time interval, in milliseconds, between each such attempt.
-      delay: ${service_retry_backoff_delay:1000}
+      delay: 1000
 
-httpConnection:
-  maxConnections: ${http_max_connections:100}
+http:
+  max-connections: 100
 # Sets the task-executor configuration for threads
-taskExecutor:
+task-executor:
   index:
     # Specify the prefix to use for the names of newly created threads.
-    threadPoolName: ${taskExecutor_index_threadPoolName:IndexThread-}
+    thread-pool-name: ${taskExecutor_index_threadPoolName:IndexThread-}
     # Set the ThreadPoolExecutor's core pool size.
-    corePoolSize: ${taskExecutor_index_corePoolSize:2}
+    core-pool-size: ${taskExecutor_index_corePoolSize:2}
     # Set the ThreadPoolExecutor's maximum pool size.
-    maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
+    max-pool-size: ${taskExecutor_index_maxPoolSize:2}
     # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-    queueCapacity: ${taskExecutor_index_queueCapacity:100}
+    queue-capacity: ${taskExecutor_index_queueCapacity:100}
 
 # Sets the task-executor configuration for threads while auditing
-auditTaskExecutor:
+audit-task-executor:
   # Specify the prefix to use for the names of newly created threads.
-  threadPoolName: ${auditTaskExecutor_threadPoolName:AuditThread-}
+  thread-pool-name: ${auditTaskExecutor_threadPoolName:AuditThread-}
   # Set the ThreadPoolExecutor's core pool size.
-  corePoolSize: ${auditTaskExecutor_corePoolSize:2}
+  core-pool-size: ${auditTaskExecutor_corePoolSize:2}
   # Set the ThreadPoolExecutor's maximum pool size.
-  maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
+  max-pool-size: ${auditTaskExecutor_maxPoolSize:2}
   # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-  queueCapacity: ${auditTaskExecutor_queueCapacity:100}
+  queue-capacity: ${auditTaskExecutor_queueCapacity:100}
 
 # elastic-search configuration details
 elastic:
   search:
-    # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
-    connection_url: ${elastic_search_connection_url:localhost:9200}
-    add_shard_prefix: ${elastic_search_add_shard_prefix:true}
+    connection-url: localhost:9200
+    add-shard-prefix: true
     #if authentication is enabled
-    auth_enabled: ${elastic_search_auth_enabled:false}
-    elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:elastic}
-    scheme: ${elastic_search_scheme:http}
-filestorage:
-  enabled: ${filestorage_enabled:false}
-  url: ${filestorage_connection_url:http://localhost:9000}
-  accesskey: ${filestorage_access_key:XXXXX}
-  secretkey: ${filestorage_secret_key:XXXXX}
-  bucketname: ${filestorage_bucket_key:dummy}
+    auth-enabled: false
+    username: elastic
+    password: elastic
+    scheme: http
+file-storage:
+  enabled: false
+  connection-url: http://localhost:9000
+  access-key: XXXXX
+  secret-key: XXXXX
+  bucket-name: dummy
 
-api-swagger:
-  enabled: ${swagger_enabled:true}
-  title: ${swagger_title:Sunbird Registry and Credential}
-  description: ${swagger_description:Sunbird registry and credential api (SunbirdRC)}
-  version: ${swagger_version:1.0.0}
+swagger:
+  enabled: true
+  title: Sunbird Registry and Credential
+  description: Sunbird registry and credential api (SunbirdRC)
+  version: 1.0.0
 
 idgen:
-  enabled: ${idgen_enabled:false}
-  tenantId: ${idgen_tenant_id:default}
-  healthCheckURL: ${idgen_health_check_url:http://localhost:8088/egov-idgen/health}
-  generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
-  idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
+  enabled: false
+  tenant-id: default
+  health-check-url: http://localhost:8088/egov-idgen/health
+  generate-url: http://localhost:8088/egov-idgen/id/_generate
+  id-format-url: http://localhost:8088/egov-idgen/id/_format/add
 
 did:
-  enabled: ${did_enabled:false}
-  healthCheckURL: ${did_health_check_url:http://localhost:3332/health}
-  generateURL: ${did_generate_url:http://localhost:3332/did/generate}
-  resolveURL: ${did_resolve_url:http://localhost:3332/did/resolve/{id}}
+  enabled: false
+  health-check-url: http://localhost:3332/health
+  generate-url: http://localhost:3332/did/generate
+  resolve-url: http://localhost:3332/did/resolve/{id}
 
 signature:
-  enabled: ${signature_enabled:false}
-  provider: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
+  enabled: false
+  provider-name: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
   v1:
-    healthCheckURL: ${sign_health_check_url:http://localhost:8079/health}
-    signURL: ${sign_url:http://localhost:8079/sign}
-    verifyURL: ${verify_url:http://localhost:8079/verify}
-    keysURL: ${keys_url:http://localhost:8013/keys/}
-    domain: ${domain_url:https://w3id.org/security/v1/}
+    health-check-url: ${sign_health_check_url:http://localhost:8079/health}
+    sign-url: ${sign_url:http://localhost:8079/sign}
+    verify-url: ${verify_url:http://localhost:8079/verify}
+    keys-url: ${keys_url:http://localhost:8013/keys/}
   v2:
-    credentialDidMethod: ${signature_v2_credential_did_method:rcw}
-    issuerDidMethod: ${signature_v2_issuer_did_method:issuer}
-    healthCheckURL: ${signature_v2_health_check_url:http://localhost:3000/health}
-    issueCredentialURL: ${signature_v2_issue_url:http://localhost:3000/credentials/issue}
-    getCredentialByIdURL: ${signature_v2_get_url:http://localhost:3000/credentials/{id}}
-    deleteCredentialByIdURL: ${signature_v2_delete_url:http://localhost:3000/credentials/{id}}
-    verifyCredentialURL: ${signature_v2_verify_url:http://localhost:3000/credentials/{id}/verify}
-    verifyAnyCredentialURL: ${signature_v2_verify_any_url:http://localhost:3000/credentials/verify}
-    getRevocationListURL: ${signature_v2_revocation_list_url:http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
+    credential-did-method: rcw
+    issuer-did-method: issuer
+    health-check-url: http://localhost:3000/health
+    issue-url: http://localhost:3000/credentials/issue
+    get-url: http://localhost:3000/credentials/{id}
+    delete-url: http://localhost:3000/credentials/{id}
+    verify-url: http://localhost:3000/credentials/{id}/verify
+    verify-any-url: http://localhost:3000/credentials/verify
+    revocation-list-url: http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}
     schema:
-      author: ${signature_v2_schema_author:Registry}
-      authorDidMethod: ${signature_v2_schema_author_did_method:author}
-      healthCheckURL: ${signature_v2_schema_health_check_url:http://localhost:3333/health}
-      createSchemaURL: ${signature_v2_schema_create_url:http://localhost:3333/credential-schema}
-      updateSchemaURL: ${signature_v2_schema_update_url:http://localhost:3333/credential-schema/{id}/{version}}
-      getSchemaByIdAndVersionURL: ${signature_v2_schema_get_by_id_and_version_url:http://localhost:3333/credential-schema/{id}/{version}
-      getSchemaByTagsURL: ${signature_v2_schema_search_by_tags_url:http://localhost:3333/credential-schema?tags={tags}}
+      author: Registry
+      author-did-method: author
+      health-check-url: http://localhost:3333/health
+      create-url: http://localhost:3333/credential-schema
+      update-url: http://localhost:3333/credential-schema/{id}/{version}
+      get-by-id-and-version-url: http://localhost:3333/credential-schema/{id}/{version}
+      search-by-tags-url: http://localhost:3333/credential-schema?tags={tags}
 
 ---
 ##################################################################
@@ -402,12 +374,11 @@ spring:
 name: test-yaml
 enviroment: test
 workflow:
-  enabled: ${workflow.enable:true}
-view_template:
-  decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+  enabled: true
+view-template:
+  decrypt-private-fields: false
 notification:
-  service:
-    enabled: true
+  enabled: true
 perf:
   monitoring:
     enabled: false
@@ -417,28 +388,27 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
-  expandReference: ${expand_reference:false}
+  expand-reference: false
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService
-  providerName: io.opensaber.registry.service.NativeReadService
+  provider-name: io.opensaber.registry.service.NativeReadService
 
 database:
   # This property is internal. Clients use this property to perform read/update operation.
   # NOTE: Once a uuidPropertyName is chosen it must not be changed, unless you're ready to let go the
   #       existing data in the database.
-  uuidPropertyName: ${database_uuidPropertyName:osid}
+  uuid-property-name: osid
 
   # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
   # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:TINKERGRAPH}
+  provider: TINKERGRAPH
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
   # has been provided for reference. If you'd like to use it, set value "serialNum" here.
-  shardProperty: ${database_shardProperty:none}
-
   # Any other provider breaks the unit tests, needs a work-item
+  shard-property: none
 
 # File for framing the entity while reading
 frame:
@@ -446,25 +416,21 @@ frame:
 
 encryption:
   enabled: true
-  base: https://dev.sunbirded.org/encryption/
-  uri: https://dev.sunbirded.org/encryption/encrypt
-  batch:
-    uri: https://dev.sunbirded.org/encryption/encrypt/obj
+  url: https://dev.sunbirded.org/encryption/encrypt
+  batch-url: https://dev.sunbirded.org/encryption/encrypt/obj
 
 decryption:
-  uri: https://dev.sunbirded.org/encryption/decrypt
-  batch:
-    uri: https://dev.sunbirded.org/encryption/decrypt/obj
+  url: https://dev.sunbirded.org/encryption/decrypt
+  batch-url: https://dev.sunbirded.org/encryption/decrypt/obj
 
 signature:
-  enabled: ${signature_enabled:true}
-  provider: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
+  enabled: true
+  provider: dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl
   v1:
-    healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
-    signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
-    verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
-    keysURL: ${keys_url:https://dev.sunbirded.org/encryption/keys/}
-    domain: ${domain_url:https://w3id.org/security/v1/}
+    health-check-url: https://dev.sunbirded.org/encryption/
+    sign-url: https://dev.sunbirded.org/encryption/sign
+    verify-url: https://dev.sunbirded.org/encryption/verify
+    keys-url: https://dev.sunbirded.org/encryption/keys/
 
 
 # These properties are used to enable the audit log
@@ -476,75 +442,53 @@ signature:
 audit:
   enabled: true
   vc-enabled: true
-  frame:
-    store: DATABASE
-    suffix: Audit
-    suffixSeparator: _
+  frame-store: DATABASE
+  suffix: Audit
+  suffix-separator: _
 
 authentication:
-  enabled: ${authentication_enabled:true}
-  publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
-  realm:  ${authentication_realm:PartnerRegistry}
-  url:  ${authentication_url:http://localhost:8443/auth/}
-
-keycloak:
-  sso:
-    publicKey:  ${sunbird_sso_publickey}
-    realm:  ${sunbird_sso_realm}
-    auth_server_url:  ${sunbird_sso_url}
+  enabled: true
 
 validation:
-  enabled: ${validation_enabled:true}
-  type: ${validation_type:json}
+  enabled: true
+  type: json
 
 # Sets the service request and retry related configuration
 service:
   connection:
-    # Set the connection timeout for the underlying request configuration
-    timeout: ${service_connection_timeout:5000}
-    # Set the timeout in milliseconds used when requesting a connection from the connection manager using the underlying request Configuration
+    timeout: 5000
     request:
-      timeout: ${service_connection_request_timeout:5000}
-  # Set the socket read timeout for the underlying request configuration
+      timeout: 5000
   read:
-    timeout: ${service_read_timeout:5000}
+    timeout: 5000
   retry:
-    # The number of times an attempt must be made to reach to the service.
-    maxAttempts: ${service_retry_maxAttempts:5}
+    max-attempts: 5
     backoff:
-      # The fixed time interval, in milliseconds, between each such attempt.
-      delay: ${service_retry_backoff_delay:1000}
+      delay: 1000
 
 # Sets the task-executor configuration for threads
-taskExecutor:
+task-executor:
   index:
-    # Specify the prefix to use for the names of newly created threads.
-    threadPoolName: ${taskExecutor_index_threadPoolName:IndexThread-}
-    # Set the ThreadPoolExecutor's core pool size.
-    corePoolSize: ${taskExecutor_index_corePoolSize:2}
-    # Set the ThreadPoolExecutor's maximum pool size.
-    maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
-    # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-    queueCapacity: ${taskExecutor_index_queueCapacity:3}
+    thread-pool-name: IndexThread-
+    core-pool-size: 2
+    max-pool-size: 2
+    queue-capacity: 3
 
 # Sets the task-executor configuration for threads while auditing
-auditTaskExecutor:
-  # Specify the prefix to use for the names of newly created threads.
-  threadPoolName: ${auditTaskExecutor_threadPoolName:AuditThread-}
-  # Set the ThreadPoolExecutor's core pool size.
-  corePoolSize: ${auditTaskExecutor_corePoolSize:2}
-  # Set the ThreadPoolExecutor's maximum pool size.
-  maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
-  # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-  queueCapacity: ${auditTaskExecutor_queueCapacity:3}
+audit-task-executor:
+  thread-pool-name: AuditThread-
+  core-pool-size: 2
+  max-pool-size: 2
+  queue-capacity: 3
 
 # elastic-search configuration details
 elastic:
   search:
-    # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:true}
-    # elastic-search connection info
-    connection_url: ${elastic_search_connection_url:localhost:9200}
+    connection-url: localhost:9200
+
+
+certificate:
+  enabled: true
 
 idgen:
   enabled: true

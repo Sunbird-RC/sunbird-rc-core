@@ -1,6 +1,6 @@
 package dev.sunbirdrc.registry.authorization;
 
-import dev.sunbirdrc.registry.authorization.pojos.OAuth2Properties;
+import dev.sunbirdrc.registry.authorization.pojos.OAuth2Resource;
 import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,13 +21,13 @@ import static org.mockito.Mockito.when;
 public class CustomJwtAuthenticationConverterTest {
 	@Test
 	public void shouldExtractValuesFromJWTClaim() {
-		OAuth2Properties oAuth2Properties = new OAuth2Properties();
-		oAuth2Properties.setUserIdPath("sub");
-		oAuth2Properties.setRolesPath("user.roles");
-		oAuth2Properties.setConsentPath("user.consent");
-		oAuth2Properties.setEmailPath("user.email");
-		oAuth2Properties.setEntityPath("entity");
-		CustomJwtAuthenticationConverter converter = new CustomJwtAuthenticationConverter(oAuth2Properties);
+		OAuth2Resource oAuth2Resource = new OAuth2Resource();
+		oAuth2Resource.setUserIdPath("sub");
+		oAuth2Resource.setRolesPath("user.roles");
+		oAuth2Resource.setConsentPath("user.consent");
+		oAuth2Resource.setEmailPath("user.email");
+		oAuth2Resource.setEntityPath("entity");
+		CustomJwtAuthenticationConverter converter = new CustomJwtAuthenticationConverter(oAuth2Resource);
 		Jwt jwt = mock(Jwt.class);
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("sub", "1234");
@@ -51,13 +51,13 @@ public class CustomJwtAuthenticationConverterTest {
 
 	@Test
 	public void shouldHandleInvalidValuesWhileExtractionWithDefaultValues() {
-		OAuth2Properties oAuth2Properties = new OAuth2Properties();
-		oAuth2Properties.setUserIdPath("sub");
-		oAuth2Properties.setRolesPath("user.roles");
-		oAuth2Properties.setConsentPath("user.consent");
-		oAuth2Properties.setEmailPath("user.email");
-		oAuth2Properties.setEntityPath("entity");
-		CustomJwtAuthenticationConverter converter = new CustomJwtAuthenticationConverter(oAuth2Properties);
+		OAuth2Resource oAuth2Resource = new OAuth2Resource();
+		oAuth2Resource.setUserIdPath("sub");
+		oAuth2Resource.setRolesPath("user.roles");
+		oAuth2Resource.setConsentPath("user.consent");
+		oAuth2Resource.setEmailPath("user.email");
+		oAuth2Resource.setEntityPath("entity");
+		CustomJwtAuthenticationConverter converter = new CustomJwtAuthenticationConverter(oAuth2Resource);
 		Jwt jwt = mock(Jwt.class);
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("sub", "1234");

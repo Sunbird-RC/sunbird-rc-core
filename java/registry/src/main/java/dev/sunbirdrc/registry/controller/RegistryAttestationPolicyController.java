@@ -20,7 +20,7 @@ import java.util.Optional;
 public class RegistryAttestationPolicyController extends AbstractController {
     private static Logger logger = LoggerFactory.getLogger(RegistryAttestationPolicyController.class);
 
-    @Value("${registry.attestationPolicy.createAccess:''}")
+    @Value("${registry.attestation-policy.create-access:''}")
     public List<String> createAttestationEntities;
 
     @PostMapping("/api/v1/{entityName}/attestationPolicy")

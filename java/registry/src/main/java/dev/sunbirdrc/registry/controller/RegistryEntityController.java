@@ -69,7 +69,7 @@ public class RegistryEntityController extends AbstractController {
     @Autowired(required = false)
     private ICertificateService certificateService;
 
-    @Value("${filestorage.enabled}")
+    @Value("${file-storage.enabled}")
     private boolean fileStorageEnabled;
     @Autowired(required = false)
     private FileStorageService fileStorageService;
@@ -82,7 +82,7 @@ public class RegistryEntityController extends AbstractController {
 
     @Value("${authentication.enabled:true}")
     boolean securityEnabled;
-    @Value("${certificate.enableExternalTemplates:false}")
+    @Value("${template.external-enabled:false}")
     boolean externalTemplatesEnabled;
     @Value("${search.offset:0}")
     private int searchOffset;
