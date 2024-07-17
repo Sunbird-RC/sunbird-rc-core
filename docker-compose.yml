@@ -100,6 +100,7 @@ services:
       - SIGNATURE_V2_GET_URL=http://credential:3000/credentials/{id}
       - SIGNATURE_V2_DELETE_URL=http://credential:3000/credentials/{id}
       - SIGNATURE_V2_VERIFY_URL=http://credential:3000/credentials/{id}/verify
+      - SIGNATURE_V2_VERIFY_ANY_URL=http://credential:3000/credentials/verify
       - SIGNATURE_V2_REVOCATION_LIST_URL=http://credential:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}
       - SIGNATURE_V2_SCHEMA_HEALTH_CHECK_URL=http://credential-schema:3333/health
       - SIGNATURE_V2_SCHEMA_CREATE_URL=http://credential-schema:3333/credential-schema

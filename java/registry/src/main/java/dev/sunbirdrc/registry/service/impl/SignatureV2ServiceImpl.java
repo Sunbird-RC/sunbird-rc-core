@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
+import com.google.gson.Gson;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
@@ -27,13 +28,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -53,6 +52,8 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     @Value("${signature.v2.delete-url}")
     private String deleteCredentialByIdURL;
     @Value("${signature.v2.verify-url}")
+    private String verifyCredentialByIdURL;
+    @Value("${signature.v2.verify-any-url}")
     private String verifyCredentialURL;
     @Value("${signature.v2.revocation-list-url}")
     private String getRevocationListURL;
@@ -73,6 +74,8 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     private CredentialSchemaService credentialSchemaService;
     @Autowired
     private DIDService didService;
+    @Autowired
+    private Gson gson;
 
     @Override
     public Object sign(Map<String, Object> propertyValue) throws SignatureException.UnreachableException, SignatureException.CreationException {
@@ -89,18 +92,39 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
 
     @Override
     public boolean verify(Object propertyValue) throws SignatureException.UnreachableException, SignatureException.VerificationException {
-        String credentialId = (String) ((Map<String, Object>) propertyValue).get("credentialId");
-        ObjectNode credential = (ObjectNode) ((Map<String, Object>) propertyValue).get("signedCredentials");
-        if(credentialId == null || credentialId.isEmpty()) {
-            credentialId = credential.get("credentialId").asText();
-        }
-        JsonNode resultNode = null;
+        ObjectNode properties = objectMapper.convertValue(propertyValue, ObjectNode.class);
+        JsonNode signedCredential = properties.get("signedCredentials");
         try {
-            resultNode = this.verifyCredential(credentialId);
+            JsonNode resultNode = null;
+            if(signedCredential.isTextual()) {
+                resultNode = this.verifyCredentialById(signedCredential.asText());
+            } else if(signedCredential.isObject()) {
+                resultNode = verifyCredential(signedCredential, null);
+            }
+            if(resultNode == null) {
+                throw new RuntimeException("Invalid result while verifying");
+            }
+            AtomicReference<Boolean> verified = new AtomicReference<>(true);
+            if(resultNode.has("status")) {
+                verified.set(resultNode.get("status").asText().equals("ISSUED"));
+            }
+            String expectedValue = "OK";
+            if(resultNode.has("errors")) {
+                throw new SignatureException.VerificationException(resultNode.asText());
+            }
+            if(resultNode.has("checks")) {
+                for (JsonNode check : resultNode.get("checks")) {
+                    check.fields().forEachRemaining(field -> {
+                        if(!field.getValue().asText().equalsIgnoreCase(expectedValue)) {
+                            verified.set(false);
+                        }
+                    });
+                }
+            }
+            return verified.get();
         } catch (IOException e) {
             throw new SignatureException.VerificationException(e.getMessage());
         }
-        return resultNode.get("verified").asBoolean();
     }
 
     @Override
@@ -133,6 +157,9 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         if(template != null && (template.startsWith(HTTP_URI_PREFIX) || template.startsWith(HTTPS_URI_PREFIX))) {
             ResponseEntity<String> response = this.retryRestTemplate.getForEntity(URLDecoder.decode(template, "UTF-8"));
             template = response.getBody();
+        }
+        if (template != null) {
+            template = template.replaceAll("\n", "");
         }
         return getCredentialById(credentialId.asText(), mediaType, templateId, template);
     }
@@ -216,8 +243,27 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         return JsonNodeFactory.instance.arrayNode();
     }
 
-    public JsonNode verifyCredential(String credentialId) throws IOException {
-        ResponseEntity<String> response = retryRestTemplate.getForEntity(verifyCredentialURL, credentialId);
+    public JsonNode verifyCredential(Object vc, Object options) {
+        Map vcMap = objectMapper.convertValue(vc, Map.class);
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("verifiableCredential", vcMap);
+        requestMap.put("options", options);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(gson.toJson(requestMap), headers);
+        try {
+            ResponseEntity<String> response = retryRestTemplate.postForEntity(verifyCredentialURL, request);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return JSONUtil.convertStringJsonNode(response.getBody());
+            }
+        } catch (RestClientException | IOException e) {
+            logger.error("Exception while verifying a VC: {}, {}", vc, ExceptionUtils.getStackTrace(e));
+        }
+        return null;
+    }
+
+    public JsonNode verifyCredentialById(String credentialId) throws IOException {
+        ResponseEntity<String> response = retryRestTemplate.getForEntity(verifyCredentialByIdURL, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {
             return JSONUtil.convertStringJsonNode(response.getBody());
         }

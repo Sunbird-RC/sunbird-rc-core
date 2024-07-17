@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(name = "event.provider-name", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
 public class KafkaEventService implements IEventService {
 
-    @Value("${events.topic:events}")
+    @Value("${event.topic:events}")
     String metricsTopic;
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;

@@ -13,7 +13,7 @@ export class VaultHealthIndicator extends HealthIndicator {
       if (resp.status.sealed === false && resp.status.initialized === true) return this.getStatus(key, true);
       throw new InternalServerErrorException('Vault is not initialized or sealed');
     } catch (err) {
-      throw new HealthCheckError("Prisma health check failed", err);
+      throw new HealthCheckError("Vault health check failed", err);
     }
   }
 }

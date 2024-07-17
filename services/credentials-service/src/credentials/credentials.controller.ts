@@ -22,6 +22,7 @@ import { Credential } from 'src/app.interface';
 import { GetCredentialsByTagsResponseDTO } from './dto/getCredentialsByTags.dto';
 import { GetCredentialByIdResponseDTO } from './dto/getCredentialById.dto';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
+import { VerifyCredentialDTO } from './dto/verify-credential.dto';
 
 @Controller('credentials')
 export class CredentialsController {
@@ -74,8 +75,8 @@ export class CredentialsController {
     const requestedTemplateId: string = req.headers['templateid'] as string;
     const externalTemplate: string = req.headers['template'] as string;
 
-    if (!requestedTemplateId && !externalTemplate && accept !== 'application/json')
-      throw new BadRequestException('Template id is required');
+    if (!requestedTemplateId && !externalTemplate && ['application/pdf', 'text/html'].indexOf(accept) > -1)
+      throw new BadRequestException('Template id or template is required');
     else if (!requestedTemplateId && !externalTemplate && accept === 'application/json')
       return this.credentialsService.getCredentialById(
         id,
@@ -110,13 +111,18 @@ export class CredentialsController {
   }
 
   @Delete(':id')
-  delteCredential(@Param('id') id: string) {
+  deleteCredential(@Param('id') id: string) {
     return this.credentialsService.deleteCredential(id);
   }
 
   @Get(':id/verify')
-  verifyCredential(@Param('id') credId: string) {
-    return this.credentialsService.verifyCredential(credId);
+  verifyCredentialById(@Param('id') credId: string) {
+    return this.credentialsService.verifyCredentialById(credId);
+  }
+
+  @Post('/verify')
+  verifyCredential(@Body() verifyRequest: VerifyCredentialDTO) {
+    return this.credentialsService.verifyCredential(verifyRequest.verifiableCredential);
   }
 
   @Get('revocation-list')

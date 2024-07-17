@@ -349,6 +349,7 @@ signature:
     get-url: http://localhost:3000/credentials/{id}
     delete-url: http://localhost:3000/credentials/{id}
     verify-url: http://localhost:3000/credentials/{id}/verify
+    verify-any-url: http://localhost:3000/credentials/verify
     revocation-list-url: http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}
     schema:
       author: Registry
@@ -439,8 +440,8 @@ signature:
 # suffixSeperator : specifies the separator used between entity name and suffix. If audit schema name is Teacher_Audit.json, the suffixSeperator is _.
 
 audit:
-  enabled: false
-  vc-enabled: false
+  enabled: true
+  vc-enabled: true
   frame-store: DATABASE
   suffix: Audit
   suffix-separator: _
@@ -485,5 +486,13 @@ elastic:
   search:
     connection-url: localhost:9200
 
+
 certificate:
   enabled: true
+
+idgen:
+  enabled: true
+  tenantId: default
+  healthCheckURL: http://localhost:8088/egov-idgen/health
+  generateURL: http://localhost:8088/egov-idgen/id/_generate
+  idFormatURL: http://localhost:8088/egov-idgen/id/_format/add

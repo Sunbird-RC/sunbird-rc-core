@@ -38,7 +38,7 @@ export class AuthGuard implements CanActivate {
 
     if (process.env.ENABLE_AUTH === undefined) {
       this.logger.warn('ENABLE_AUTH is not set, defaulting to true');
-    };
+    }
     if (process.env.ENABLE_AUTH && process.env.ENABLE_AUTH.trim() === 'false') return true;
 
     const request = context.switchToHttp().getRequest();

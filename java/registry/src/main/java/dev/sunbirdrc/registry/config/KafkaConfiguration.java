@@ -30,7 +30,7 @@ import static dev.sunbirdrc.registry.Constants.createEntityGroupId;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KAFKA_SERVICE_NAME;
 
 @Configuration
-@ConditionalOnExpression("${async.enabled} or ${event.enabled}")
+@ConditionalOnExpression("${async.enabled} or ${event.enabled} or (${notification.service.enabled:false} and ${notification.async.enabled})")
 @EnableKafka
 public class KafkaConfiguration {
 	@Value("${kafka.create-entity-topic:create_entity}")
@@ -41,6 +41,8 @@ public class KafkaConfiguration {
 	private String bootstrapAddress;
 	@Value(value = "${event.topic}")
 	private String eventTopic;
+	@Value(value = "${notification.topic}")
+	private String notificationTopic;
 
 	@Bean
 	public KafkaAdmin kafkaAdmin() {
@@ -59,6 +61,12 @@ public class KafkaConfiguration {
 	@ConditionalOnProperty("event.enabled")
 	public NewTopic createEventsTopic() {
 		return new NewTopic(eventTopic, 1, (short) 1);
+	}
+
+	@Bean
+	@ConditionalOnExpression("${notification.service.enabled:false} && ${notification.async.enabled}")
+	public NewTopic createNotificationTopic() {
+		return new NewTopic(notificationTopic, 1, (short) 1);
 	}
 
 	@Bean

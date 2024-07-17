@@ -177,7 +177,7 @@ public class SchemaService {
 		if(!signatureEnabled || !Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
 			return;
 		}
-		if(credentialTemplate != null) return;
+		if(credentialTemplate == null || credentialTemplate == "") return;
         try {
             credentialSchemaService.ensureCredentialSchema(title, credentialTemplate, status);
         } catch (Exception e) {

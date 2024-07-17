@@ -146,27 +146,7 @@ export class CredentialsService {
     }
   }
 
-  async verifyCredential(credId: string) {
-    // getting the credential from the db
-    const stored =
-      (await this.prisma.verifiableCredentials.findUnique({
-      where: {
-        id: credId,
-      },
-      select: {
-        signed: true,
-        status: true,
-      },
-    }));
-    const { signed: credToVerify, status } = (stored || {}) as { signed: Verifiable<W3CCredential>; status: VCStatus };
-
-    this.logger.debug('Fetched credntial from db to verify');
-
-    // invalid request in case credential is not found
-    if (!credToVerify) {
-      this.logger.error('Credential not found');
-      throw new NotFoundException({ errors: ['Credential not found'] });
-    }
+  async verifyCredential(credToVerify: Verifiable<W3CCredential>, status?: VCStatus) {
     try {
       // calling identity service to verify the issuer DID
       const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
@@ -174,7 +154,7 @@ export class CredentialsService {
         issuerId
       );
       const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
-      .find(d => d.indexOf("verificationMethod") > -1)]
+        .find(d => d.indexOf("verificationMethod") > -1)]
 
       // VERIFYING THE JWS
       const vm = did.verificationMethod?.find(d => (d.id === credVerificationMethod || d.id === credVerificationMethod?.id));
@@ -206,8 +186,7 @@ export class CredentialsService {
         status: status,
         checks: [
           {
-            active: 'OK',
-            revoked: status === VCStatus.REVOKED ? 'NOK' : 'OK', // NOK represents revoked
+            ...(status && {revoked: status === VCStatus.REVOKED ? 'NOK' : 'OK'}), // NOK represents revoked
             expired:
               new Date(credToVerify.expirationDate).getTime() < Date.now()
                 ? 'NOK'
@@ -222,6 +201,30 @@ export class CredentialsService {
         errors: [e],
       };
     }
+  }
+
+  async verifyCredentialById(credId: string) {
+    // getting the credential from the db
+    const stored =
+      (await this.prisma.verifiableCredentials.findUnique({
+      where: {
+        id: credId,
+      },
+      select: {
+        signed: true,
+        status: true,
+      },
+    }));
+    const { signed: credToVerify, status } = (stored || {}) as { signed: Verifiable<W3CCredential>; status: VCStatus };
+
+    this.logger.debug('Fetched credntial from db to verify');
+
+    // invalid request in case credential is not found
+    if (!credToVerify) {
+      this.logger.error('Credential not found');
+      throw new NotFoundException({ errors: ['Credential not found'] });
+    }
+    return this.verifyCredential(credToVerify, status);
   }
 
   async getSuite(verificationMethod: VerificationMethod, signatureType: string) {
@@ -340,8 +343,8 @@ export class CredentialsService {
     return {
       credential: res,
       credentialSchemaId: newCred.credential_schema,
-      createdAt: newCred.created_at,
-      updatedAt: newCred.updated_at,
+      createdAt: newCred.updated_at.toISOString(),
+      updatedAt: newCred.updated_at.toISOString(),
       createdBy: '',
       updatedBy: '',
       tags: newCred.tags,

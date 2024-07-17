@@ -5,10 +5,9 @@ import {
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import wkhtmltopdf from 'wkhtmltopdf';
+import * as wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-import QRCode from 'qrcode';
+import * as QRCode from 'qrcode';
 import JSZip from 'jszip';
 
 @Injectable()
@@ -17,6 +16,9 @@ export class RenderingUtilsService {
 
   async generateQR(cred: W3CCredential) {
     try {
+      if(!QRCode) {
+        console.log("library QRCode is not loaded!");
+      }
       let qrData = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
       if(process?.env?.QR_TYPE === "W3C_VC") {
         const zip = new JSZip();
@@ -31,6 +33,7 @@ export class RenderingUtilsService {
       }
       return QRCode.toDataURL(qrData);
     } catch (err) {
+      console.log(err);
       this.logger.error('Error rendering QR: ', err);
       throw new InternalServerErrorException('Error rendering QR');
     }
@@ -62,6 +65,7 @@ export class RenderingUtilsService {
         encoding: 'UTF-8',
       });
     } catch (err) {
+      console.log(err);
       this.logger.error('Error rendering PDF: ', err);
       throw new InternalServerErrorException('Error rendering PDF');
     }

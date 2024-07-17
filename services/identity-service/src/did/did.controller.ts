@@ -21,7 +21,7 @@ import {
 const { DIDDocument } = require('did-resolver');
 type DIDDocument = typeof DIDDocument;
 import { DidService } from './did.service';
-import { GenerateDidDTO } from './dtos/GenerateDid.dto';
+import { GenerateDidRequestDTO } from './dtos/GenerateDidRequest.dto';
 const pLimit = require('p-limit');
 const limit = pLimit(100);
 
@@ -33,10 +33,10 @@ export class DidController {
   @ApiOperation({ summary: 'Generate a new DID' })
   @ApiOkResponse({ description: 'DID Generated', isArray: true })
   @ApiBadRequestResponse({ description: 'Bad request' })
-  @ApiBody({ type: GenerateDidDTO, isArray: true })
+  @ApiBody({ type: GenerateDidRequestDTO, isArray: false })
   @Post('/did/generate')
   async generateDID(
-    @Body() generateRequest: { content: GenerateDidDTO[] },
+    @Body() generateRequest: GenerateDidRequestDTO,
   ): Promise<DIDDocument[]> {
     const promises = generateRequest.content.map((generateDidDTO) => {
       return limit(() => this.didService.generateDID(generateDidDTO));
@@ -45,7 +45,7 @@ export class DidController {
       return await Promise.all(promises);
     } catch (err) {
       Logger.error(err);
-      throw new InternalServerErrorException(`Error generating one or more DIDs`);
+      throw new InternalServerErrorException(err?.message);
     }
   }
 
