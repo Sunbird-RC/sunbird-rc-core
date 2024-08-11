@@ -370,7 +370,9 @@ public class RegistryHelper {
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
-            resultNode.set(ENTITY_LIST, vTransformer.transform(viewTemplate, resultNode.get(ENTITY_LIST)));
+            String entityName = resultNode.fields().next().getKey();
+            ObjectNode transformerInput = JsonNodeFactory.instance.objectNode().set(entityName, resultNode.get(entityName).get(ENTITY_LIST));
+            ((ObjectNode) resultNode.get(entityName)).set(ENTITY_LIST, vTransformer.transform(viewTemplate, transformerInput).get(entityName));
         }
         // Search is tricky to support LD. Needs a revisit here.
         logger.debug("searchEntity ends");
