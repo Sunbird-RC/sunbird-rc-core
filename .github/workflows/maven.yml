@@ -31,6 +31,11 @@ jobs:
         sudo rm -rf /usr/local/.ghcup/ghc/9.6.4
     - name: Check space before tests
       run: df -h
+    - name: Install Docker Compose
+      run: |
+        curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
       # debug step
 #    - name: Setup upterm session
 #      uses: lhotari/action-upterm@v1
