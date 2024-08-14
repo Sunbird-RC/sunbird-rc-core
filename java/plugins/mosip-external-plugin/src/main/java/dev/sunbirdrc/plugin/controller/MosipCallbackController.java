@@ -38,7 +38,7 @@ public class MosipCallbackController {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     private String uuidPropertyName;
 
     @RequestMapping(value = "/plugin/mosip/callback", method = RequestMethod.POST)

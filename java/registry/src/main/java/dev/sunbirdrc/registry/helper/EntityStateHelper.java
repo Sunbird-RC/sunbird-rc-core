@@ -37,7 +37,7 @@ public class EntityStateHelper {
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
 
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     private String uuidPropertyName;
 
     private final IDefinitionsManager definitionsManager;
@@ -48,9 +48,9 @@ public class EntityStateHelper {
 
     private final ClaimRequestClient claimRequestClient;
 
-    @Value("${identity.set_default_password}")
+    @Value("${identity.set-default-password}")
     private Boolean setDefaultPassword;
-    @Value("${identity.default_password}")
+    @Value("${identity.default-password}")
     private String defaultPassword;
     private final boolean authenticationEnabled;
 

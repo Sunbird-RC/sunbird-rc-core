@@ -66,7 +66,7 @@ public class RegistryServiceImplTest {
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
 	private String validationType = "json";
-	@Value("${registry.expandReference}")
+	@Value("${registry.expand-reference}")
 	private boolean expandReferenceObj;
 
 	public Constants.SchemaType getValidationType() throws IllegalArgumentException {

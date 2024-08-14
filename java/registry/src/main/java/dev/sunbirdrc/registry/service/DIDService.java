@@ -34,11 +34,11 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 @ConditionalOnProperty(value = "did.enabled", havingValue = "true")
 public class DIDService implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(DIDService.class);
-    @Value("${did.healthCheckURL}")
+    @Value("${did.health-check-url}")
     private String healthCheckUrl;
-    @Value("${did.generateURL}")
+    @Value("${did.generate-url}")
     private String generateIdUrl;
-    @Value("${did.resolveURL}")
+    @Value("${did.resolve-url}")
     private String resolveIdUrl;
 
     private static final String authorSchemaName = "Issuer";

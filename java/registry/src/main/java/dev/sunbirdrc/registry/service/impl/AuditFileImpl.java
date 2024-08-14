@@ -18,7 +18,7 @@ import dev.sunbirdrc.registry.util.AuditFileWriter;
  * Audit service implementation for audit layer in the application
  */
 @Component
-@ConditionalOnExpression("${audit.enabled} and 'file'.equalsIgnoreCase('${audit.frame.store}')")
+@ConditionalOnExpression("${audit.enabled} and 'file'.equalsIgnoreCase('${audit.frame-store}')")
 public class AuditFileImpl extends AuditServiceImpl {
 
     private static Logger logger = LoggerFactory.getLogger(AuditFileImpl.class);

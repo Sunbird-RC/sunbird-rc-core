@@ -50,14 +50,14 @@ public class JanusGraphStorage extends DatabaseProvider {
 	}
 
 	public JanusGraphStorage(Environment environment) {
-		String graphFactory = environment.getProperty("database.janus_cassandra.graphFactory");
-		String storageBackend = environment.getProperty("database.janus_cassandra.storage.backend");
-		String hostname = environment.getProperty("database.janus_cassandra.storage.hostname");
-		String storageKeyspace = environment.getProperty("database.janus_cassandra.storage.keyspace");
-		String dbCacheSize = environment.getProperty("database.janus_cassandra.db.cache.size");
-		String dbCacheCleanUpWaitTime = environment.getProperty("database.janus_cassandra.db.cache.clean.wait");
-		String searchIndex = environment.getProperty("database.janus_cassandra.index.storage.backend");
-		String searchHostname = environment.getProperty("database.janus_cassandra.index.hostname");
+		String graphFactory = environment.getProperty("database.janus-cassandra.graph-factory");
+		String storageBackend = environment.getProperty("database.janus-cassandra.storage.backend");
+		String hostname = environment.getProperty("database.janus-cassandra.storage.hostname");
+		String storageKeyspace = environment.getProperty("database.janus-cassandra.storage.keyspace");
+		String dbCacheSize = environment.getProperty("database.janus-cassandra.db-cache-size");
+		String dbCacheCleanUpWaitTime = environment.getProperty("database.janus-cassandra.db-cache-clean-wait");
+		String searchIndex = environment.getProperty("database.janus-cassandra.index.storage-backend");
+		String searchHostname = environment.getProperty("database.janus-cassandra.index.hostname");
 		setProvider(Constants.GraphDatabaseProvider.CASSANDRA);
 
 		Configuration config = new BaseConfiguration();

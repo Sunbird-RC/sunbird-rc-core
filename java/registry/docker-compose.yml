@@ -32,12 +32,5 @@ services:
       - /data:/data
       - ./logs:/logs
     command: java -jar -Xms1024m -Xmx2048m -XX:+UseG1GC -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=50M -Xloggc:logs/sunbirdrc_gc.log /registry.jar
-    environment:
-      - sunbird_sso_publickey=${sunbird_sso_publickey}
-      - sunbird_sso_realm=${sunbird_sso_realm}
-      - sunbird_sso_url=${sunbird_sso_url}
-      - sunbird_sso_username=${sunbird_sso_username}
-      - sunbird_sso_password=${sunbird_sso_password}
-      - sunbird_sso_client_id=${sunbird_sso_client_id}
 
 

@@ -37,7 +37,7 @@ public class SchemaService {
 
 	@Value("${signature.enabled:false}")
 	private boolean signatureEnabled;
-	@Value("${signature.provider}")
+	@Value("${signature.provider-name}")
 	private String signatureProvider;
 	@Autowired(required = false)
 	private CredentialSchemaService credentialSchemaService;
