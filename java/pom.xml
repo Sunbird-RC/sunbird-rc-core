@@ -1,30 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.2</version>
-        <relativePath/>
     </parent>
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-test</artifactId>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-junit-jupiter</artifactId>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <optional>true</optional>
-    </dependency>
-</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
     <groupId>dev.sunbirdrc</groupId>
     <artifactId>sunbird-rc</artifactId>
     <version>2.0.3</version>
@@ -42,16 +46,24 @@
         </license>
     </licenses>
     <properties>
+        <sunbird.revision>2.0.3</sunbird.revision>
+        <jsonldConversionVersion>${sunbird.revision}</jsonldConversionVersion>
+        <authorizationVersion>${sunbird.revision}</authorizationVersion>
+        <validationVersion>${sunbird.revision}</validationVersion>
+        <signaturePresenceValidationVersion>${sunbird.revision}</signaturePresenceValidationVersion>
+        <springframework.version>3.3.2</springframework.version>
+        <findbugs.version>3.0.1</findbugs.version>
+        <perf4j.version>0.9.16</perf4j.version>
         <neo4j.version>3.2.3</neo4j.version>
         <jacoco.version>0.8.12</jacoco.version>
-
-        <revision>2.0.3</revision>
-
-        <jsonldConversionVersion>${revision}</jsonldConversionVersion>
-        <authorizationVersion>${revision}</authorizationVersion>
-        <validationVersion>${revision}</validationVersion>
-        <signaturePresenceValidationVersion>${revision}</signaturePresenceValidationVersion>
-
+        <commons-io.version>2.16.1</commons-io.version>
+        <commons-lang3.version>3.16.0</commons-lang3.version>
+        <java.version>21</java.version>
+        <gson.version>2.11.0</gson.version>
+        <zjsonpatch.version>0.4.16</zjsonpatch.version>
+        <jakarta.json-api.version>2.1.3</jakarta.json-api.version>
+        <jsonld-java.version>0.13.6</jsonld-java.version>
+        <json-path.version>2.9.0</json-path.version>
     </properties>
 
     <modules>

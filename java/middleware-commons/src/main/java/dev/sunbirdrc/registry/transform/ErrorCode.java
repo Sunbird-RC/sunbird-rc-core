@@ -1,5 +1,8 @@
 package dev.sunbirdrc.registry.transform;
 
+import lombok.Getter;
+
+@Getter
 public enum ErrorCode {
 
 	NODE_MAPPING_NOT_DEFINED("NODE_MAPPING_NOT_DEFINED", 1000), JSON_TO_JSONLD_TRANFORMATION_ERROR(
@@ -14,11 +17,4 @@ public enum ErrorCode {
 		this.errorCode = errorCode;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
-	public int getErrorCode() {
-		return errorCode;
-	}
 }

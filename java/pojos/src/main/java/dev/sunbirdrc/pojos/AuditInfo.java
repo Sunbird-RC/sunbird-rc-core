@@ -1,45 +1,18 @@
 package dev.sunbirdrc.pojos;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
+@AllArgsConstructor
 public class AuditInfo {
     private String op;
     private String path;
+    @JsonIgnore
     private Object value;
+    @JsonIgnore
     private String from;
-
-    public String getOp() {
-        return op;
-    }
-
-    public void setOp(String op) {
-        this.op = op;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    @JsonIgnore
-    public String getFrom() {
-        return from;
-    }
-
-    public void setFrom(String path) {
-        this.from = path;
-    }
-
-    @JsonIgnore
-    public Object getValue() {
-        return value;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
 }
