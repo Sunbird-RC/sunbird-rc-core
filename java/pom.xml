@@ -1,22 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.2</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
     <groupId>dev.sunbirdrc</groupId>
     <artifactId>sunbird-rc</artifactId>
     <version>2.0.3</version>
     <name>Open Software for Building Electronic Registries</name>
+    <description>Sunbird RC is an open-source software framework for rapidly building electronic
+        registries, enable atestation capabilities, and build verifiable credentialling
+        with minimal effort.
+    </description>
     <packaging>pom</packaging>
-
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <junit.version>4.12</junit.version>
         <neo4j.version>3.2.3</neo4j.version>
-        <jacoco.version>0.8.1</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
 
         <revision>2.0.3</revision>
 
@@ -35,29 +46,27 @@
         <module>registry-interceptor</module>
         <module>registry</module>
         <module>elastic-search</module>
-		<module>view-templates</module>
+        <module>view-templates</module>
         <module>sunbirdrc-actors</module>
         <module>sunbird-actor</module>
         <module>claim</module>
         <module>apitest</module>
         <module>plugins</module>
-  </modules>
+    </modules>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
             </plugin>
         </plugins>
     </build>
