@@ -6,18 +6,22 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.AuditRecord;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class JSONUtilTest {
+class JSONUtilTest {
     private static final Logger logger = LoggerFactory.getLogger(JSONUtilTest.class);
     private static final String TEST_DIR = "src/test/resources/";
     private static final String ACTUAL_DATA = "actual_data.json";
@@ -38,24 +42,8 @@ public class JSONUtilTest {
         return objectNode;
     }
 
-//    @Test
-//    public void convertObjectJsonMap() {
-//    }
-//
-//    @Test
-//    public void getStringWithReplacedText() {
-//    }
-//
-//    @Test
-//    public void frameJsonAndRemoveIds() {
-//    }
-//
-//    @Test
-//    public void isJsonString() {
-//    }
-
     @Test
-    public void replaceField() {
+    void replaceField() {
         ObjectNode actualNode = getNodeData(ACTUAL_DATA);
         ObjectNode expectedNode = getNodeData(EXPECTED_REPLACE_FIELD_DATA);
 
@@ -64,7 +52,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void trimPrefix() {
+    void trimPrefix() {
         ObjectNode testDataNode = JsonNodeFactory.instance.objectNode();
         ObjectNode expected = JsonNodeFactory.instance.objectNode();
         try {
@@ -78,24 +66,26 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void addPrefix() {
+    void addPrefix() {
         ObjectNode actualNode = getNodeData(ACTUAL_DATA);
         ObjectNode expectedNode = getNodeData(EXPECTED_ADDED_PREFIX_DATA);
-        List<String> keys = new ArrayList<String>();
+        List<String> keys = new ArrayList<>();
         keys.add(Constants.JsonldConstants.ID);
 
         JSONUtil.addPrefix(actualNode, "prefix-", keys);
         assertEquals(actualNode, expectedNode);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void addNode_noKey_throws_exception() {
+    @Test
+    void addNode_noKey_throws_exception() {
         ObjectNode actualNode = getNodeData(ACTUAL_DATA);
-        JSONUtil.addNode(actualNode, "", JsonNodeFactory.instance.objectNode());
+        assertThrows(IllegalArgumentException.class, () -> {
+            JSONUtil.addNode(actualNode, "", JsonNodeFactory.instance.objectNode());
+        });
     }
 
     @Test
-    public void addNode() {
+    void addNode() {
         ObjectNode actualNode = getNodeData(ACTUAL_DATA);
         ObjectNode expectedNode = getNodeData(EXPECTED_ADDED_NODE_DATA);
 
@@ -107,7 +97,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void removeNode() {
+    void removeNode() {
         ObjectNode actualNode = getNodeData(ACTUAL_DATA);
         ObjectNode expectedNode = getNodeData(EXPECTED_DATA);
 
@@ -115,34 +105,8 @@ public class JSONUtilTest {
         assertEquals(actualNode, expectedNode);
     }
 
-//    @Test
-//    public void removeNodes() {
-//    }
-//
-//    @Test
-//    public void findKey() {
-//    }
-
-    private String getContent(String fileName) throws IOException {
-        InputStream in;
-        try {
-            in = this.getClass().getClassLoader().getResourceAsStream(fileName);
-            ByteArrayOutputStream result = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = in.read(buffer)) != -1) {
-                result.write(buffer, 0, length);
-            }
-            return result.toString(StandardCharsets.UTF_8.name());
-
-        } catch (IOException e) {
-            logger.error("Exception occurred: {}", ExceptionUtils.getStackTrace(e));
-            throw e;
-        }
-    }
-
     @Test
-    public void removeNodesByPathTest() throws Exception {
+    void removeNodesByPathTest() throws Exception {
         JsonNode node = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student.json"));
         Set<String> removalPaths = new HashSet<>(Arrays.asList(
                 "$.age",
@@ -159,7 +123,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void diffJsonNode_test() throws IOException {
+    void diffJsonNode_test() throws IOException {
         String beforeJsonStr = "{\"a\":{\"b1\":\"c\"}}";
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
@@ -171,8 +135,10 @@ public class JSONUtilTest {
         assertThat(patchNode.get(1).get("value").asText(), is("d"));
     }
 
+
+    //    @Disabled
     @Test
-    public void diffJsonNode_WithExistingValueAsEmpty() throws IOException {
+    void diffJsonNode_WithExistingValueAsEmpty() throws IOException {
         String beforeJsonStr = "";
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
@@ -182,7 +148,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void diffJsonNode_WithBothValuesAreSame() throws IOException {
+    void diffJsonNode_WithBothValuesAreSame() throws IOException {
         String beforeJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
@@ -192,7 +158,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void diffJsonNode_WithBothValuesempty() throws IOException {
+    void diffJsonNode_WithBothValuesempty() throws IOException {
         String beforeJsonStr = "";
         String afterJsonStr = "";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
@@ -202,7 +168,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void convertObjectJsonNode_doNotSerializeNullValues() throws IOException {
+    void convertObjectJsonNode_doNotSerializeNullValues() throws IOException {
         AuditRecord ar = new AuditRecord();
         ar.setUserId(null);
         ar.setAuditId("xyz");
@@ -210,12 +176,12 @@ public class JSONUtilTest {
         ar.setTransactionId(new ArrayList<>(Arrays.asList(1234, 4566)));
 
         JsonNode result = JSONUtil.convertObjectJsonNode(ar);
-        assertTrue(result.size() == 3);
-        assertTrue(result.get("userId") == null);
+        assertEquals(3, result.size());
+        assertNull(result.get("userId"));
     }
 
     @Test
-    public void shouldReplaceFieldByJsonPointer() throws IOException {
+    void shouldReplaceFieldByJsonPointer() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode test = objectMapper.readTree(new File(TEST_DIR + "actual_data.json"));
         String jsonPtrExpr = "/Teacher/inServiceTeacherTrainingFromCRC/daysOfInServiceTeacherTraining";
@@ -225,8 +191,7 @@ public class JSONUtilTest {
     }
 
     @Test
-    public void shouldAbleToFetchPropertiesFromEntity() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
+    void shouldAbleToFetchPropertiesFromEntity() throws IOException {
         final String entityFilePath = "src/test/resources/property-extraction/entity.json";
         final String expectedPropertyDataFilePath = "src/test/resources/property-extraction/extracted-out.json";
 
@@ -248,4 +213,21 @@ public class JSONUtilTest {
         assertEquals(expectedPropertyNode, actualPropertyData);
     }
 
+    private String getContent(String fileName) throws IOException {
+        InputStream in;
+        try {
+            in = this.getClass().getClassLoader().getResourceAsStream(fileName);
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = in.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            return result.toString(StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            logger.error("Exception occurred: {}", ExceptionUtils.getStackTrace(e));
+            throw e;
+        }
+    }
 }
