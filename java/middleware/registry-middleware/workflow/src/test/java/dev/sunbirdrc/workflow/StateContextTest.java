@@ -3,16 +3,15 @@ package dev.sunbirdrc.workflow;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import dev.sunbirdrc.workflow.StateContext;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class StateContextTest {
     private static final ObjectMapper m = new ObjectMapper();
@@ -20,7 +19,7 @@ public class StateContextTest {
     JsonNode existingNode;
     JsonNode updatedNode;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         existingNode = m.readTree(new File(TEST_FOLDER + "existingNode.json"));
         updatedNode = m.readTree(new File(TEST_FOLDER + "updatedNode.json"));
@@ -28,7 +27,6 @@ public class StateContextTest {
 
     @Test
     public void shouldReturnTrueIfThereIsChangeInTheUpdatedNode() throws Exception {
-
         StateContext stateContext = StateContext.builder()
                 .existing(existingNode.at("/Student/identityDetails"))
                 .updated(updatedNode.at("/Student/identityDetails"))
