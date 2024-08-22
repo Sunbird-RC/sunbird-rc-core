@@ -3,7 +3,13 @@ package dev.sunbirdrc.auth.keycloak;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.identity_providers.pojos.*;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import jakarta.ws.rs.client.ClientBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient43Engine;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -16,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KEYCLOAK_SERVICE_NAME;
@@ -38,6 +44,12 @@ public class KeycloakAdminUtil implements IdentityManager {
     }
 
     private Keycloak buildKeycloak(IdentityProviderConfiguration configuration) {
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+
+        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).build();
+        cm.setMaxTotal(configuration.getHttpMaxConnections()); // Increase max total connection to 200
+        ApacheHttpClient43Engine engine = new ApacheHttpClient43Engine(httpClient);
+        ResteasyClient restClient = ((ResteasyClientBuilder) ClientBuilder.newBuilder()).httpEngine(engine).build();
         return KeycloakBuilder.builder()
                 .serverUrl(configuration.getUrl())
                 .realm(configuration.getRealm())
@@ -45,8 +57,7 @@ public class KeycloakAdminUtil implements IdentityManager {
                 .clientId(configuration.getClientId())
                 .clientSecret(configuration.getClientSecret())
                 .resteasyClient(
-                        new ResteasyClientBuilder()
-                                .connectionPoolSize(configuration.getHttpMaxConnections()).build()
+                        restClient
                 )
                 .build();
     }
