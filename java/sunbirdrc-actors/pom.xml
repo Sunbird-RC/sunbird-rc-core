@@ -2,30 +2,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>sunbird-rc</artifactId>
-        <groupId>dev.sunbirdrc</groupId>
-        <version>2.0.3</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
 
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>dev.sunbirdrc.actors</groupId>
     <artifactId>sunbirdrc-actors</artifactId>
+    <version>2.0.3</version>
+    <name>sunbird-actors</name>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <properties>
+        <akka-remote.version>2.6.0-M2</akka-remote.version>
+        <okhttp.version>5.0.0-alpha.2</okhttp.version>
+        <commons-lang3.version>3.16.0</commons-lang3.version>
+        <protobuf-java.version>3.6.1</protobuf-java.version>
+        <sunbird.revision>2.0.3</sunbird.revision>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.sunbird.akka</groupId>
             <artifactId>sunbird-actor</artifactId>
-            <version>1.0.0</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
-            <version>${version}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>5.0.0-alpha.2</version>
-            <scope>compile</scope>
+            <version>${okhttp.version}</version>
         </dependency>
     </dependencies>
 
