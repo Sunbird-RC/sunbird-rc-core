@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>generic-iam</artifactId>
+    <description>Middleware for generic iam</description>
     <licenses>
         <license>
             <name>MIT License</name>

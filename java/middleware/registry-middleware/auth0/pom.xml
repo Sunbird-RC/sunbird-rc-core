@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>auth0</artifactId>
-
+    <description>Middleware to support auth0</description>
     <licenses>
         <license>
             <name>MIT License</name>

@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>keycloak</artifactId>
+    <description>Middleware for keycloak</description>
     <licenses>
         <license>
             <name>MIT License</name>
