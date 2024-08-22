@@ -34,7 +34,7 @@
     <version>2.0.3</version>
     <name>Open Software for Building Electronic Registries</name>
     <description>Sunbird RC is an open-source software framework for rapidly building electronic
-        registries, enable atestation capabilities, and build verifiable credentialling
+        registries, enable attestation capabilities, and build verifiable credentialling
         with minimal effort.
     </description>
     <packaging>pom</packaging>
@@ -64,6 +64,8 @@
         <jakarta.json-api.version>2.1.3</jakarta.json-api.version>
         <jsonld-java.version>0.13.6</jsonld-java.version>
         <json-path.version>2.9.0</json-path.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <keycloak-admin-client.version>25.0.4</keycloak-admin-client.version>
     </properties>
 
     <modules>
