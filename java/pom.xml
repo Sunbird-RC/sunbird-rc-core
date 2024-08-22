@@ -66,6 +66,7 @@
         <json-path.version>2.9.0</json-path.version>
         <jjwt.version>0.12.6</jjwt.version>
         <keycloak-admin-client.version>25.0.4</keycloak-admin-client.version>
+        <com-auth0.version>2.12.0</com-auth0.version>
     </properties>
 
     <modules>
