@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class AuditServiceImplTest {
+class AuditServiceImplTest {
 
     @Value("${audit.enabled}")
     private boolean auditEnabled;
@@ -70,7 +70,7 @@ public class AuditServiceImplTest {
     private AuditServiceImpl auditService;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         setField(auditService, "auditEnabled", auditEnabled);
         setField(auditService, "auditFrameStore", auditFrameStore);
@@ -86,14 +86,14 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void shouldAudit_ReturnsTrueWhenFileAuditEnabled() throws Exception {
+    void shouldAudit_ReturnsTrueWhenFileAuditEnabled() throws Exception {
         setField(auditService, "auditFrameStore", Constants.FILE);
         boolean result = auditService.shouldAudit("EntityType");
         assertTrue(result);
     }
 
     @Test
-    public void shouldAudit_ReturnsTrueWhenDBAuditEnabledAndDefinitionNotNull() throws Exception {
+    void shouldAudit_ReturnsTrueWhenDBAuditEnabledAndDefinitionNotNull() throws Exception {
         when(definitionsManager.getDefinition(anyString())).thenReturn(mock(Definition.class));
         setField(auditService, "auditFrameStore", Constants.DATABASE);
         boolean result = auditService.shouldAudit("EntityType");
@@ -101,28 +101,28 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void shouldAudit_ReturnsFalseWhenNoAuditingEnabled() throws Exception {
+    void shouldAudit_ReturnsFalseWhenNoAuditingEnabled() throws Exception {
         setField(auditService, "auditEnabled", false);
         boolean result = auditService.shouldAudit("EntityType");
         assertFalse(result);
     }
 
     @Test
-    public void isAuditAction_ReturnsAuditActionForMatchingSuffix() {
+    void isAuditAction_ReturnsAuditActionForMatchingSuffix() {
         String entityType = auditSuffix;
         String action = auditService.isAuditAction(entityType);
         assertEquals(Constants.AUDIT_ACTION_AUDIT, action);
     }
 
     @Test
-    public void isAuditAction_ReturnsSearchActionForNonMatchingSuffix() {
+    void isAuditAction_ReturnsSearchActionForNonMatchingSuffix() {
         String entityType = "NonMatchingEntity";
         String action = auditService.isAuditAction(entityType);
         assertEquals(Constants.AUDIT_ACTION_SEARCH, action);
     }
 
     @Test
-    public void createAuditInfo_ReturnsAuditInfoList() {
+    void createAuditInfo_ReturnsAuditInfoList() {
         String auditAction = "AuditAction";
         String entityType = "EntityType";
         List<AuditInfo> auditInfoList = auditService.createAuditInfo(auditAction, entityType);
@@ -134,13 +134,10 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void convertAuditRecordToJson_ReturnsJsonNode() throws IOException {
+    void convertAuditRecordToJson_ReturnsJsonNode() throws IOException {
         // Given
         AuditRecord auditRecord = new AuditRecord();
-        JsonNode inputNode = mock(JsonNode.class);
-        Shard shard = mock(Shard.class);
         String vertexLabel = "VertexLabel";
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         // When
         JsonNode result = auditService.convertAuditRecordToJson(auditRecord, vertexLabel);
@@ -151,7 +148,7 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void createAuditInfoWithJson_ReturnsAuditInfoListFromJson() throws JsonProcessingException {
+    void createAuditInfoWithJson_ReturnsAuditInfoListFromJson() throws JsonProcessingException {
         // Given
         String auditAction = "AuditAction";
         JsonNode differenceJson = mock(JsonNode.class);
@@ -168,7 +165,7 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void testDoAudit() throws AuditFailedException {
+    void testDoAudit() throws AuditFailedException {
         // Given
         AuditRecord auditRecord = mock(AuditRecord.class);
         JsonNode inputNode = mock(JsonNode.class);

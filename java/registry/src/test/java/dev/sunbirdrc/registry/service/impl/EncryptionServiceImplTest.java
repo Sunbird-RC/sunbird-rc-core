@@ -30,30 +30,30 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class EncryptionServiceImplTest {
+class EncryptionServiceImplTest {
 
     @Mock
     private RetryRestTemplate retryRestTemplate;
     @Mock
-    public SunbirdRCInstrumentation watch;
+    SunbirdRCInstrumentation watch;
     @InjectMocks
     private EncryptionServiceImpl encryptionServiceImpl;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         ReflectionTestUtils.setField(encryptionServiceImpl, "encryptionEnabled", true);
         ReflectionTestUtils.setField(encryptionServiceImpl, "gson", new Gson());
     }
 
     @Test
-    public void test_encrypt_api_with_object_as_input() throws Exception {
+    void test_encrypt_api_with_object_as_input() throws Exception {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
-                .thenAnswer(invocation -> ResponseEntity.ok("{\"encrypted\": \"data\"}"));
+                .thenAnswer(invocation -> ResponseEntity.ok("[success]"));
         assertThat(encryptionServiceImpl.encrypt(new Object()), is(notNullValue()));
     }
 
     @Test
-    public void test_encrypted_api_with_map_as_input() throws Exception {
+    void test_encrypted_api_with_map_as_input() throws Exception {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenAnswer(invocation -> ResponseEntity.ok("{\"encrypted\": \"data\"}"));
         Map<String, Object> propertyMap = new HashMap<>();
@@ -63,7 +63,7 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_encrypt_api_object_param_throwing_resource_exception() {
+    void test_encrypt_api_object_param_throwing_resource_exception() {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenThrow(ResourceAccessException.class);
         org.junit.jupiter.api.Assertions.assertThrows(EncryptionException.class, () -> {
@@ -72,7 +72,7 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_encrypt_api_map_param_throwing_resource_exception() {
+    void test_encrypt_api_map_param_throwing_resource_exception() {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenThrow(ResourceAccessException.class);
         org.junit.jupiter.api.Assertions.assertThrows(EncryptionException.class, () -> {
@@ -81,14 +81,14 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_decrypt_api_with_object_as_input() throws Exception {
+    void test_decrypt_api_with_object_as_input() throws Exception {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenAnswer(invocation -> ResponseEntity.ok("{\"decrypted\": \"data\"}"));
         assertThat(encryptionServiceImpl.decrypt(new Object()), is(notNullValue()));
     }
 
     @Test
-    public void test_decrypt_api_object_param_throwing_resource_exception() {
+    void test_decrypt_api_object_param_throwing_resource_exception() {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenThrow(ResourceAccessException.class);
         org.junit.jupiter.api.Assertions.assertThrows(EncryptionException.class, () -> {
@@ -97,7 +97,7 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_decrypt_api_with_input_as_map() throws Exception {
+    void test_decrypt_api_with_input_as_map() throws Exception {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenAnswer(invocation -> ResponseEntity.ok("{\"decrypted\": \"data\"}"));
         Map<String, Object> propertyMap = new HashMap<>();
@@ -107,7 +107,7 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_decrypt_api_map_param_throwing_resource_exception() {
+    void test_decrypt_api_map_param_throwing_resource_exception() {
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
                 .thenThrow(ResourceAccessException.class);
         org.junit.jupiter.api.Assertions.assertThrows(EncryptionException.class, () -> {
@@ -116,14 +116,14 @@ public class EncryptionServiceImplTest {
     }
 
     @Test
-    public void test_encryption_isup() throws Exception {
+    void test_encryption_isup() throws Exception {
         when(retryRestTemplate.getForEntity(nullable(String.class)))
                 .thenReturn(ResponseEntity.accepted().body("{\"status\": \"UP\"}"));
         assertTrue(encryptionServiceImpl.isEncryptionServiceUp());
     }
 
     @Test
-    public void test_encryption_isup_throw_restclientexception() {
+    void test_encryption_isup_throw_restclientexception() {
         when(retryRestTemplate.getForEntity(nullable(String.class)))
                 .thenThrow(RestClientException.class);
         assertFalse(encryptionServiceImpl.isEncryptionServiceUp());

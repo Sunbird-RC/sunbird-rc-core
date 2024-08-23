@@ -81,8 +81,6 @@ public class CredentialSchemaServiceTest {
         Object credTemplate = new LinkedHashMap<>();
         ((LinkedHashMap<String, Object>) credTemplate).put("credentialSubject", new LinkedHashMap<>());
 
-        when(credentialSchemaServiceMock.convertCredentialTemplateToSchema(title, credTemplate))
-                .thenCallRealMethod();
 
         JsonNode result = credentialSchemaService.convertCredentialTemplateToSchema(title, credTemplate);
         assertEquals("Proof of Test Credential", result.get("name").asText());
@@ -186,7 +184,6 @@ public class CredentialSchemaServiceTest {
         JsonNode expectedResult = JsonNodeFactory.instance.objectNode().set("title", JsonNodeFactory.instance.textNode("Test Title"));
 
         when(retryRestTemplate.postForEntity(any(), any(HttpEntity.class))).thenReturn(response);
-        when(objectMapper.readTree(anyString())).thenReturn(expectedResult);
         JsonNode result = credentialSchemaService.createSchema(title, credentialSchema, status);
         assertEquals(expectedResult, result);
 

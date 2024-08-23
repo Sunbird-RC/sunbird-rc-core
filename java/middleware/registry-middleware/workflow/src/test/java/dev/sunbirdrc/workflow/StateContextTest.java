@@ -10,23 +10,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class StateContextTest {
+class StateContextTest {
     private static final ObjectMapper m = new ObjectMapper();
     private static final String TEST_FOLDER = "src/test/resources/StateContext/";
     JsonNode existingNode;
     JsonNode updatedNode;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         existingNode = m.readTree(new File(TEST_FOLDER + "existingNode.json"));
         updatedNode = m.readTree(new File(TEST_FOLDER + "updatedNode.json"));
     }
 
     @Test
-    public void shouldReturnTrueIfThereIsChangeInTheUpdatedNode() throws Exception {
+    void shouldReturnTrueIfThereIsChangeInTheUpdatedNode() {
         StateContext stateContext = StateContext.builder()
                 .existing(existingNode.at("/Student/identityDetails"))
                 .updated(updatedNode.at("/Student/identityDetails"))
@@ -35,7 +35,7 @@ public class StateContextTest {
     }
 
     @Test
-    public void shouldReturnFalseIfThereIsNoChangeInRelevantFieldsUpdatedNode() throws Exception {
+    void shouldReturnFalseIfThereIsNoChangeInRelevantFieldsUpdatedNode() {
         StateContext stateContext = StateContext.builder()
                 .existing(existingNode.at("/Student/educationDetails/0"))
                 .updated(updatedNode.at("/Student/educationDetails/1"))
@@ -45,11 +45,11 @@ public class StateContextTest {
     }
 
     @Test
-    public void shouldReturnTrueIfFieldIsPresentOnlyInUpdatedNode() throws Exception {
-         StateContext stateContext = StateContext.builder()
-                 .existing(JsonNodeFactory.instance.objectNode())
-                 .updated(updatedNode.at("/Student/educationDetails/1/awards/0"))
-                 .build();
+    void shouldReturnTrueIfFieldIsPresentOnlyInUpdatedNode() {
+        StateContext stateContext = StateContext.builder()
+                .existing(JsonNodeFactory.instance.objectNode())
+                .updated(updatedNode.at("/Student/educationDetails/1/awards/0"))
+                .build();
         assertTrue(stateContext.isModified());
     }
 }

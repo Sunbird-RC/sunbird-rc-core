@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SignatureV2ServiceImplTest {
+class SignatureV2ServiceImplTest {
 
     @Mock
     private RetryRestTemplate retryRestTemplate;
@@ -57,12 +57,12 @@ public class SignatureV2ServiceImplTest {
     private SignatureV2ServiceImpl signatureServiceMock;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         signatureServiceMock = spy(signatureService);
     }
 
     @Test
-    public void testSign_Success() throws Exception {
+    void testSign_Success() throws Exception {
         // Prepare test data
         String title = "Test Title";
         ObjectNode data = JsonNodeFactory.instance.objectNode();
@@ -70,37 +70,41 @@ public class SignatureV2ServiceImplTest {
         Object credentialTemplate = "{ \"context\": [], \"credentialSubject\": { \"property1\": \"value1\", \"property2\": \"value2\" } }";
 
         doReturn(null).when(signatureServiceMock).issueCredential(any(), any(), any());
-        doReturn(new ObjectMapper().readTree("{ \"schema\": { \"id\": \"schemaid\", \"version\": \"1.0.0\" }}")).when(credentialSchemaService).getLatestSchemaByTags(any());
 
         Map<String, Object> map = new HashMap<>();
         map.put("title", title);
         map.put("data", data);
         map.put("credentialTemplate", credentialTemplate);
-
-        // Add assertions and other test logic here
+        try {
+            signatureServiceMock.sign(map);
+        } catch (Exception e) {
+            fail("Exception should not be thrown");
+        }
     }
 
     @Test
-    public void testSign_Exception() throws Exception {
+    void testSign_Exception() {
         // Prepare test data
         String title = "Test Title";
         ObjectNode data = JsonNodeFactory.instance.objectNode();
         data.put("key", "value");
         Object credentialTemplate = "{ \"context\": [], \"credentialSubject\": { \"property1\": \"value1\", \"property2\": \"value2\" } }";
 
-        doThrow(new RuntimeException()).when(signatureServiceMock).issueCredential(any(), any(), any());
-        doReturn(new ObjectMapper().readTree("{ \"schema\": { \"id\": \"schemaid\", \"version\": \"1.0.0\" }}")).when(credentialSchemaService).getLatestSchemaByTags(any());
-
         Map<String, Object> map = new HashMap<>();
         map.put("title", title);
         map.put("data", data);
         map.put("credentialTemplate", credentialTemplate);
 
-        // Add assertions and other test logic here
+        try {
+            signatureServiceMock.sign(map);
+            fail("Exception should be thrown");
+        } catch (Exception e) {
+            assertTrue(true);
+        }
     }
 
     @Test
-    public void testVerify_Success() throws SignatureException.VerificationException, SignatureException.UnreachableException, IOException {
+    void testVerify_Success() throws SignatureException.VerificationException, SignatureException.UnreachableException, IOException {
         // Prepare test data
         ObjectNode credential = JsonNodeFactory.instance.objectNode();
         credential.put("signedCredentials", "12345");
@@ -118,7 +122,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testVerify_Exception() throws Exception {
+    void testVerify_Exception() throws Exception {
         // Prepare test data
         ObjectNode credential = JsonNodeFactory.instance.objectNode();
         credential.put("signedCredentials", "12345");
@@ -129,11 +133,16 @@ public class SignatureV2ServiceImplTest {
 
         ReflectionTestUtils.setField(signatureServiceMock, "objectMapper", new ObjectMapper());
         doReturn(result).when(signatureServiceMock).verifyCredentialById(any());
-        // Add assertions and other test logic here
+        try {
+            signatureServiceMock.verify(Collections.singletonMap("signedCredentials", "12345"));
+            fail("Exception should be thrown");
+        } catch (Exception e) {
+            assertTrue(true);
+        }
     }
 
     @Test
-    public void testGetKey_success() throws Exception {
+    void testGetKey_success() throws Exception {
         String keyId = "did:1234";
         JsonNode didDocument = new ObjectMapper().readTree("{\"verificationMethod\": [{\"id\": \"did:1234\"}]}");
         when(didService.resolveDid(keyId)).thenReturn(didDocument);
@@ -141,7 +150,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testGetKey_not_exists() throws Exception {
+    void testGetKey_not_exists() throws Exception {
         String keyId = "did:1234";
         JsonNode didDocument = new ObjectMapper().readTree("{\"verificationMethod\": [{\"id\": \"did:12345\"}]}");
         when(didService.resolveDid(keyId)).thenReturn(didDocument);
@@ -149,28 +158,35 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void restRevoke_success() throws Exception {
+    void restRevoke_success() {
         String credentialId = "did:1234";
         doNothing().when(retryRestTemplate).deleteForEntity(any(), eq(credentialId));
-        // Add assertions and other test logic here
+        try {
+            signatureService.revoke("", "", credentialId);
+        } catch (Exception e) {
+            fail("Exception should not be thrown");
+        }
     }
 
     @Test
-    public void testRevoke_Exception() throws Exception {
+    void testRevoke_Exception() {
         String credentialId = "did:1234";
         doThrow(new RuntimeException("Not Valid")).when(retryRestTemplate).deleteForEntity(any(), eq(credentialId));
-        // Add assertions and other test logic here
+        try {
+            signatureService.revoke("", "", credentialId);
+            fail("Exception should be thrown");
+        } catch (Exception e) {
+            assertTrue(true);
+        }
     }
 
     @Test
-    public void testGetCertificate_application_json() throws Exception {
+    void testGetCertificate_application_json() throws Exception {
         // Set up test data
         String credentialId = "123";
-        byte[] bytesResult = new byte[]{1,2,3,4,5};
+        byte[] bytesResult = new byte[]{1, 2, 3, 4, 5};
 
         // Mock getCredentialById method
-        String template = "abcd";
-        when(retryRestTemplate.getForEntity(any(), any())).thenReturn(ResponseEntity.ok(template));
         doReturn(JsonNodeFactory.instance.objectNode()).when(signatureServiceMock).getCredentialById(any());
         doReturn(bytesResult).when(signatureServiceMock).getCredentialById(any(), any(), any(), any());
 
@@ -182,7 +198,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testGetCredentialById() throws IOException, NotFoundException {
+    void testGetCredentialById() throws IOException, NotFoundException {
         String credentialId = "validCredentialId";
         String responseBody = "{\"id\": \"validCredentialId\", \"name\": \"John Doe\"}";
         ResponseEntity<String> responseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
@@ -196,11 +212,16 @@ public class SignatureV2ServiceImplTest {
 
         // negative test case
         when(retryRestTemplate.getForEntity(any(), any())).thenReturn(badResponse);
-        // Add assertions and other test logic here
+        try {
+            signatureService.getCredentialById(credentialId);
+            fail("Exception should be thrown");
+        } catch (NotFoundException e) {
+            assertTrue(true);
+        }
     }
 
     @Test
-    public void testGetCredentialByIdWithFormatRender() {
+    void testGetCredentialByIdWithFormatRender() {
         // Set up test data
         String credentialId = "123";
         String format = "application/pdf";
@@ -218,7 +239,11 @@ public class SignatureV2ServiceImplTest {
 
         // Invoke the method
         byte[] result = null;
-        // Add assertions and other test logic here
+        try {
+            result = signatureService.getCredentialById(credentialId, format, templateId, template);
+        } catch (IOException | NotFoundException e) {
+            fail("Exception should not be thrown");
+        }
 
         // Verify the result
         assertNotNull(result);
@@ -226,7 +251,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testRevocationList_success() throws IOException {
+    void testRevocationList_success() throws IOException {
         // Set up test data
         String issuerDid = "validIssuerDid";
         Integer page = 1;
@@ -255,7 +280,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testRevocationList_Exception() throws IOException {
+    void testRevocationList_Exception() throws IOException {
         // Set up test data
         String issuerDid = "validIssuerDid";
         Integer page = 1;
@@ -280,7 +305,7 @@ public class SignatureV2ServiceImplTest {
     }
 
     @Test
-    public void testGetHealthInfo() throws Exception {
+    void testGetHealthInfo() {
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
         ResponseEntity<String> successResponse = ResponseEntity.ok("{\"status\": \"UP\"}");
         when(retryRestTemplate.getForEntity(any())).thenReturn(successResponse);
@@ -289,7 +314,6 @@ public class SignatureV2ServiceImplTest {
         ComponentHealthInfo healthInfo = signatureService.getHealthInfo();
         assertNotNull(healthInfo);
         assertTrue(healthInfo.isHealthy());
-        // Add assertions based on the expected behavior of getHealthInfo method for a successful response
 
         // Mocking the RetryRestTemplate to return a ResponseEntity with an unsuccessful response
         ResponseEntity<String> failureResponse = ResponseEntity.badRequest().body("Error");
@@ -299,6 +323,5 @@ public class SignatureV2ServiceImplTest {
         ComponentHealthInfo failedHealthInfo = signatureService.getHealthInfo();
         assertNotNull(failedHealthInfo);
         assertFalse(failedHealthInfo.isHealthy());
-        // Add assertions based on the expected behavior of getHealthInfo method with a failed response
     }
 }

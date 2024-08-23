@@ -22,7 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 @SpringBootTest(classes = {ObjectMapper.class, KieConfiguration.class})
-public class NotificationHelperTest {
+class NotificationHelperTest {
     @Mock
     private RegistryService registryService;
     @Mock
@@ -48,7 +49,7 @@ public class NotificationHelperTest {
     NotificationTemplates notificationTemplates;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         objectMapper = new ObjectMapper();
         notificationHelper = new NotificationHelper(notificationEnabled, definitionsManager, entityStateHelper, registryService, objectMapper);
         osSchemaConfiguration = Mockito.mock(OSSchemaConfiguration.class);
@@ -57,15 +58,15 @@ public class NotificationHelperTest {
         when(definition.getOsSchemaConfiguration()).thenReturn(osSchemaConfiguration);
         ObjectNode owners = mock(ObjectNode.class);
         inputJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"contactNumber\": \"1234123423\", \"instituteName\": \"Insitute2\", \"osid\": \"123\"}}");
-        when(owners.get(MOBILE)).thenReturn(JsonNodeFactory.instance.textNode("1234123423"));
-        when(owners.get(EMAIL)).thenReturn(JsonNodeFactory.instance.textNode("gecasu.ihises@tovinit.com"));
-        when(entityStateHelper.getOwnersData(inputJson, "Institute")).thenReturn(Collections.singletonList(owners));
+//        when(owners.get(MOBILE)).thenReturn(JsonNodeFactory.instance.textNode("1234123423"));
+//        when(owners.get(EMAIL)).thenReturn(JsonNodeFactory.instance.textNode("gecasu.ihises@tovinit.com"));
+//        when(entityStateHelper.getOwnersData(inputJson, "Institute")).thenReturn(Collections.singletonList(owners));
         notificationTemplates = mock(NotificationTemplates.class);
         when(osSchemaConfiguration.getNotificationTemplates()).thenReturn(notificationTemplates);
     }
 
     @Test
-    public void shouldSendNotificationForCreateEntity() throws Exception {
+    void shouldSendNotificationForCreateEntity() throws Exception {
         List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
         notificationTemplates1.add(new NotificationTemplate("Credential Created", "{{name}}, Your {{entityType}} credential has been created"));
         when(notificationTemplates.getCreate()).thenReturn(notificationTemplates1);
@@ -77,7 +78,7 @@ public class NotificationHelperTest {
     }
 
     @Test
-    public void shouldSendNotificationForUpdateEntity() throws Exception {
+    void shouldSendNotificationForUpdateEntity() throws Exception {
         JsonNode inputJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"contactNumber\": \"1234123423\", \"instituteName\": \"Insitute2\", \"osid\": \"123\"}}");
         List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
         notificationTemplates1.add(new NotificationTemplate("Credential Updated", "{{name}}, Your {{entityType}} credential has been updated"));
@@ -90,7 +91,7 @@ public class NotificationHelperTest {
     }
 
     @Test
-    public void shouldSendNotificationForInviteEntity() throws Exception {
+    void shouldSendNotificationForInviteEntity() throws Exception {
         List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
         notificationTemplates1.add(new NotificationTemplate("Invitation", "{{name}}, You have been invited"));
         when(notificationTemplates.getInvite()).thenReturn(notificationTemplates1);
@@ -102,7 +103,7 @@ public class NotificationHelperTest {
     }
 
     @Test
-    public void shouldSendNotificationForDeleteEntity() throws Exception {
+    void shouldSendNotificationForDeleteEntity() throws Exception {
         List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
         notificationTemplates1.add(new NotificationTemplate("Revoked", "{{name}}, Your credential has been revoked"));
         when(notificationTemplates.getDelete()).thenReturn(notificationTemplates1);
@@ -114,7 +115,7 @@ public class NotificationHelperTest {
     }
 
     @Test
-    public void shouldSendMultipleNotificationsIfMultipleOwnersPresent() throws Exception {
+    void shouldSendMultipleNotificationsIfMultipleOwnersPresent() throws Exception {
         JsonNode inputJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"contactNumber\": \"123123\", \"adminEmail\": \"admin@email.com\",\n" +
                 "  \"adminMobile\": \"1234\"\n" +
                 "}}");
@@ -144,7 +145,7 @@ public class NotificationHelperTest {
     }
 
     @Test
-    public void shouldSendMultipleNotificationsIfMultipleTemplatesConfigured() throws Exception {
+    void shouldSendMultipleNotificationsIfMultipleTemplatesConfigured() throws Exception {
         List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
         notificationTemplates1.add(new NotificationTemplate("Revoked", "{{name}}, Your credential has been revoked"));
         notificationTemplates1.add(new NotificationTemplate("Revoked", "{{instituteName}}, Your credential has been revoked"));

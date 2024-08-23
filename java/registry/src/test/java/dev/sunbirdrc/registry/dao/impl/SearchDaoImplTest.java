@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
-import dev.sunbirdrc.registry.dao.IRegistryDao;
-import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
-import dev.sunbirdrc.registry.dao.SearchDao;
-import dev.sunbirdrc.registry.dao.SearchDaoImpl;
-import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.AuditFailedException;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
@@ -19,16 +15,12 @@ import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.registry.util.OSResourceLoader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import jakarta.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.hamcrest.core.Every;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +29,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
-import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = { DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class })
+@SpringBootTest(classes = {DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class})
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SearchDaoImplTest {
+class SearchDaoImplTest {
 
     private static Graph graph;
     private SearchDao searchDao;
@@ -62,11 +57,11 @@ public class SearchDaoImplTest {
     private final static int limit = 1;
     private final static boolean expandInternal = true;
     private List<String> entities = new ArrayList<>();
-    @Value("${registry.expandReference:false}")
+    @Value("${registry.expandReference}")
     private boolean expandReferenceObj;
 
     @BeforeEach
-    public void initializeGraph() throws IOException {
+    void initializeGraph() throws IOException {
         dbConnectionInfoMgr.setUuidPropertyName("tid");
 
         databaseProvider = dbProviderFactory.getInstance(null);
@@ -80,14 +75,14 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
+    void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
         SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").get(ENTITY_LIST).isEmpty());
     }
 
     @Test
-    public void testEqOperator() {
+    void testEqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -96,7 +91,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testNeqOperator() {
+    void testNeqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.neq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -105,7 +100,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testRangeOperator() {
+    void testRangeOperator() {
         List<Object> range = new ArrayList<>();
         range.add(1);
         range.add(3);
@@ -118,7 +113,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testOrOperator() {
+    void testOrOperator() {
         List<Object> values = new ArrayList<>();
         values.add("marko");
         values.add("vedas");
@@ -131,7 +126,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testStartsWithOperator() {
+    void testStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.startsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -140,7 +135,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testNotStartsWithOperator() {
+    void testNotStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -149,7 +144,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testEndsWithOperator() {
+    void testEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.endsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -158,7 +153,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testNotEndsWithOperator() {
+    void testNotEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -167,7 +162,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testContainsOperator() {
+    void testContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.contains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -176,7 +171,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testNotContainsOperator() {
+    void testNotContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notContains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -185,7 +180,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testMultiOperators() {
+    void testMultiOperators() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "a", FilterOperators.contains);
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lte, 1));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lt, 3));
@@ -197,14 +192,14 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testResponseLimit() {
+    void testResponseLimit() {
         SearchQuery searchQuery = new SearchQuery(entities, offset, limit);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertEquals(1, result.get("Teacher").get(ENTITY_LIST).size());
     }
 
     @PreDestroy
-    public void shutdown() throws Exception {
+    void shutdown() throws Exception {
         graph.close();
     }
 

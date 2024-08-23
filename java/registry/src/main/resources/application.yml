@@ -401,7 +401,7 @@ spring:
     allow-bean-definition-overriding: true
   config:
     activate:
-      on-profile: default
+      on-profile: test
   output:
     ansi:
       enabled: ALWAYS

@@ -7,32 +7,32 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PluginRequestMessageTest {
+class PluginRequestMessageTest {
 
     PluginRequestMessage pluginRequestMessage;
     final String pluginName = "ClaimPluginActor";
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         pluginRequestMessage = new PluginRequestMessage();
     }
 
     @Test
-    public void shouldAbleToGetActorNameIfParamsIsNotPresent() {
+    void shouldAbleToGetActorNameIfParamsIsNotPresent() {
         String attestationPlugin = "did:internal:ClaimPluginActor?entity=Teacher";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
         assertEquals(pluginName, pluginRequestMessage.getActorName().get());
     }
 
     @Test
-    public void shouldAbleToGetActorNameIfParamsIsPresent() {
+    void shouldAbleToGetActorNameIfParamsIsPresent() {
         String attestationPlugin = "did:internal:ClaimPluginActor";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
         assertEquals(pluginName, pluginRequestMessage.getActorName().get());
     }
 
     @Test
-    public void shouldReturnOptionalEmptyForInvalidPluginURI() {
+    void shouldReturnOptionalEmptyForInvalidPluginURI() {
         String attestationPlugin = "did:internal";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
         assertEquals(Optional.empty(), pluginRequestMessage.getActorName());

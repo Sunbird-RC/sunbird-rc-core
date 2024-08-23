@@ -23,6 +23,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -125,8 +126,8 @@ public class EncryptionServiceImpl implements EncryptionService {
             watch.start("EncryptionServiceImpl.encryptBatch");
             ResponseEntity<String> response = retryRestTemplate.postForEntity(uri, entity);
             watch.stop("EncryptionServiceImpl.encryptBatch");
-            List<T> results = gson.fromJson(response.getBody(), new TypeToken<List<T>>() {
-            }.getType());
+            Type type = TypeToken.getParameterized(List.class, propertyValue.getClass()).getType();
+            List<T> results = gson.fromJson(response.getBody(), type);
             assert results != null;
             return results.get(0);
         } catch (ResourceAccessException e) {
@@ -149,8 +150,8 @@ public class EncryptionServiceImpl implements EncryptionService {
             watch.start("EncryptionServiceImpl.decryptBatch");
             ResponseEntity<String> response = retryRestTemplate.postForEntity(uri, entity);
             watch.stop("EncryptionServiceImpl.decryptBatch");
-            return gson.fromJson(response.getBody(), new TypeToken<T>() {
-            }.getType());
+            Type type = TypeToken.get(propertyValue.getClass()).getType();
+            return gson.fromJson(response.getBody(), type);
         } catch (ResourceAccessException e) {
             logger.error("Exception while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
             throw new EncryptionException("Exception while connecting encryption service ! ");

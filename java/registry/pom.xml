@@ -35,7 +35,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -98,11 +97,6 @@
             <version>${sunbird.revision}</version>
         </dependency>
 
-        <dependency>
-            <groupId>dev.sunbirdrc.actors</groupId>
-            <artifactId>sunbirdrc-actors</artifactId>
-            <version>${sunbird.revision}</version>
-        </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>divoc-external-plugin</artifactId>
@@ -335,6 +329,21 @@
             <version>${httpclient5.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${jakarta.validation-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>${jakarta.el.version}</version>
+        </dependency>
 
     </dependencies>
 

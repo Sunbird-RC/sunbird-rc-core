@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SchemaServiceTest {
+class SchemaServiceTest {
     private static final String TRAINING_CERTIFICATE = "TrainingCertificate";
     private final ObjectMapper objectMapper = new ObjectMapper();
     DefinitionsManager definitionsManager = new DefinitionsManager();
@@ -54,7 +54,7 @@ public class SchemaServiceTest {
     String trainingCertificateSchema;
 
     @BeforeEach
-    public void setup() throws IOException {
+    void setup() throws IOException {
         definitionsManager = new DefinitionsManager();
         Map<String, Definition> definitionMap = new HashMap<>();
         trainingCertificateSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
@@ -65,7 +65,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldDeleteSchemaFromDefinitionManger() throws SchemaException {
+    void shouldDeleteSchemaFromDefinitionManger() throws SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         Vertex vertex = mock(Vertex.class);
         VertexProperty vertexProperty = mock(VertexProperty.class);
@@ -76,7 +76,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotDeleteSchemaFromDefinitionManger() throws IOException, SchemaException {
+    void shouldNotDeleteSchemaFromDefinitionManger() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         Vertex vertex = mock(Vertex.class);
         VertexProperty vertexProperty = mock(VertexProperty.class);
@@ -88,7 +88,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotDeleteSchemasIfPublished() throws IOException, SchemaException {
+    void shouldNotDeleteSchemasIfPublished() throws IOException, SchemaException {
         Vertex vertex = mock(Vertex.class);
         VertexProperty schemaProperty = mock(VertexProperty.class);
         Mockito.when(schemaProperty.value()).thenReturn(SchemaStatus.PUBLISHED.toString());
@@ -99,7 +99,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldDeleteSchemasIfPublished() throws IOException, SchemaException {
+    void shouldDeleteSchemasIfPublished() throws IOException, SchemaException {
         Vertex vertex = mock(Vertex.class);
         VertexProperty vertexProperty = mock(VertexProperty.class);
         VertexProperty schemaProperty = mock(VertexProperty.class);
@@ -112,7 +112,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToDefinitionManager() throws IOException, SchemaException {
+    void shouldAddSchemaToDefinitionManager() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -125,7 +125,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException, SchemaException {
+    void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException, SchemaException {
         ReflectionTestUtils.setField(schemaService, "isElasticSearchEnabled", true);
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
@@ -140,7 +140,7 @@ public class SchemaServiceTest {
 
 
     @Test
-    public void shouldAddStatusToNewSchemasIfNotPresent() throws IOException, SchemaException {
+    void shouldAddStatusToNewSchemasIfNotPresent() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -154,7 +154,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException, SchemaException {
+    void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -167,7 +167,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException, SchemaException {
+    void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -179,7 +179,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldUpdateSchemaIfStatusIsNotUpdated() throws IOException, SchemaException {
+    void shouldUpdateSchemaIfStatusIsNotUpdated() throws IOException, SchemaException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
         assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
@@ -221,7 +221,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateSchemaIfSchemaDefinitionUpdated() throws SchemaException, IOException {
+    void shouldNotUpdateSchemaIfSchemaDefinitionUpdated() throws SchemaException, IOException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
         assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
@@ -266,7 +266,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateSchemaStatusIfSchemaAlreadyPublished() throws SchemaException, IOException {
+    void shouldNotUpdateSchemaStatusIfSchemaAlreadyPublished() throws SchemaException, IOException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
         assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
@@ -310,7 +310,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldUpdateSchemaStatusIfInDraft() throws IOException, SchemaException {
+    void shouldUpdateSchemaStatusIfInDraft() throws IOException, SchemaException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
         assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
@@ -351,7 +351,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldUpdateSchemaStatus() throws IOException, SchemaException {
+    void shouldUpdateSchemaStatus() throws IOException, SchemaException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
         assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
@@ -394,7 +394,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldUpdateSchemaConfigIfSchemaIsPublished() throws SchemaException, IOException {
+    void shouldUpdateSchemaConfigIfSchemaIsPublished() throws SchemaException, IOException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 
         assertNull(existingDefinition.get("_osConfig").get("certificateTemplates"));
@@ -438,7 +438,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotAddDuplicateSchemaToDefinitionManager() throws IOException, SchemaException {
+    void shouldNotAddDuplicateSchemaToDefinitionManager() throws IOException, SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
@@ -459,7 +459,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotAddSchemaToDefinitionManagerIfInDraftStatus() throws IOException, SchemaException {
+    void shouldNotAddSchemaToDefinitionManagerIfInDraftStatus() throws IOException, SchemaException {
         assertNull(definitionsManager.getDefinition("BirthCertificate"));
 
         JsonNode updatedSchema = objectMapper.readTree("{\n" +
@@ -483,7 +483,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldNotAddSchemaToDefinitionManagerWithInternalSchemaNames() throws Exception {
+    void shouldNotAddSchemaToDefinitionManagerWithInternalSchemaNames() throws Exception {
         definitionsManager.loadDefinition();
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
         assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
@@ -528,7 +528,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToSchemFilter() throws IOException, SchemaException {
+    void shouldAddSchemaToSchemFilter() throws IOException, SchemaException {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
         ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -540,7 +540,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToSchemFilterInviteAnonymous() throws IOException, SchemaException {
+    void shouldAddSchemaToSchemFilterInviteAnonymous() throws IOException, SchemaException {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
         ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -552,7 +552,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToAnonymousSchemaFilterOnUpdate() throws SchemaException, IOException {
+    void shouldAddSchemaToAnonymousSchemaFilterOnUpdate() throws SchemaException, IOException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 
         assertNull(existingDefinition.get("_osConfig").get("certificateTemplates"));
@@ -580,7 +580,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldAddSchemaToAnonymousInviteSchemaFilterOnUpdate() throws SchemaException, IOException {
+    void shouldAddSchemaToAnonymousInviteSchemaFilterOnUpdate() throws SchemaException, IOException {
         JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 
         assertNull(existingDefinition.get("_osConfig").get("certificateTemplates"));
@@ -608,7 +608,7 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void shouldDeleteSchemaFromSchemaFilter() throws SchemaException {
+    void shouldDeleteSchemaFromSchemaFilter() throws SchemaException {
         assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
         Vertex vertex = mock(Vertex.class);
         VertexProperty vertexProperty = mock(VertexProperty.class);

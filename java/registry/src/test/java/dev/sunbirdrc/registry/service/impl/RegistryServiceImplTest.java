@@ -59,14 +59,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, DBConnectionInfo.class, OSResourceLoader.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RegistryServiceImplTest {
+class RegistryServiceImplTest {
     @Value("${registry.schema.url}")
     private String schemaUrl;
     private String validationType = "json";
     @Value("${registry.expandReference}")
     private boolean expandReferenceObj;
 
-    public Constants.SchemaType getValidationType() throws IllegalArgumentException {
+    Constants.SchemaType getValidationType() throws IllegalArgumentException {
         String validationMechanism = validationType.toUpperCase();
         Constants.SchemaType st = Constants.SchemaType.valueOf(validationMechanism);
 
@@ -147,7 +147,7 @@ public class RegistryServiceImplTest {
     @Mock
     private EntityParenter entityParenter;
 
-    public void setup() throws IOException {
+    void setup() throws IOException {
         MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
         ReflectionTestUtils.setField(encryptionService, "decryptionUri", "decryptionUri");
@@ -165,7 +165,7 @@ public class RegistryServiceImplTest {
     }
 
     @BeforeEach
-    public void initialize() throws IOException {
+    void initialize() throws IOException {
         Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 
         SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
@@ -191,29 +191,25 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void test_health_check_up_scenario() throws Exception {
+    void test_health_check_up_scenario() throws Exception {
         when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, true));
         mockDatabaseProvider = mock(DatabaseProvider.class);
         when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
         ReflectionTestUtils.setField(healthCheckService, "healthIndicators", Arrays.asList(encryptionService, mockDatabaseProvider));
-        when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
         when(shardManager.getDefaultShard()).thenReturn(shard);
-        when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
         HealthCheckResponse response = healthCheckService.health(shardManager.getDefaultShard());
         assertTrue(response.isHealthy());
         response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
     }
 
     @Test
-    public void test_health_check_down_scenario() throws Exception {
+    void test_health_check_down_scenario() throws Exception {
         mockDatabaseProvider = mock(DatabaseProvider.class);
         when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
         when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, false));
         when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
         ReflectionTestUtils.setField(healthCheckService, "healthIndicators", Arrays.asList(signatureService, encryptionService, mockDatabaseProvider));
-        when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
         when(shardManager.getDefaultShard()).thenReturn(shard);
-        when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
 
         HealthCheckResponse response = healthCheckService.health(shardManager.getDefaultShard());
         System.out.println(response.toString());
@@ -231,7 +227,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldAddSchemaToDefinitionManager() throws Exception {
+    void shouldAddSchemaToDefinitionManager() throws Exception {
         int previousSize = definitionsManager.getAllKnownDefinitions().size();
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -239,13 +235,12 @@ public class RegistryServiceImplTest {
         object.put(Schema.toLowerCase(), schema);
         object.put("status", SchemaStatus.PUBLISHED.toString());
         schemaNode.set(Schema, object);
-        doNothing().when(entityParenter).ensureKnownParenter(any(), any(), any(), any());
         registryService.addEntity(shard, "", schemaNode, true);
         assertEquals(previousSize + 1, definitionsManager.getAllKnownDefinitions().size());
     }
 
     @Test
-    public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws Exception {
+    void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws Exception {
         int previousSize = definitionsManager.getAllKnownDefinitions().size();
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -259,7 +254,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldStoreOnlyPublicFieldsInES() throws Exception {
+    void shouldStoreOnlyFieldsInES() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -289,7 +284,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldNotRemoveAnyFieldsInAdd() throws Exception {
+    void shouldNotRemoveAnyFieldsInAdd() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Teacher.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -318,7 +313,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldUpdateArrayFieldsInEntity() throws Exception {
+    void shouldUpdateArrayFieldsInEntity() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -349,7 +344,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldUpdateTextFieldsInEntity() throws Exception {
+    void shouldUpdateTextFieldsInEntity() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -376,7 +371,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldUpdateOnlyPublicFieldsInES() throws Exception {
+    void shouldUpdateOnlyFieldsInES() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -413,7 +408,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldNotRemoveAnyFieldsInUpdate() throws Exception {
+    void shouldNotRemoveAnyFieldsInUpdate() throws Exception {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Teacher.json"), Charset.defaultCharset());
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -444,7 +439,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldTestVertexWriter() throws Exception {
+    void shouldTestVertexWriter() throws Exception {
         String v1 = addStudentToGraph();
         ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
         VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, expandReferenceObj);
@@ -484,7 +479,7 @@ public class RegistryServiceImplTest {
     }
 
     @Test
-    public void shouldNotAddDuplicateSchemaToDefinitionManager() throws Exception {
+    void shouldNotAddDuplicateSchemaToDefinitionManager() throws Exception {
         ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
         ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
         ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
