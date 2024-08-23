@@ -2,82 +2,82 @@ package dev.sunbirdrc.registry.util;
 
 public class RecordIdentifier {
 
-	private final static String SEPARATOR = "-";
-	private final static String REGEX_RECORDID = "[0-9a-z]*-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+    private final static String SEPARATOR = "-";
+    private final static String REGEX_RECORDID = "[0-9a-z]*-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-	private String shardLabel;
-	private String uuid;
+    private String shardLabel;
+    private String uuid;
 
-	public RecordIdentifier(String shardLabel, String uuid) {
-		this.shardLabel = shardLabel;
-		this.uuid = uuid;
-	}
+    public RecordIdentifier(String shardLabel, String uuid) {
+        this.shardLabel = shardLabel;
+        this.uuid = uuid;
+    }
 
-	public String getShardLabel() {
-		return shardLabel;
-	}
+    private static String format(String shardLabel, String uuid) {
+        return shardLabel + SEPARATOR + uuid;
+    }
 
-	public String getUuid() {
-		return uuid;
-	}
+    /**
+     * Creates RecordIdentifier object from a string representation
+     *
+     * @param input
+     * @return
+     */
+    public static RecordIdentifier parse(String input) {
+        return new RecordIdentifier(getLabel(input), getUUID(input));
+    }
 
-	private static String format(String shardLabel, String uuid) {
-		return shardLabel + SEPARATOR + uuid;
-	}
+    /**
+     * Return a value only when input form is shard SEPARATOR uuid
+     *
+     * @param input
+     * @return
+     */
+    private static String getLabel(String input) {
+        String shardLabel = null;
+        if (isValid(input))
+            shardLabel = input.substring(0, input.indexOf(SEPARATOR));
+        return shardLabel;
+    }
 
-	/**
-	 * Returns spring representation of RecordIdentifier. Example: shard
-	 * SEPARATOR uuid
-	 */
-	@Override
-	public String toString() {
-		String result;
-		if (this.getShardLabel() != null && !this.getShardLabel().isEmpty()) {
-			result = format(this.getShardLabel(), this.getUuid());
-		} else {
-			result = this.getUuid();
-		}
-		return result;
+    public static String getUUID(String input) {
+        String uuid = input;
+        if (isValid(input)) {
+            uuid = input.substring(input.indexOf(SEPARATOR) + 1, input.length());
+        }
+        return uuid;
+    }
 
-	}
+    private static boolean isValid(String uuid) {
+        return uuid.matches(REGEX_RECORDID);
+    }
 
-	/**
-	 * Creates RecordIdentifier object from a string representation
-	 * 
-	 * @param input
-	 * @return
-	 */
-	public static RecordIdentifier parse(String input) {
-		return new RecordIdentifier(getLabel(input), getUUID(input));
-	}
+    public static final String getSeparator() {
+        return SEPARATOR;
+    }
 
-	/**
-	 * Return a value only when input form is shard SEPARATOR uuid
-	 * 
-	 * @param input
-	 * @return
-	 */
-	private static String getLabel(String input) {
-		String shardLabel = null;
-		if (isValid(input))
-			shardLabel = input.substring(0, input.indexOf(SEPARATOR));
-		return shardLabel;
-	}
+    public String getShardLabel() {
+        return shardLabel;
+    }
 
-	public static String getUUID(String input) {
-		String uuid = input;
-		if (isValid(input)) {
-			uuid = input.substring(input.indexOf(SEPARATOR) + 1, input.length());
-		}
-		return uuid;
-	}
+    public String getUuid() {
+        return uuid;
+    }
 
-	private static boolean isValid(String uuid) {
-		return uuid.matches(REGEX_RECORDID);
-	}
+    /**
+     * Returns spring representation of RecordIdentifier. Example: shard
+     * SEPARATOR uuid
+     */
+    @Override
+    public String toString() {
+        String result;
+        if (this.getShardLabel() != null && !this.getShardLabel().isEmpty()) {
+            result = format(this.getShardLabel(), this.getUuid());
+        } else {
+            result = this.getUuid();
+        }
+        return result;
 
-	public static final String getSeparator() {
-		return SEPARATOR;
-	}
+    }
 
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,6 @@ import org.springframework.core.io.ResourceLoader;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,13 +22,12 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     private static final String SCHEMA = "SCHEMA_";
     private static final String SCHEMA_WILDCARD = SCHEMA + "*";
-
+    private static final Logger logger = LoggerFactory.getLogger(DistributedDefinitionsManager.class);
     private Set<String> internalSchemas = new HashSet<>();
     @Autowired
     private JedisPool jedisPool;
     @Autowired
     private ObjectMapper objectMapper;
-    private static final Logger logger = LoggerFactory.getLogger(DistributedDefinitionsManager.class);
     @Autowired
     private ResourceLoader resourceLoader;
 
@@ -50,7 +49,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             String schemaAsText = entry.getValue();
             JsonNode schemaJson = objectMapper.readTree(schemaAsText);
             Definition definition = new Definition(schemaJson);
-            try(Jedis jedis = jedisPool.getResource()) {
+            try (Jedis jedis = jedisPool.getResource()) {
                 jedis.set(SCHEMA + definition.getTitle(), schemaAsText);
                 jedis.set(SCHEMA + filenameWithoutExtn, schemaAsText);
             }
@@ -65,7 +64,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public Set<String> getAllKnownDefinitions() {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
             keys = keys.stream().map(key -> key.substring(SCHEMA.length())).collect(Collectors.toSet());
             return keys;
@@ -74,12 +73,12 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public List<Definition> getAllDefinitions() {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
             String[] keysArr = keys.toArray(new String[0]);
             List<String> definitionsStr = jedis.mget(keysArr);
             List<Definition> definitions = new ArrayList<>();
-            for(String definitionStr : definitionsStr) {
+            for (String definitionStr : definitionsStr) {
                 JsonNode jsonNode = objectMapper.readTree(definitionStr);
                 Definition definition = new Definition(jsonNode);
                 definitions.add(definition);
@@ -92,9 +91,9 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public Definition getDefinition(String title) {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             String schemaAsText = jedis.get(SCHEMA + title);
-            if(schemaAsText == null) {
+            if (schemaAsText == null) {
                 return null;
             }
             JsonNode schemaNode = objectMapper.readTree(schemaAsText);
@@ -107,7 +106,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public Map<String, Definition> getDefinitionMap() {
         Map<String, Definition> definitionMap = new HashMap<>();
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
             String[] keysArr = keys.toArray(new String[0]);
             List<String> definitionsStr = jedis.mget(keysArr);
@@ -130,9 +129,9 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             String value = jedis.get(SCHEMA + entity);
-            if(value != null) {
+            if (value != null) {
                 JsonNode schemaJson = objectMapper.readTree(value);
                 Definition definition = new Definition(schemaJson);
                 return definition.getOsSchemaConfiguration().getOwnershipAttributes();
@@ -147,7 +146,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public boolean isValidEntityName(String entityName) {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             return jedis.exists(SCHEMA + entityName);
         }
     }
@@ -165,14 +164,14 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public void appendNewDefinition(Definition definition) {
-        try(Jedis jedis = jedisPool.getResource()) {
-            jedis.set(SCHEMA+definition.getTitle(), definition.getContent());
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.set(SCHEMA + definition.getTitle(), definition.getContent());
         }
     }
 
     @Override
     public void removeDefinition(JsonNode jsonNode) {
-        try{
+        try {
             String schemaAsText = jsonNode.asText("{}");
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
             String schemaTitle = SCHEMA + schemaJsonNode.get(TITLE).asText();
@@ -184,7 +183,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public void removeDefinition(String schema) {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try (Jedis jedis = jedisPool.getResource()) {
             jedis.del(schema);
         } catch (Exception e) {
             throw new RuntimeException(e);

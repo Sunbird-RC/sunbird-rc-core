@@ -3,10 +3,10 @@ package dev.sunbirdrc.registry.model.attestation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class AttestationPathTest {
         return pointers.stream().map(EntityPropertyURI::getPropertyURI).collect(Collectors.toSet());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         node = m.readTree(new File(getBaseDir() + "/attestationPathTest/example.json"));
     }
@@ -56,6 +56,7 @@ public class AttestationPathTest {
         Set<EntityPropertyURI> pointers = new AttestationPath("education/[]/courses/[]/[]").getEntityPropertyURIs(node, UUID_PROP);
         assertTrue(convertToJsonPaths(pointers).containsAll(expectedUUIDPaths));
     }
+
     @Test
     public void testGetPointers_fieldPath() throws Exception {
         Set<EntityPropertyURI> pointers = new AttestationPath("education").getEntityPropertyURIs(node, UUID_PROP);

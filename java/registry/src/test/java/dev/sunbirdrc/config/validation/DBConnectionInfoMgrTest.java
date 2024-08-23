@@ -2,18 +2,18 @@ package dev.sunbirdrc.config.validation;
 
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DBConnectionInfoMgrTest {
 
@@ -23,7 +23,7 @@ public class DBConnectionInfoMgrTest {
 
     private Validator validator;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
@@ -31,13 +31,11 @@ public class DBConnectionInfoMgrTest {
 
     @Test
     public void testEmptyUuidProperty() {
-
         DBConnectionInfoMgr mgr = new DBConnectionInfoMgr();
         mgr.setProvider(NOT_EMPTY);
         mgr.setUuidPropertyName(EMPTY);
         Set<ConstraintViolation<DBConnectionInfoMgr>> violations = validator.validate(mgr);
         assertEquals(1, violations.size());
-
     }
 
     @Test
@@ -47,7 +45,6 @@ public class DBConnectionInfoMgrTest {
         mgr.setUuidPropertyName(NOT_EMPTY);
         Set<ConstraintViolation<DBConnectionInfoMgr>> violations = validator.validate(mgr);
         assertEquals(1, violations.size());
-
     }
 
     @Test
@@ -97,7 +94,6 @@ public class DBConnectionInfoMgrTest {
         mgr.setUuidPropertyName(NOT_EMPTY);
         Set<ConstraintViolation<DBConnectionInfoMgr>> violations = validator.validate(mgr);
         assertEquals(1, violations.size());
-
     }
 
     private List<DBConnectionInfo> getDBConnectionInfoList(String[] values) {
@@ -110,7 +106,5 @@ public class DBConnectionInfoMgrTest {
             connectionInfos.add(ci);
         }
         return connectionInfos;
-
     }
-
 }

@@ -1,20 +1,12 @@
 package dev.sunbirdrc.registry.exception;
 
-public class UniqueIdentifierException extends Exception{
+public class UniqueIdentifierException extends Exception {
 
 
     private static final long serialVersionUID = -6315798195661762883L;
 
     public UniqueIdentifierException(CustomException e) {
         super(e);
-    }
-
-    public class CreationException extends CustomException {
-        private static final long serialVersionUID = 6174717850058203377L;
-
-        public CreationException(String msg) {
-            super("Unable to create unique ID: " + msg);
-        }
     }
 
     public static class UnreachableException extends CustomException {
@@ -50,6 +42,14 @@ public class UniqueIdentifierException extends Exception{
 
         public FieldConfigNotFoundException(String message) {
             super("Unable to find UniqueIdentifierField configuration in schema configuration: " + message);
+        }
+    }
+
+    public class CreationException extends CustomException {
+        private static final long serialVersionUID = 6174717850058203377L;
+
+        public CreationException(String msg) {
+            super("Unable to create unique ID: " + msg);
         }
     }
 }

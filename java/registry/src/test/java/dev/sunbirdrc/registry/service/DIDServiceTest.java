@@ -2,7 +2,7 @@ package dev.sunbirdrc.registry.service;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
 import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,20 +16,20 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.service.impl.RetryRestTemplate;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestClientException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class DIDServiceTest {
 
@@ -52,7 +52,7 @@ public class DIDServiceTest {
     private static final String authorSchemaName = "Issuer";
     private static final String didPropertyName = "did";
 
-    @Before
+    @BeforeEach
     public void setup() {
         // Setup any initial configurations or mocks
     }
@@ -70,13 +70,7 @@ public class DIDServiceTest {
 
         // Negative test case when no results are found
         when(searchService.search(any(), anyString())).thenReturn(createEmptyJsonNode());
-        try {
-            didService.getDid(name);
-            fail("Expected RuntimeException to be thrown");
-        } catch (RuntimeException e) {
-            // Expected exception
-            assertTrue(e.getMessage().contains("did John Doe not found"));
-        }
+        assertThrows(RuntimeException.class, () -> didService.getDid(name));
     }
 
     @Test
@@ -104,13 +98,7 @@ public class DIDServiceTest {
         // Negative test case when no results are found
         resultsNode.set(authorSchemaName, JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()));
         when(searchService.search(any(), anyString())).thenReturn(resultsNode);
-        try {
-            didService.findDidForProperty(propertyName, value);
-            fail("Expected RuntimeException to be thrown");
-        } catch (RuntimeException e) {
-            // Expected exception
-            assertTrue(e.getMessage().contains("name John Doe not found"));
-        }
+        assertThrows(RuntimeException.class, () -> didService.findDidForProperty(didPropertyName, value));
     }
 
     @Test

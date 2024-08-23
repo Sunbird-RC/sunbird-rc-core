@@ -3,32 +3,33 @@ package dev.sunbirdrc.registry.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
-import dev.sunbirdrc.registry.identity_providers.pojos.OwnerCreationException;
-import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.EntityCreationException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.identity_providers.pojos.OwnerCreationException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
+import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.workflow.KieConfiguration;
+import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.api.runtime.KieContainer;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,14 +39,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ObjectMapper.class,
-        ConditionResolverService.class, ClaimRequestClient.class, KieConfiguration.class})
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {ObjectMapper.class, ConditionResolverService.class, ClaimRequestClient.class, KieConfiguration.class})
 @Import(EntityStateHelperTestConfiguration.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class EntityStateHelperTest {
@@ -66,9 +65,9 @@ public class EntityStateHelperTest {
 
     ObjectMapper m = new ObjectMapper();
 
-    @Before
+    @BeforeEach
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         definitionsManager = new DefinitionsManager();
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Definition> definitionMap = new HashMap<>();
@@ -152,5 +151,4 @@ public class EntityStateHelperTest {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldRemovePasswordOwnershipFields.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
-
 }

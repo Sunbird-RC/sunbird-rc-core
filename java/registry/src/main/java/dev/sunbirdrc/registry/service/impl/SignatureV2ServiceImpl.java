@@ -43,6 +43,10 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 @ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
 public class SignatureV2ServiceImpl implements SignatureService, ICertificateService {
     private static final Logger logger = LoggerFactory.getLogger(SignatureV2ServiceImpl.class);
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
+    @Autowired
+    protected RetryRestTemplate retryRestTemplate;
     @Value("${signature.v2.healthCheckURL}")
     private String healthCheckUrl;
     @Value("${signature.v2.issueCredentialURL}")
@@ -57,17 +61,10 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     private String verifyCredentialURL;
     @Value("${signature.v2.getRevocationListURL}")
     private String getRevocationListURL;
-
     @Value("${signature.v2.credentialDidMethod}")
     private String credentialMethod;
     @Value("${signature.v2.issuerDidMethod}")
     private String credentialIssuerMethod;
-
-    @Value("${database.uuidPropertyName}")
-    public String uuidPropertyName;
-
-    @Autowired
-    protected RetryRestTemplate retryRestTemplate;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -80,7 +77,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     @Override
     public Object sign(Map<String, Object> propertyValue) throws SignatureException.UnreachableException, SignatureException.CreationException {
         String title = (String) propertyValue.get("title");
-        JsonNode data =(JsonNode) (propertyValue.get("data"));
+        JsonNode data = (JsonNode) (propertyValue.get("data"));
         Object credentialTemplate = propertyValue.get("credentialTemplate");
         try {
             return this.issueCredential(title, credentialTemplate, data);
@@ -96,26 +93,26 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         JsonNode signedCredential = properties.get("signedCredentials");
         try {
             JsonNode resultNode = null;
-            if(signedCredential.isTextual()) {
+            if (signedCredential.isTextual()) {
                 resultNode = this.verifyCredentialById(signedCredential.asText());
-            } else if(signedCredential.isObject()) {
+            } else if (signedCredential.isObject()) {
                 resultNode = verifyCredential(signedCredential, null);
             }
-            if(resultNode == null) {
+            if (resultNode == null) {
                 throw new RuntimeException("Invalid result while verifying");
             }
             AtomicReference<Boolean> verified = new AtomicReference<>(true);
-            if(resultNode.has("status")) {
+            if (resultNode.has("status")) {
                 verified.set(resultNode.get("status").asText().equals("ISSUED"));
             }
             String expectedValue = "OK";
-            if(resultNode.has("errors")) {
+            if (resultNode.has("errors")) {
                 throw new SignatureException.VerificationException(resultNode.asText());
             }
-            if(resultNode.has("checks")) {
+            if (resultNode.has("checks")) {
                 for (JsonNode check : resultNode.get("checks")) {
                     check.fields().forEachRemaining(field -> {
-                        if(!field.getValue().asText().equalsIgnoreCase(expectedValue)) {
+                        if (!field.getValue().asText().equalsIgnoreCase(expectedValue)) {
                             verified.set(false);
                         }
                     });
@@ -133,7 +130,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         ArrayNode verificationMethods = (ArrayNode) didDocument.get("verificationMethod");
         AtomicReference<JsonNode> verificationMethod = new AtomicReference<>();
         verificationMethods.elements().forEachRemaining(vm -> {
-            if(vm.get("id").asText().equals(keyId)) {
+            if (vm.get("id").asText().equals(keyId)) {
                 verificationMethod.set(vm);
             }
         });
@@ -154,7 +151,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         if (Objects.equals(mediaType, MediaType.APPLICATION_JSON.toString())) {
             return getCredentialById(credentialId.asText());
         }
-        if(template != null && (template.startsWith(HTTP_URI_PREFIX) || template.startsWith(HTTPS_URI_PREFIX))) {
+        if (template != null && (template.startsWith(HTTP_URI_PREFIX) || template.startsWith(HTTPS_URI_PREFIX))) {
             ResponseEntity<String> response = this.retryRestTemplate.getForEntity(URLDecoder.decode(template, "UTF-8"));
             template = response.getBody();
         }
@@ -168,7 +165,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         // Render the credential using credential template
         Handlebars hb = new Handlebars();
         String templateJsonString = null;
-        if(credentialTemplate instanceof LinkedHashMap || credentialTemplate instanceof JsonNode) {
+        if (credentialTemplate instanceof LinkedHashMap || credentialTemplate instanceof JsonNode) {
             templateJsonString = JSONUtil.convertObjectJsonString(credentialTemplate);
         } else {
             templateJsonString = (String) credentialTemplate;
@@ -196,7 +193,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         node.set("method", JsonNodeFactory.instance.textNode(credentialMethod));
         ArrayNode tags = JsonNodeFactory.instance.arrayNode();
         tags.add(title);
-        if(input.get(uuidPropertyName) != null) tags.add(input.get(uuidPropertyName));
+        if (input.get(uuidPropertyName) != null) tags.add(input.get(uuidPropertyName));
         node.set("tags", tags);
 
         // send the request and issue credential
@@ -220,7 +217,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     public byte[] getCredentialById(String credentialId, String format, String templateId, String template) throws IOException, NotFoundException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("templateId", templateId);
-        if(template != null) headers.set(Template, template.trim());
+        if (template != null) headers.set(Template, template.trim());
         headers.setAccept(Collections.singletonList(MediaType.valueOf(format)));
         ResponseEntity<byte[]> response = retryRestTemplate.getForObject(getCredentialByIdURL, headers, byte[].class, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -234,8 +231,8 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
     }
 
     public ArrayNode revocationList(String issuerDid, Integer page, Integer limit) throws IOException {
-        if(page != null && page < 1) page = 1;
-        if(limit != null && limit < 1) limit = 1000;
+        if (page != null && page < 1) page = 1;
+        if (limit != null && limit < 1) limit = 1000;
         ResponseEntity<String> response = retryRestTemplate.getForEntity(getRevocationListURL, issuerDid, page, limit);
         if (response.getStatusCode().is2xxSuccessful()) {
             return (ArrayNode) JSONUtil.convertStringJsonNode(response.getBody());

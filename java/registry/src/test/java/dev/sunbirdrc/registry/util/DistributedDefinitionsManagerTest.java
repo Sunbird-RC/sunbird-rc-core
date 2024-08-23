@@ -7,18 +7,18 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
-import org.springframework.boot.test.autoconfigure.properties.PropertyMapping;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -26,15 +26,16 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = { OSResourceLoader.class, ObjectMapper.class, JedisPool.class, Jedis.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class DistributedDefinitionsManagerTest {
     private static final String SCHEMA = "SCHEMA_";
     private static final String SCHEMA_WILDCARD = SCHEMA + "*";
+
     @InjectMocks
     @Spy
     private DistributedDefinitionsManager distributedDefinitionsManager;
@@ -48,7 +49,7 @@ public class DistributedDefinitionsManagerTest {
     @Mock
     private Jedis jedis;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(jedisPool.getResource()).thenReturn(jedis);
@@ -149,6 +150,7 @@ public class DistributedDefinitionsManagerTest {
         assertEquals("/contact", ownershipsAttributes.get(0).getMobile());
         assertEquals("/contact", ownershipsAttributes.get(0).getUserId());
     }
+
     @Test
     public void shouldReturnEmptyOwnershipAttributesForUnknownEntity() {
         String entity = "UnknownEntity";

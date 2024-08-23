@@ -2,20 +2,21 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.2</version>
-    </parent>
     <groupId>dev.sunbirdrc</groupId>
     <artifactId>sunbird-rc</artifactId>
-    <version>2.0.3</version>
+    <packaging>pom</packaging>
+    <version>2.0.4-SNAPSHOT</version>
     <name>Open Software for Building Electronic Registries</name>
     <description>Sunbird RC is an open-source software framework for rapidly building electronic
         registries, enable attestation capabilities, and build verifiable credentialling
         with minimal effort.
     </description>
-    <packaging>pom</packaging>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.2</version>
+        <relativePath/>
+    </parent>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -46,7 +47,7 @@
         </dependency>
     </dependencies>
     <properties>
-        <sunbird.revision>2.0.3</sunbird.revision>
+        <sunbird.revision>2.0.4-SNAPSHOT</sunbird.revision>
         <jsonldConversionVersion>${sunbird.revision}</jsonldConversionVersion>
         <authorizationVersion>${sunbird.revision}</authorizationVersion>
         <validationVersion>${sunbird.revision}</validationVersion>
@@ -66,6 +67,7 @@
         <json-path.version>2.9.0</json-path.version>
         <jjwt.version>0.12.6</jjwt.version>
         <keycloak-admin-client.version>25.0.4</keycloak-admin-client.version>
+        <keycloak-spring-security-adapter.version>25.0.3</keycloak-spring-security-adapter.version>
         <com-auth0.version>2.12.0</com-auth0.version>
         <drools.version>7.49.0.Final</drools.version>
         <elastic.search.version>6.6.0</elastic.search.version>
@@ -78,6 +80,21 @@
         <protobuf-java.version>3.6.1</protobuf-java.version>
         <akka-remote.version>2.6.0-M2</akka-remote.version>
         <okhttp.version>5.0.0-alpha.2</okhttp.version>
+        <tinkerpop.version>3.3.3</tinkerpop.version>
+        <janusgraph.version>0.3.1</janusgraph.version>
+        <elasticsearch.version>6.6.0</elasticsearch.version>
+        <handlebars.version>4.0.0</handlebars.version>
+        <orientdb-gremlin.version>3.0.0</orientdb-gremlin.version>
+        <sqlg-postgres.version>2.0.0</sqlg-postgres.version>
+        <commons-text.version>1.9</commons-text.version>
+        <neo4j-tinkerpop.version>0.7-3.2.3</neo4j-tinkerpop.version>
+        <mssql-jdbc.version>12.8.0.jre11</mssql-jdbc.version>
+        <sqlg-mssqlserver.version>3.0.4</sqlg-mssqlserver.version>
+        <neo4j-gremlin-bolt.version>0.4.6</neo4j-gremlin-bolt.version>
+        <swagger-core.version>1.6.14</swagger-core.version>
+        <neo4j-java-driver.version>5.23.0</neo4j-java-driver.version>
+        <jakarta.ws.rs-api.version>4.0.0</jakarta.ws.rs-api.version>
+        <httpclient5.version>5.3.1</httpclient5.version>
     </properties>
 
     <modules>
@@ -91,8 +108,8 @@
         <module>view-templates</module>
         <module>sunbirdrc-actors</module>
         <module>sunbird-actor</module>
-        <module>claim</module>
-        <module>apitest</module>
+        <!--        <module>claim</module>-->
+        <!--        <module>apitest</module>-->
         <module>plugins</module>
     </modules>
 

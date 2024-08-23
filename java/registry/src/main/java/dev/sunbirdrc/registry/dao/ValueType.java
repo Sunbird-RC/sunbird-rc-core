@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class ValueType {
     /**
      * Writes into the database in the original value type that was passed
+     *
      * @param entryVal
      * @return
      */
@@ -27,13 +28,13 @@ public class ValueType {
         } else if (entryVal.isTextual()) {
             result = entryVal.textValue();
         } else if (entryVal.isIntegralNumber() ||
-                    entryVal.isLong() ||
-                    entryVal.isBigInteger()) {
+                entryVal.isLong() ||
+                entryVal.isBigInteger()) {
             // Any number
             result = entryVal.asLong();
         } else if ((!entryVal.isIntegralNumber() && entryVal.isNumber()) ||
-                    entryVal.isFloat() ||
-                    entryVal.isBigDecimal()) {
+                entryVal.isFloat() ||
+                entryVal.isBigDecimal()) {
             // Decimal number
             result = entryVal.asDouble();
         }
@@ -44,9 +45,10 @@ public class ValueType {
     /**
      * Sets the contentNode to the corresponding value.
      * This is needed to appropriately identify the value types - long, double, string
+     *
      * @param contentNode - the node where the given fieldname value must be set
-     * @param fieldName - the fieldname
-     * @param readVal - the value type
+     * @param fieldName   - the fieldname
+     * @param readVal     - the value type
      */
     public static void setValue(ObjectNode contentNode, String fieldName, Object readVal) {
         if (readVal instanceof Boolean) {

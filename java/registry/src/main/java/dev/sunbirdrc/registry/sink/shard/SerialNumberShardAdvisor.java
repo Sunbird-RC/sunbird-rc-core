@@ -11,26 +11,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class SerialNumberShardAdvisor extends DefaultShardAdvisor {
 
-	/**
-	 * Based on serialNum, choosing the shard.
-	 * If serialNum is even, choose first shard  
-	 * If serialNum is odd , choose second shard
-	 */
-	@Override
-	public DBConnectionInfo getShard(Object serialNumber) {
-		DBConnectionInfo connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(0);
-		if (serialNumber instanceof Integer) {
-			Integer serNo = (Integer) serialNumber;
-			int mod = serNo % 2;
-			connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
+    /**
+     * Based on serialNum, choosing the shard.
+     * If serialNum is even, choose first shard
+     * If serialNum is odd , choose second shard
+     */
+    @Override
+    public DBConnectionInfo getShard(Object serialNumber) {
+        DBConnectionInfo connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(0);
+        if (serialNumber instanceof Integer) {
+            Integer serNo = (Integer) serialNumber;
+            int mod = serNo % 2;
+            connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
 
-		}
-		if (serialNumber instanceof IntNode) {
-			Integer serNo = ((IntNode) serialNumber).intValue();
-			int mod = serNo % 2;
-			connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
+        }
+        if (serialNumber instanceof IntNode) {
+            Integer serNo = ((IntNode) serialNumber).intValue();
+            int mod = serNo % 2;
+            connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
 
-		}
-		return connectionInfo;
-	}
+        }
+        return connectionInfo;
+    }
 }

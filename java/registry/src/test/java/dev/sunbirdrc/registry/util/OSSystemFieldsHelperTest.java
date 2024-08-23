@@ -1,6 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,16 +8,15 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import java.io.IOException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = { OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class OSSystemFieldsHelperTest {
@@ -29,11 +28,10 @@ public class OSSystemFieldsHelperTest {
 
     private String entityType;
 
-    @Before
+    @BeforeEach
     public void init() {
         JsonNode testNode = getTestNode();
         entityType = testNode.fieldNames().next();
-
     }
 
     private JsonNode getTestNode() {
@@ -45,7 +43,6 @@ public class OSSystemFieldsHelperTest {
             // let the test fail with null
         }
         return testNode;
-
     }
 
     @Test
@@ -56,9 +53,8 @@ public class OSSystemFieldsHelperTest {
         try {
             systemFieldsHelper.addSystemProperty("notValid", node, "userId", "timeStamp", true);
         } catch (Exception e) {
-            Assert.fail("Exception " + e);
+            org.junit.jupiter.api.Assertions.fail("Exception " + e);
         }
-
     }
 
     @Test
@@ -72,7 +68,6 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
@@ -86,7 +81,6 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
@@ -100,7 +94,6 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
@@ -115,7 +108,5 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
-
 }

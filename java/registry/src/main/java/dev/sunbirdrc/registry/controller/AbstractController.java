@@ -1,9 +1,9 @@
 package dev.sunbirdrc.registry.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.transform.ConfigurationHelper;
@@ -22,30 +22,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public abstract class AbstractController {
     private static Logger logger = LoggerFactory.getLogger(AbstractController.class);
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
-    SunbirdRCInstrumentation watch;
-
-    @Autowired
-    RegistryHelper registryHelper;
-
-    @Autowired
-    DBConnectionInfoMgr dbConnectionInfoMgr;
-
-    @Autowired
-    Transformer transformer;
-
-    @Autowired
-    ConfigurationHelper configurationHelper;
-
-    @Autowired
-    IDefinitionsManager definitionsManager;
-
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
+    @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
+    SunbirdRCInstrumentation watch;
+    @Autowired
+    RegistryHelper registryHelper;
+    @Autowired
+    DBConnectionInfoMgr dbConnectionInfoMgr;
+    @Autowired
+    Transformer transformer;
+    @Autowired
+    ConfigurationHelper configurationHelper;
+    @Autowired
+    IDefinitionsManager definitionsManager;
 
     ResponseEntity<Object> badRequestException(ResponseParams responseParams, Response response, String errorMessage) {
         logger.info("Error in handling the invite: {}", errorMessage);

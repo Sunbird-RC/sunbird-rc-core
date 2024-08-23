@@ -12,15 +12,15 @@ import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSchemaConfiguration;
 import dev.sunbirdrc.workflow.KieConfiguration;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
 
@@ -28,7 +28,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 @SpringBootTest(classes = {ObjectMapper.class, KieConfiguration.class})
 public class NotificationHelperTest {
@@ -47,7 +47,7 @@ public class NotificationHelperTest {
     OSSchemaConfiguration osSchemaConfiguration;
     NotificationTemplates notificationTemplates;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         objectMapper = new ObjectMapper();
         notificationHelper = new NotificationHelper(notificationEnabled, definitionsManager, entityStateHelper, registryService, objectMapper);

@@ -1,10 +1,5 @@
 package dev.sunbirdrc.registry.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,18 +7,25 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+
 public class OSResourceLoader {
 
     private static Logger logger = LoggerFactory.getLogger(OSResourceLoader.class);
     private Map<String, String> nameContentMap = new HashMap<>();
     private ResourceLoader resourceLoader;
- 
+
     public OSResourceLoader(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
     /**
      * Loads the resources with a given pattern
+     *
      * @param pattern "Example: *.json to load all json files"
      * @return
      * @throws IOException
@@ -32,17 +34,17 @@ public class OSResourceLoader {
         Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(pattern);
         return resources;
     }
-    
-	public void loadResource(String path) throws Exception {
-		Resource[] resources = getResources(path);
 
-		for (Resource resource : resources) {
-			String jsonContent = getContent(resource);
-			nameContentMap.put(resource.getFilename(), jsonContent);
-		}
-		logger.info("Number of resources loaded " + nameContentMap.size());
+    public void loadResource(String path) throws Exception {
+        Resource[] resources = getResources(path);
 
-	}
+        for (Resource resource : resources) {
+            String jsonContent = getContent(resource);
+            nameContentMap.put(resource.getFilename(), jsonContent);
+        }
+        logger.info("Number of resources loaded " + nameContentMap.size());
+
+    }
 
     public Map<String, String> getNameContent() {
         return nameContentMap;
@@ -50,7 +52,7 @@ public class OSResourceLoader {
 
     /**
      * Returns a content of resource
-     * 
+     *
      * @param resource
      * @return
      */
@@ -64,7 +66,7 @@ public class OSResourceLoader {
         } catch (IOException e) {
             logger.error("Cannot load resource " + resource.getFilename());
 
-        } 
+        }
         return content;
     }
 

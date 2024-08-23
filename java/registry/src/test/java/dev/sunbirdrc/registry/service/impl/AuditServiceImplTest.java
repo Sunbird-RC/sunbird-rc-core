@@ -13,24 +13,25 @@ import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSystemFieldsHelper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class AuditServiceImplTest {
@@ -68,9 +69,9 @@ public class AuditServiceImplTest {
     @InjectMocks
     private AuditServiceImpl auditService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         setField(auditService, "auditEnabled", auditEnabled);
         setField(auditService, "auditFrameStore", auditFrameStore);
         setField(auditService, "auditSuffix", auditSuffix);
@@ -183,4 +184,3 @@ public class AuditServiceImplTest {
         verify(auditProvider, times(1)).doAudit(auditRecord, inputNode, shard);
     }
 }
-

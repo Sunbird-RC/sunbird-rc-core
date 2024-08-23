@@ -1,10 +1,14 @@
 spring:
-  profiles.active: default
+  config:
+    activate:
+      on-profile: default
 ---
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: default
+  config:
+    activate:
+      on-profile: default
   servlet:
     multipart:
       enabled: true
@@ -395,7 +399,9 @@ signature:
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: test
+  config:
+    activate:
+      on-profile: default
   output:
     ansi:
       enabled: ALWAYS

@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.sql.DataSource;
+import jakarta.sql.DataSource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.id.config.PropertiesManager;

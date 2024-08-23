@@ -1,6 +1,5 @@
 package dev.sunbirdrc.registry.dao;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -18,27 +17,26 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
-
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {Environment.class, DBProviderFactory.class, DBConnectionInfoMgr.class, DBConnectionInfo.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class VertexWriterTest {
@@ -57,7 +55,7 @@ public class VertexWriterTest {
     private VertexWriter vertexWriter;
     Vertex vertex;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         dbConnectionInfoMgr.setUuidPropertyName(testUuidPropertyName);
         mockDatabaseProvider = Mockito.mock(DatabaseProvider.class);
@@ -179,7 +177,6 @@ public class VertexWriterTest {
         Mockito.when(vertexProperty.isPresent()).thenReturn(false);
         Mockito.when(vertex.property(anyString())).thenReturn(vertexProperty);
         String id = vertexWriter.writeNodeEntity(recordNode);
-        Assert.assertTrue(id != null);
         assertEquals("123", id);
     }
 }

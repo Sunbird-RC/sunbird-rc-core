@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>claim</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>2.0.4-SNAPSHOT</version>
     <name>claim</name>
     <description>Claim processing service</description>
     <parent>
@@ -25,6 +25,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
 
         <!-- PostgreSQL -->
         <dependency>
@@ -60,7 +61,7 @@
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>pojos</artifactId>
-            <version>2.0.3</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -86,7 +87,7 @@
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>middleware-commons</artifactId>
-            <version>2.0.3</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 

@@ -2,13 +2,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>identity-provider</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <name>Identity Provider</name>
     <description>Middleware Identity Provider</description>
     <parent>
         <groupId>dev.sunbirdrc</groupId>
         <artifactId>registry-middleware</artifactId>
-        <version>2.0.3</version>
+        <version>2.0.4-SNAPSHOT</version>
     </parent>
     <licenses>
         <license>
@@ -17,5 +17,11 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
+    <dependencies>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>pojos</artifactId>
+            <version>2.0.4-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

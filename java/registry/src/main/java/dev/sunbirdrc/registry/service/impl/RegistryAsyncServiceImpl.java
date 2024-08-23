@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,43 +26,43 @@ import java.util.UUID;
 @Service
 @Qualifier("async")
 public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements RegistryService {
-	private static final Logger logger = LoggerFactory.getLogger(RegistryAsyncServiceImpl.class);
-	@Value("${kafka.createEntityTopic:create_entity}")
-	String createEntityTopic;
-	@Autowired
-	private KafkaTemplate<String, String> kafkaTemplate;
-	@Autowired
-	private ObjectMapper objectMapper;
+    private static final Logger logger = LoggerFactory.getLogger(RegistryAsyncServiceImpl.class);
+    @Value("${kafka.createEntityTopic:create_entity}")
+    String createEntityTopic;
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-	@Autowired
-	private AsyncRequest asyncRequest;
+    @Autowired
+    private AsyncRequest asyncRequest;
 
-	@Override
-	public String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception {
-		UserToken authenticationToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
-		CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson)
-				.skipSignature(skipSignature).webhookUrl(asyncRequest.getWebhookUrl())
-				.emailId(authenticationToken == null ? "" : authenticationToken.getEmail())
-				.build();
-		String message = objectMapper.writeValueAsString(createEntityMessage);
-		String transactionId = UUID.randomUUID().toString();
-		ListenableFuture<SendResult<String, String>> future =
-				kafkaTemplate.send(createEntityTopic, transactionId, message);
+    @Override
+    public String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception {
+        UserToken authenticationToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
+        CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson)
+                .skipSignature(skipSignature).webhookUrl(asyncRequest.getWebhookUrl())
+                .emailId(authenticationToken == null ? "" : authenticationToken.getEmail())
+                .build();
+        String message = objectMapper.writeValueAsString(createEntityMessage);
+        String transactionId = UUID.randomUUID().toString();
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(createEntityTopic, transactionId, message);
 
-		future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
 
-			@Override
-			public void onSuccess(SendResult<String, String> result) {
-				logger.debug("Sent message=[{}] with offset=[{}]", message, result.getRecordMetadata().offset());
-			}
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                logger.debug("Sent message=[{}] with offset=[{}]", message, result.getRecordMetadata().offset());
+            }
 
-			@Override
-			public void onFailure(@NotNull Throwable e) {
-				logger.error("Unable to send message=[{}] due to : {}", message, ExceptionUtils.getStackTrace(e));
-			}
-		});
-		return transactionId;
-	}
+            @Override
+            public void onFailure(@NotNull Throwable e) {
+                logger.error("Unable to send message=[{}] due to : {}", message, ExceptionUtils.getStackTrace(e));
+            }
+        });
+        return transactionId;
+    }
 
 
 }

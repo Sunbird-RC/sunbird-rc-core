@@ -22,28 +22,28 @@ import dev.sunbirdrc.registry.util.OSResourceLoader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.hamcrest.core.Every;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
 import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = { DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class })
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class SearchDaoImplTest {
 
@@ -56,17 +56,16 @@ public class SearchDaoImplTest {
     private DBProviderFactory dbProviderFactory;
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
-    
+
     private final static String VALUE_NOT_PRESENT = "valueNotPresent";
     private final static int offset = 0;
     private final static int limit = 1;
     private final static boolean expandInternal = true;
     private List<String> entities = new ArrayList<>();
-    @Value("${registry.expandReference}")
+    @Value("${registry.expandReference:false}")
     private boolean expandReferenceObj;
 
-
-    @Before
+    @BeforeEach
     public void initializeGraph() throws IOException {
         dbConnectionInfoMgr.setUuidPropertyName("tid");
 
@@ -76,14 +75,13 @@ public class SearchDaoImplTest {
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, "tid", expandReferenceObj);
         searchDao = new SearchDaoImpl(registryDao);
         populateGraph();
-        
-        entities.add("Teacher");
 
+        entities.add("Teacher");
     }
 
     @Test
     public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
-        SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);//new SearchQuery("", 0, 0);
+        SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").get(ENTITY_LIST).isEmpty());
     }
@@ -118,13 +116,13 @@ public class SearchDaoImplTest {
             assertTrue(d.get("serialNum").asLong() <= 3);
         });
     }
-    
+
     @Test
     public void testOrOperator() {
         List<Object> values = new ArrayList<>();
         values.add("marko");
         values.add("vedas");
-        values.add(VALUE_NOT_PRESENT); 
+        values.add(VALUE_NOT_PRESENT);
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", values, FilterOperators.or);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -140,6 +138,7 @@ public class SearchDaoImplTest {
             assertTrue(d.get("teacherName").asText().startsWith("ma"));
         });
     }
+
     @Test
     public void testNotStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
@@ -157,6 +156,7 @@ public class SearchDaoImplTest {
             assertTrue(d.get("teacherName").asText().endsWith("as"));
         });
     }
+
     @Test
     public void testNotEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
@@ -174,6 +174,7 @@ public class SearchDaoImplTest {
             assertTrue(d.get("teacherName").asText().contains("as"));
         });
     }
+
     @Test
     public void testNotContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notContains);
@@ -182,10 +183,10 @@ public class SearchDaoImplTest {
             assertFalse(d.get("teacherName").asText().contains("as"));
         });
     }
+
     @Test
     public void testMultiOperators() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "a", FilterOperators.contains);
-        //addes other filter
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lte, 1));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lt, 3));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gte, 3));
@@ -236,9 +237,9 @@ public class SearchDaoImplTest {
     }
 
     private SearchQuery getSearchQuery(SearchQuery searchQuery, Filter filter, String type) {
-        List<Filter> filterList = new ArrayList<Filter>();
+        List<Filter> filterList = new ArrayList<>();
         if (searchQuery.getFilters() != null) {
-            filterList = searchQuery.getFilters();
+            filterList.addAll(searchQuery.getFilters());
         }
         filterList.add(filter);
         searchQuery.setFilters(filterList);

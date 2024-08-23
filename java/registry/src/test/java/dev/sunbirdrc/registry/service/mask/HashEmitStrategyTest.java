@@ -1,14 +1,14 @@
 package dev.sunbirdrc.registry.service.mask;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class HashEmitStrategyTest {
     private HashEmitStrategy hashEmitStrategy;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         hashEmitStrategy = new HashEmitStrategy();
     }

@@ -1,8 +1,13 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.sunbirdrc</groupId>
+        <artifactId>registry-middleware</artifactId>
+        <version>2.0.4-SNAPSHOT</version>
+    </parent>
     <artifactId>authorization</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <name>Authorization</name>
     <description>Authorization of requests</description>
     <licenses>
@@ -12,11 +17,7 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <parent>
-        <groupId>dev.sunbirdrc</groupId>
-        <artifactId>registry-middleware</artifactId>
-        <version>2.0.3</version>
-    </parent>
+
     <dependencies>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -41,14 +42,6 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-resource-server</artifactId>
         </dependency>
-        <!--  TODO : Remove javax dependency -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-
     </dependencies>
 
     <build>

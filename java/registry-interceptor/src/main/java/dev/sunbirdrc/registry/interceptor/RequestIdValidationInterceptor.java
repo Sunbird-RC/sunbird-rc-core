@@ -35,6 +35,7 @@ public class RequestIdValidationInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 		RequestWrapper wrapper = apiMessage.getRequestWrapper();
+//		cannot access javax.servlet.http.HttpServletRequestWrapper
 		String expectedAPI = requestIdMap.getOrDefault(wrapper.getRequestURI(), "");
 
 		boolean validRequest = !expectedAPI.isEmpty() && (apiMessage.getRequest().getId().compareTo(expectedAPI) == 0);

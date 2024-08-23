@@ -3,18 +3,24 @@ package dev.sunbirdrc.registry.sink;
 import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.umlg.sqlg.structure.SqlgGraph;
-import org.umlg.sqlg.structure.topology.*;
+import org.umlg.sqlg.structure.topology.Index;
+import org.umlg.sqlg.structure.topology.IndexType;
+import org.umlg.sqlg.structure.topology.PropertyColumn;
+import org.umlg.sqlg.structure.topology.VertexLabel;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SqlgProvider extends DatabaseProvider {
@@ -62,21 +68,21 @@ public class SqlgProvider extends DatabaseProvider {
 
     @Override
     public void createIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
-		if (!propertyNames.isEmpty()) {
-	        createIndexByIndexType(graph, IndexType.NON_UNIQUE, label, propertyNames);
-		} else {
-			logger.info("Could not create single index for empty properties");
-		}
+        if (!propertyNames.isEmpty()) {
+            createIndexByIndexType(graph, IndexType.NON_UNIQUE, label, propertyNames);
+        } else {
+            logger.info("Could not create single index for empty properties");
+        }
 
     }
 
     @Override
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
-		if (!propertyNames.isEmpty()) {
-	        ensureCompositeIndex(graph, label, propertyNames, IndexType.NON_UNIQUE);
-		} else {
-			logger.info("Could not create composite index for empty properties");
-		}
+        if (!propertyNames.isEmpty()) {
+            ensureCompositeIndex(graph, label, propertyNames, IndexType.NON_UNIQUE);
+        } else {
+            logger.info("Could not create composite index for empty properties");
+        }
     }
 
     @Override
@@ -90,11 +96,11 @@ public class SqlgProvider extends DatabaseProvider {
 
     @Override
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
-		if (!propertyNames.isEmpty()) {
-	        createIndexByIndexType(graph, IndexType.UNIQUE, label, propertyNames);
-		} else {
-			logger.info("Could not create unique index for empty properties");
-		}
+        if (!propertyNames.isEmpty()) {
+            createIndexByIndexType(graph, IndexType.UNIQUE, label, propertyNames);
+        } else {
+            logger.info("Could not create unique index for empty properties");
+        }
     }
 
     /**
@@ -108,12 +114,11 @@ public class SqlgProvider extends DatabaseProvider {
 
     private void createIndexByIndexType(Graph graph, IndexType indexType, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         for (String propertyName : propertyNames) {
-            List<String> indexPropertyPath =  Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            List<String> indexPropertyPath = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
             int indexPropertiesLength = indexPropertyPath.size();
-            if(indexPropertiesLength == 1) {
+            if (indexPropertiesLength == 1) {
                 createIndexOnVertex(label, indexPropertyPath.get(0), indexType, graph);
-            }
-            else {
+            } else {
                 createIndexOnVertex(indexPropertyPath.get(indexPropertiesLength - 2),
                         indexPropertyPath.get(indexPropertiesLength - 1), indexType, graph);
             }
@@ -121,7 +126,7 @@ public class SqlgProvider extends DatabaseProvider {
     }
 
     private void createIndexOnVertex(String label, String property, IndexType indexType, Graph graph) throws IndexException.LabelNotFoundException {
-        if(!isVertexLabelExists(graph, label)) {
+        if (!isVertexLabelExists(graph, label)) {
             throw new IndexException.LabelNotFoundException(label);
         }
         VertexLabel vertexLabel = getVertex(graph, label);
@@ -141,21 +146,20 @@ public class SqlgProvider extends DatabaseProvider {
      * @param indexType
      */
     private void ensureCompositeIndex(Graph graph, String label, List<String> propertyNames, IndexType indexType) throws IndexException.LabelNotFoundException {
-        if(!isVertexLabelExists(graph, label)) {
+        if (!isVertexLabelExists(graph, label)) {
             throw new IndexException.LabelNotFoundException(label);
         }
         VertexLabel vertexLabel = getVertex(graph, label);
         List<PropertyColumn> properties = new ArrayList<>();
 
         for (String propertyName : propertyNames) {
-            List<String> indexPropertyPath =  Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            List<String> indexPropertyPath = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
             int indexPropertiesLength = indexPropertyPath.size();
-            if(indexPropertiesLength == 1) {
+            if (indexPropertiesLength == 1) {
                 Optional<PropertyColumn> property = vertexLabel.getProperty(propertyName);
                 property.ifPresent(properties::add);
                 property.orElseThrow(() -> new RuntimeException("Property not found"));
-            }
-            else {
+            } else {
                 // composite fields should be of the same entity type
                 vertexLabel = getVertex(graph, indexPropertyPath.get(indexPropertiesLength - 2));
                 Optional<PropertyColumn> property = vertexLabel.getProperty(indexPropertyPath.get(indexPropertiesLength - 1));
@@ -168,8 +172,10 @@ public class SqlgProvider extends DatabaseProvider {
             ensureIndex(vertexLabel, indexType, properties);
         }
     }
+
     /**
      * Ensures that the vertex table exist in the db.
+     *
      * @param graph
      * @param label
      * @return
@@ -181,8 +187,10 @@ public class SqlgProvider extends DatabaseProvider {
     private boolean isVertexLabelExists(Graph graph, String label) {
         return ((SqlgGraph) graph).getTopology().getPublicSchema().getVertexLabel(label).isPresent();
     }
+
     /**
      * ensure index for a given label for non-unique index type
+     *
      * @param vertexLabel
      * @param indexType
      * @param properties

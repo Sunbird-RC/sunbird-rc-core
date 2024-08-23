@@ -1,17 +1,18 @@
 package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 public class ArrayHelperTest {
 
     @Test
@@ -21,9 +22,11 @@ public class ArrayHelperTest {
         assertTrue(expectedString.equalsIgnoreCase(actualString));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testRemoveSquareBracesWithNull() {
-        ArrayHelper.removeSquareBraces(null);
+        assertThrows(NullPointerException.class, () -> {
+            ArrayHelper.removeSquareBraces(null);
+        });
     }
 
     @Test
@@ -82,9 +85,11 @@ public class ArrayHelperTest {
         assertTrue(expectedString.equalsIgnoreCase(actualString));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFormatToStringWithNull(){
-       ArrayHelper.formatToString(null);
+        assertThrows(NullPointerException.class, () -> {
+            ArrayHelper.formatToString(null);
+        });
     }
 
     @Test
@@ -126,10 +131,10 @@ public class ArrayHelperTest {
     @Test
     public void constructJsonStringArrayNode() {
         ArrayNode arrayNode = ArrayHelper.constructArrayNode("[{\"op\":\"add\",\"path\":\"/Teacher\"},{\"op\":\"update\",\"path\":\"/Teacher\"}]");
-       
-        arrayNode.forEach( item -> { 
+
+        arrayNode.forEach( item -> {
             assertTrue("add".equals(item.get("op").asText()) ||
-            		"/Teacher".equals(item.get("path").asText()) ||
+              "/Teacher".equals(item.get("path").asText()) ||
                     "update".equals(item.get("op").asText()) ||
                     "/Teacher".equals(item.get("path").asText())
                     );

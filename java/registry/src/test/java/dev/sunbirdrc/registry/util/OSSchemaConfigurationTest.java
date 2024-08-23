@@ -1,33 +1,35 @@
 package dev.sunbirdrc.registry.util;
 
 import dev.sunbirdrc.views.FunctionDefinition;
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class OSSchemaConfigurationTest{
-	@Test
-	public void shouldReturnMatchingFunctionDefinition() {
-		OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
-		osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
-				FunctionDefinition.builder().name("func1").build(),
-				FunctionDefinition.builder().name("func2").build()
-		));
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-		Assert.assertNotNull(osSchemaConfiguration.getFunctionDefinition("func1"));
-		Assert.assertNotNull(osSchemaConfiguration.getFunctionDefinition("func2"));
-	}
-	@Test
-	public void shouldReturnNullForInvalidFunctionName() {
-		OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
-		osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
-				FunctionDefinition.builder().name("func1").build(),
-				FunctionDefinition.builder().name("func2").build()
-		));
+public class OSSchemaConfigurationTest {
 
-		Assert.assertNull(osSchemaConfiguration.getFunctionDefinition("func3"));
-	}
+    @Test
+    public void shouldReturnMatchingFunctionDefinition() {
+        OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
+        osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
+                FunctionDefinition.builder().name("func1").build(),
+                FunctionDefinition.builder().name("func2").build()
+        ));
 
+        assertNotNull(osSchemaConfiguration.getFunctionDefinition("func1"));
+        assertNotNull(osSchemaConfiguration.getFunctionDefinition("func2"));
+    }
+
+    @Test
+    public void shouldReturnNullForInvalidFunctionName() {
+        OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
+        osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
+                FunctionDefinition.builder().name("func1").build(),
+                FunctionDefinition.builder().name("func2").build()
+        ));
+
+        assertNull(osSchemaConfiguration.getFunctionDefinition("func3"));
+    }
 }

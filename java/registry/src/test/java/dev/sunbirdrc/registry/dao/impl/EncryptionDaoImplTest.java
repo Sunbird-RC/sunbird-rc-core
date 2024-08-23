@@ -14,19 +14,9 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-import org.mockito.Mock;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,100 +24,72 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Map;
 
-@Ignore
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = { Environment.class, ObjectMapper.class, GenericConfiguration.class,
-		EncryptionServiceImpl.class, AuditRecordReader.class })
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {Environment.class, ObjectMapper.class, GenericConfiguration.class,
+        EncryptionServiceImpl.class, AuditRecordReader.class})
+@TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class EncryptionDaoImplTest extends RegistryTestBase {
-	private static Logger logger = LoggerFactory.getLogger(EncryptionDaoImplTest.class);
-	private static Graph graph;
-	@Rule
-	public ExpectedException expectedEx = ExpectedException.none();
-	@Rule
-	public TestRule watcher = new TestWatcher() {
-		@Override
-		protected void starting(Description description) {
-			logger.debug("Executing test: " + description.getMethodName());
-		}
+    private static Logger logger = LoggerFactory.getLogger(EncryptionDaoImplTest.class);
+    private static Graph graph;
 
-		@Override
-		protected void succeeded(Description description) {
-			logger.debug("Successfully executed test: " + description.getMethodName());
-		}
+    @Autowired
+    AuditRecordReader auditRecordReader;
 
-		@Override
-		protected void failed(Throwable e, Description description) {
-			logger.debug(
-					String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
-		}
-	};
-	@Autowired
-	AuditRecordReader auditRecordReader;
+    @Autowired
+    private IRegistryDao registryDao;
+    @Autowired
+    private Gson gson;
+    @Autowired
+    private EncryptionServiceImpl encryptionMock;
 
-	/*
-	 * @Mock private SchemaConfigurator mockSchemaConfigurator;
-	 */
-	@Autowired
-	private IRegistryDao registryDao;
-	@Autowired
-	private Gson gson;
-	@Mock
-	private EncryptionServiceImpl encryptionMock;
+    @Value("${encryption.enabled}")
+    private boolean encryptionEnabled;
 
-	@Value("${encryption.enabled}")
-	private boolean encryptionEnabled;
+    @BeforeEach
+    public void initializeGraph() throws IOException {
+        auditRecordReader = new AuditRecordReader(databaseProvider);
+        Assumptions.assumeTrue(encryptionEnabled);
+    }
 
-	@Before
-	public void initializeGraph() throws IOException {
-	    auditRecordReader = new AuditRecordReader(databaseProvider);
-		Assume.assumeTrue(encryptionEnabled);
-	}
+    @AfterEach
+    public void shutDown() throws Exception {
+        if (graph != null) {
+            graph.close();
+        }
+    }
 
-	public void closeDB() throws Exception {
-		databaseProvider.shutdown();
-	}
+    public Vertex getVertexForSubject(String subjectValue, String property, String objectValue) {
+        Vertex vertex = null;
+        graph = TinkerGraph.open();
+        GraphTraversalSource t = graph.traversal();
+        GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
+        if (hasLabel.hasNext()) {
+            vertex = hasLabel.next();
+        } else {
+            vertex = graph.addVertex(T.label, subjectValue);
+        }
+        vertex.property(property, objectValue);
+        return vertex;
+    }
 
-	@After
-	public void shutDown() throws Exception {
-		if (graph != null) {
-			graph.close();
-		}
-	}
-
-	public Vertex getVertexForSubject(String subjectValue, String property, String objectValue) {
-		Vertex vertex = null;
-		graph = TinkerGraph.open();
-		GraphTraversalSource t = graph.traversal();
-		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
-		if (hasLabel.hasNext()) {
-			vertex = hasLabel.next();
-		} else {
-			vertex = graph.addVertex(T.label, subjectValue);
-		}
-		vertex.property(property, objectValue);
-		return vertex;
-	}
-
-	public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, Object> map) {
-		Vertex vertex = null;
-		graph = TinkerGraph.open();
-		GraphTraversalSource t = graph.traversal();
-		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
-		if (hasLabel.hasNext()) {
-			vertex = hasLabel.next();
-		} else {
-			vertex = graph.addVertex(T.label, subjectValue);
-		}
-		for (Map.Entry<String, Object> entry : map.entrySet()) {
-			vertex.property(entry.getKey(), entry.getValue());
-		}
-		return vertex;
-	}
+    public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, Object> map) {
+        Vertex vertex = null;
+        graph = TinkerGraph.open();
+        GraphTraversalSource t = graph.traversal();
+        GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
+        if (hasLabel.hasNext()) {
+            vertex = hasLabel.next();
+        } else {
+            vertex = graph.addVertex(T.label, subjectValue);
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            vertex.property(entry.getKey(), entry.getValue());
+        }
+        return vertex;
+    }
 }

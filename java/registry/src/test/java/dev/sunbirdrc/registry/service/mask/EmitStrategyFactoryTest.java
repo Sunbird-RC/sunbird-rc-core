@@ -1,9 +1,9 @@
 package dev.sunbirdrc.registry.service.mask;
 
 import dev.sunbirdrc.registry.model.EventConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EmitStrategyFactoryTest {
     @Test

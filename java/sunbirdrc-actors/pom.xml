@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.sunbirdrc.actors</groupId>
     <artifactId>sunbirdrc-actors</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <name>sunbird-actors</name>
 
     <licenses>
@@ -21,7 +21,7 @@
         <okhttp.version>5.0.0-alpha.2</okhttp.version>
         <commons-lang3.version>3.16.0</commons-lang3.version>
         <protobuf-java.version>3.6.1</protobuf-java.version>
-        <sunbird.revision>2.0.3</sunbird.revision>
+        <sunbird.revision>2.0.4-SNAPSHOT</sunbird.revision>
     </properties>
     <dependencies>
         <dependency>

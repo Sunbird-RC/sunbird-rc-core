@@ -3,17 +3,14 @@ package dev.sunbirdrc.registry.util;
 import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * This class helps to create index of unique or non-unique type. Must set the
  * values for unique index & non-unique index fields
- *
  */
 public class Indexer {
     private static Logger logger = LoggerFactory.getLogger(Indexer.class);
@@ -45,6 +42,7 @@ public class Indexer {
     public void setUniqueIndexFields(List<String> indexUniqueFields) {
         this.indexUniqueFields = indexUniqueFields;
     }
+
     /**
      * Required to set single fields to create
      *
@@ -53,6 +51,7 @@ public class Indexer {
     public void setSingleIndexFields(List<String> singleIndexFields) {
         this.singleIndexFields = singleIndexFields;
     }
+
     /**
      * Required to set composite fields to create
      *
@@ -70,7 +69,7 @@ public class Indexer {
      * Creates index for a given label
      *
      * @param graph
-     * @param label     type vertex label (example:Teacher) and table in rdbms
+     * @param label type vertex label (example:Teacher) and table in rdbms
      */
     public void createIndex(Graph graph, String label) throws IndexException.LabelNotFoundException {
         if (label != null && !label.isEmpty()) {

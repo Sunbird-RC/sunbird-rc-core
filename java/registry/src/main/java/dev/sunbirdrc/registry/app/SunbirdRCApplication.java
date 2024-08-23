@@ -21,19 +21,19 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
 
-@SpringBootApplication(exclude={SecurityAutoConfiguration.class})
+@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @ComponentScan(basePackages = {"dev.sunbirdrc.registry", "dev.sunbirdrc.pojos", "dev.sunbirdrc.auth", "dev.sunbirdrc.workflow", "dev.sunbirdrc.plugin"})
 public class SunbirdRCApplication {
     private static ApplicationContext context;
     private static SpringApplication application = new SpringApplication(SunbirdRCApplication.class);
+    @Value("${cors.allowedOrigin}")
+    public String corsAllowedOrigin;
     @Value("${registry.manager.type}")
     private String definitionManagerType;
-
     @Value("${registry.redis.host:localhost}")
     private String redisHost;
     @Value("${registry.redis.port:6379}")
     private String redisPort;
-
 
     public static void main(String[] args) {
         context = application.run(args);
@@ -49,9 +49,6 @@ public class SunbirdRCApplication {
         context = application.run();
         return context;
     }
-
-    @Value("${cors.allowedOrigin}")
-    public String corsAllowedOrigin;
 
     @Bean
     public FilterRegistrationBean corsFilter() {
@@ -91,7 +88,7 @@ public class SunbirdRCApplication {
 
     @Bean
     public IDefinitionsManager definitionsManager() {
-        if(definitionManagerType.equals("DefinitionsManager")) {
+        if (definitionManagerType.equals("DefinitionsManager")) {
             return new DefinitionsManager();
         }
         return new DistributedDefinitionsManager();
