@@ -558,3 +558,7 @@ idgen:
   healthCheckURL: http://localhost:8088/egov-idgen/health
   generateURL: http://localhost:8088/egov-idgen/id/_generate
   idFormatURL: http://localhost:8088/egov-idgen/id/_format/add
+certificate:
+  enabled: true
+filestorage:
+  enabled: false

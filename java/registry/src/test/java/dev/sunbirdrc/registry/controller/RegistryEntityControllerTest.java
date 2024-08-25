@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.google.gson.Gson;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
@@ -22,16 +23,16 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -39,10 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@WebMvcTest({RegistryEntityController.class})
+@ExtendWith(MockitoExtension.class)
 @ContextConfiguration(classes = {RegistryEntityController.class})
 @AutoConfigureMockMvc(addFilters = false)
+@SpringBootTest(classes = {Gson.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 class RegistryEntityControllerTest {
 
@@ -211,7 +212,6 @@ class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(testData);
         when(registryHelper.doesEntityOperationRequireAuthorization(anyString())).thenReturn(true);
         when(registryHelper.authorize(anyString(), anyString(), any(HttpServletRequest.class))).thenReturn("userId");
-        Data<Object> mockDataObject = mock(Data.class);
         JsonNode mockEntityNode = mock(JsonNode.class);
         when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(mock(JsonNode.class));
@@ -237,7 +237,6 @@ class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(testData);
         when(registryHelper.doesEntityOperationRequireAuthorization(anyString())).thenReturn(true);
         when(registryHelper.authorize(anyString(), anyString(), any(HttpServletRequest.class))).thenReturn("userId");
-        Data<Object> mockDataObject = mock(Data.class);
         JsonNode mockEntityNode = mock(JsonNode.class);
         when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(mock(JsonNode.class));

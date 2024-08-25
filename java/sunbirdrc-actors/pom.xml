@@ -17,10 +17,10 @@
         </license>
     </licenses>
     <properties>
-        <akka-remote.version>2.6.0-M2</akka-remote.version>
-        <okhttp.version>5.0.0-alpha.2</okhttp.version>
+        <akka-remote.version>2.9.0-M1</akka-remote.version>
+        <okhttp.version>5.0.0-alpha.14</okhttp.version>
         <commons-lang3.version>3.16.0</commons-lang3.version>
-        <protobuf-java.version>3.6.1</protobuf-java.version>
+        <protobuf-java.version>4.27.3</protobuf-java.version>
         <sunbird.revision>2.0.4-SNAPSHOT</sunbird.revision>
     </properties>
     <dependencies>

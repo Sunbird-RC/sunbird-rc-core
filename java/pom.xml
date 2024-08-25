@@ -99,7 +99,8 @@
         <jakarta.el.version>5.0.0-M1</jakarta.el.version>
         <drools.version>9.44.0.Final</drools.version>
         <drools-decisiontables.version>9.44.0.Final</drools-decisiontables.version>
-        <drools-bom.version>9.44.0.Final</drools-bom.version>
+        <protobuf-java.version>4.27.3</protobuf-java.version>
+
     </properties>
 
     <modules>

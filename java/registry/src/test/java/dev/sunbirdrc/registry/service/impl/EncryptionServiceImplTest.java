@@ -9,14 +9,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,8 +58,16 @@ class EncryptionServiceImplTest {
 
     @Test
     void test_encrypted_api_with_map_as_input() throws Exception {
-        when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class)))
-                .thenAnswer(invocation -> ResponseEntity.ok("{\"encrypted\": \"data\"}"));
+        when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenAnswer(new Answer<ResponseEntity<String>>() {
+            @Override
+            public ResponseEntity<String> answer(InvocationOnMock invocation) throws Throwable {
+                Map<String, Object> responseMap = new HashMap<>();
+                responseMap.put("A", "1");
+                responseMap.put("B", "2");
+                List<Map<String, Object>> list = Collections.singletonList(responseMap);
+                return ResponseEntity.accepted().body(list.toString());
+            }
+        });
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put("school", "BVM");
         propertyMap.put("name", "john");

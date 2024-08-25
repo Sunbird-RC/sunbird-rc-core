@@ -43,7 +43,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = {ObjectMapper.class, ConditionResolverService.class, ClaimRequestClient.class, KieConfiguration.class})
+@SpringBootTest(classes = {ObjectMapper.class, ConditionResolverService.class,
+        ClaimRequestClient.class, KieConfiguration.class})
 @Import(EntityStateHelperTestConfiguration.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 class EntityStateHelperTest {
