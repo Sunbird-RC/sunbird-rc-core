@@ -8,10 +8,10 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class OSSchemaConfigurationTest {
+class OSSchemaConfigurationTest {
 
     @Test
-    public void shouldReturnMatchingFunctionDefinition() {
+    void shouldReturnMatchingFunctionDefinition() {
         OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
         osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
                 FunctionDefinition.builder().name("func1").build(),
@@ -23,7 +23,7 @@ public class OSSchemaConfigurationTest {
     }
 
     @Test
-    public void shouldReturnNullForInvalidFunctionName() {
+    void shouldReturnNullForInvalidFunctionName() {
         OSSchemaConfiguration osSchemaConfiguration = new OSSchemaConfiguration();
         osSchemaConfiguration.setFunctionDefinitions(Arrays.asList(
                 FunctionDefinition.builder().name("func1").build(),

@@ -8,7 +8,7 @@
 //
 //@RunWith(WildcardPatternSuite.class)
 //@SuiteClasses("**/*Test.class")
-//public class RegistryTestSuite {
+//class RegistryTestSuite {
 //
 //	public static Test suite() {
 //		TestSuite suite = new TestSuite(RegistryTestSuite.class.getName());

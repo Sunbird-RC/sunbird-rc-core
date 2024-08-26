@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class CredentialSchemaServiceTest {
+class CredentialSchemaServiceTest {
 
     @Mock
     private DIDService didService;
@@ -48,13 +48,13 @@ public class CredentialSchemaServiceTest {
     private CredentialSchemaService credentialSchemaServiceMock;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         MockitoAnnotations.initMocks(this);
         credentialSchemaServiceMock = spy(credentialSchemaService);
     }
 
     @Test
-    public void test_valid_title_and_credential_template() throws IOException {
+    void test_valid_title_and_credential_template() throws IOException {
         // Given
         String title = "Test100";
         String credTemplate = "{ \"context\": [], \"credentialSubject\": { \"property1\": \"value1\", \"property2\": \"value2\" } }";
@@ -76,7 +76,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void test_empty_title_and_valid_credential_template() throws IOException {
+    void test_empty_title_and_valid_credential_template() throws IOException {
         String title = "Test";
         Object credTemplate = new LinkedHashMap<>();
         ((LinkedHashMap<String, Object>) credTemplate).put("credentialSubject", new LinkedHashMap<>());
@@ -89,7 +89,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void test_ensure_credential_schemas() throws Exception {
+    void test_ensure_credential_schemas() throws Exception {
         Map<String, Object> credTemplates = new HashMap<>();
         JsonNode schema1 = new ObjectMapper().readTree("{\"title\": \"Title1\", \"definitions\": { \"title\": \"Title1\", \"properties\": {} }, \"_osConfig\": {}}");
         JsonNode schema2 = new ObjectMapper().readTree("{\"title\": \"Title2\", \"definitions\": { \"title\": \"Title2\", \"properties\": {} }, \"_osConfig\": {}}");
@@ -131,7 +131,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void test_getLatestSchemaByTags_success() throws Exception {
+    void test_getLatestSchemaByTags_success() throws Exception {
         List<String> tags = Collections.singletonList("Test Tag");
         ArrayNode schemas = JsonNodeFactory.instance.arrayNode();
         JsonNode schema1 = new ObjectMapper().readTree(
@@ -152,7 +152,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void testGetSchemaByTags() throws IOException {
+    void testGetSchemaByTags() throws IOException {
         // Arrange
         List<String> tags = Arrays.asList("tag1", "tag2");
         String responseBody = "[{\"schema\": {\"version\": \"1.0\", \"id\": \"123\"}, \"status\": \"ACTIVE\"}, {\"schema\": {\"version\": \"2.0\", \"id\": \"456\"}, \"status\": \"ACTIVE\"}]";
@@ -170,7 +170,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void testCreateSchema() throws IOException {
+    void testCreateSchema() throws IOException {
         String title = "Test Title";
         JsonNode credentialSchema = JsonNodeFactory.instance.objectNode();
         String status = "DRAFT";
@@ -197,7 +197,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void testUpdateSchema() throws IOException {
+    void testUpdateSchema() throws IOException {
         String did = "did:example:123";
         String version = "1.0";
         String status = "ACTIVE";
@@ -225,7 +225,7 @@ public class CredentialSchemaServiceTest {
     }
 
     @Test
-    public void testGetHealthInfo() throws Exception {
+    void testGetHealthInfo() throws Exception {
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
         ResponseEntity<String> successResponse = ResponseEntity.ok("{\"status\": \"UP\"}");
         when(retryRestTemplate.getForEntity(any())).thenReturn(successResponse);

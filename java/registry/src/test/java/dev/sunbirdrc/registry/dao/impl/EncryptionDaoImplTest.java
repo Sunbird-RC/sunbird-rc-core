@@ -33,7 +33,7 @@ import java.util.Map;
         EncryptionServiceImpl.class, AuditRecordReader.class})
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class EncryptionDaoImplTest extends RegistryTestBase {
+class EncryptionDaoImplTest extends RegistryTestBase {
     private static Logger logger = LoggerFactory.getLogger(EncryptionDaoImplTest.class);
     private static Graph graph;
 
@@ -51,19 +51,19 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
     private boolean encryptionEnabled;
 
     @BeforeEach
-    public void initializeGraph() throws IOException {
+    void initializeGraph() throws IOException {
         auditRecordReader = new AuditRecordReader(databaseProvider);
         Assumptions.assumeTrue(encryptionEnabled);
     }
 
     @AfterEach
-    public void shutDown() throws Exception {
+    void shutDown() throws Exception {
         if (graph != null) {
             graph.close();
         }
     }
 
-    public Vertex getVertexForSubject(String subjectValue, String property, String objectValue) {
+    Vertex getVertexForSubject(String subjectValue, String property, String objectValue) {
         Vertex vertex = null;
         graph = TinkerGraph.open();
         GraphTraversalSource t = graph.traversal();
@@ -77,7 +77,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
         return vertex;
     }
 
-    public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, Object> map) {
+    Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, Object> map) {
         Vertex vertex = null;
         graph = TinkerGraph.open();
         GraphTraversalSource t = graph.traversal();

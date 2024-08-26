@@ -5,33 +5,33 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class EmitStrategyFactoryTest {
+class EmitStrategyFactoryTest {
     @Test
-    public void shouldReturnHashStrategy() {
+    void shouldReturnHashStrategy() {
         IEmitStrategy emitStrategy = EmitStrategyFactory.getMaskConfig(EventConfig.HASH);
         assertTrue(emitStrategy instanceof HashEmitStrategy);
     }
 
     @Test
-    public void shouldReturnNoneStrategy() {
+    void shouldReturnNoneStrategy() {
         IEmitStrategy emitStrategy = EmitStrategyFactory.getMaskConfig(EventConfig.NONE);
         assertTrue(emitStrategy instanceof NoneEmitStrategy);
     }
 
     @Test
-    public void shouldReturnFullStrategy() {
+    void shouldReturnFullStrategy() {
         IEmitStrategy emitStrategy = EmitStrategyFactory.getMaskConfig(EventConfig.FULL);
         assertTrue(emitStrategy instanceof FullEmitStrategy);
     }
 
     @Test
-    public void shouldReturnHashMaskStrategy() {
+    void shouldReturnHashMaskStrategy() {
         IEmitStrategy emitStrategy = EmitStrategyFactory.getMaskConfig(EventConfig.HASH_MASK);
         assertTrue(emitStrategy instanceof HashMaskEmitStrategy);
     }
 
     @Test
-    public void shouldReturnMaskStrategy() {
+    void shouldReturnMaskStrategy() {
         IEmitStrategy emitStrategy = EmitStrategyFactory.getMaskConfig(EventConfig.MASK);
         assertTrue(emitStrategy instanceof MaskEmitStrategy);
     }

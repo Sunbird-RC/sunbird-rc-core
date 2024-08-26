@@ -5,16 +5,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AttestationPolicyTest {
+class AttestationPolicyTest {
     private AttestationPolicy attestationPolicy;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         attestationPolicy = new AttestationPolicy();
     }
 
     @Test
-    public void shouldAbleToGetTheEntityFromPluginUrl() {
+    void shouldAbleToGetTheEntityFromPluginUrl() {
         String expectedVal = "Teacher";
         String attestorPlugin = "did:internal:ClaimPluginActor?entity=Teacher";
         attestationPolicy.setAttestorPlugin(attestorPlugin);
@@ -22,7 +22,7 @@ public class AttestationPolicyTest {
     }
 
     @Test
-    public void shouldReturnCompletionType() {
+    void shouldReturnCompletionType() {
         attestationPolicy.setOnComplete("attestation:instituteAffiliationCbse");
         assertEquals(FlowType.ATTESTATION, attestationPolicy.getCompletionType());
         assertEquals("instituteAffiliationCbse", attestationPolicy.getCompletionValue());

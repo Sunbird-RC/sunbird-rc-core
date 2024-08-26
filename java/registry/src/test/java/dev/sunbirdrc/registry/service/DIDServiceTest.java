@@ -1,10 +1,5 @@
 package dev.sunbirdrc.registry.service;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
-import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,9 +24,14 @@ import org.springframework.web.client.RestClientException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class DIDServiceTest {
+class DIDServiceTest {
 
     @Mock
     private RetryRestTemplate retryRestTemplate;
@@ -53,12 +53,12 @@ public class DIDServiceTest {
     private static final String didPropertyName = "did";
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         // Setup any initial configurations or mocks
     }
 
     @Test
-    public void testGetDid() throws Exception {
+    void testGetDid() throws Exception {
         String name = "John Doe";
 
         // Mocking the searchService to return a mock JsonNode
@@ -74,7 +74,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testFindDidForProperty() throws Exception {
+    void testFindDidForProperty() throws Exception {
         String propertyName = "name";
         String value = "John Doe";
 
@@ -102,7 +102,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testEnsureDidForName() throws Exception {
+    void testEnsureDidForName() throws Exception {
         String name = "John Doe";
         String method = "method";
         String generatedDid = "0987654321";
@@ -126,12 +126,12 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testGenerateDid() throws Exception {
+    void testGenerateDid() throws Exception {
         // Positive test case
         String method = "method";
         String did = "1234";
         Map<String, Object> content = new HashMap<>();
-        JsonNode rootNode = readTree("[{\"id\":\"" + did +"\"}]");
+        JsonNode rootNode = readTree("[{\"id\":\"" + did + "\"}]");
         when(retryRestTemplate.postForEntity(any(), any())).thenReturn(ResponseEntity.ok(rootNode.toString()));
         String generatedDid = didService.generateDid(method, content);
         assertNotNull(generatedDid);
@@ -144,7 +144,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testResolveDid() throws Exception {
+    void testResolveDid() throws Exception {
         String didId = "1234567890";
 
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
@@ -168,7 +168,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testGetHealthInfo() throws Exception {
+    void testGetHealthInfo() throws Exception {
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
         ResponseEntity<String> successResponse = ResponseEntity.ok("{\"status\": \"UP\"}");
         when(retryRestTemplate.getForEntity(any())).thenReturn(successResponse);

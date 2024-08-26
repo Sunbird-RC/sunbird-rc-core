@@ -5,16 +5,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class MaskEmitStrategyTest {
+class MaskEmitStrategyTest {
     private MaskEmitStrategy maskEmitStrategy;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         maskEmitStrategy = new MaskEmitStrategy();
     }
 
     @Test
-    public void shouldEmitMaskedValue() {
+    void shouldEmitMaskedValue() {
         final String value = "testValue";
         final String expectedValue = "XXXXValue";
         final String actualValue = maskEmitStrategy.updateValue(value);

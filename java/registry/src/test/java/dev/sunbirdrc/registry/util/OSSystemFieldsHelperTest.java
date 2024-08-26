@@ -1,13 +1,10 @@
 package dev.sunbirdrc.registry.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +13,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = { OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class })
+@SpringBootTest(classes = {OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class OSSystemFieldsHelperTest {
+class OSSystemFieldsHelperTest {
 
     @Autowired
     private OSSystemFieldsHelper systemFieldsHelper;
@@ -29,7 +30,7 @@ public class OSSystemFieldsHelperTest {
     private String entityType;
 
     @BeforeEach
-    public void init() {
+    void init() {
         JsonNode testNode = getTestNode();
         entityType = testNode.fieldNames().next();
     }
@@ -46,7 +47,7 @@ public class OSSystemFieldsHelperTest {
     }
 
     @Test
-    public void testAddSystemPropertyNotValid() {
+    void testAddSystemPropertyNotValid() {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -58,7 +59,7 @@ public class OSSystemFieldsHelperTest {
     }
 
     @Test
-    public void testAddSystemPropertyCreatedAt() throws IOException {
+    void testAddSystemPropertyCreatedAt() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -71,7 +72,7 @@ public class OSSystemFieldsHelperTest {
     }
 
     @Test
-    public void testAddSystemPropertyCreatedBy() throws IOException {
+    void testAddSystemPropertyCreatedBy() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -84,7 +85,7 @@ public class OSSystemFieldsHelperTest {
     }
 
     @Test
-    public void testAddSystemPropertyUpdatedAt() throws IOException {
+    void testAddSystemPropertyUpdatedAt() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -97,7 +98,7 @@ public class OSSystemFieldsHelperTest {
     }
 
     @Test
-    public void testAddSystemPropertyUpdatedBy() throws IOException {
+    void testAddSystemPropertyUpdatedBy() throws IOException {
         JsonNode testNode = getTestNode();
         String key = testNode.fieldNames().next();
         JsonNode node = testNode.get(key);

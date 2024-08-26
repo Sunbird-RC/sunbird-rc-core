@@ -20,11 +20,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SchemaLoaderTest {
+class SchemaLoaderTest {
 
     SchemaService schemaService = new SchemaService();
 
@@ -39,14 +39,14 @@ public class SchemaLoaderTest {
     DefinitionsManager definitionsManager;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         definitionsManager = new DefinitionsManager();
         ReflectionTestUtils.setField(schemaLoader, "schemaService", schemaService);
         ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
     }
 
     @Test
-     void shouldLoadSchemasToDefinitionManager() throws IOException {
+    void shouldLoadSchemasToDefinitionManager() throws IOException {
         String simpleSchema = "{\n" +
                 "  \"Schema\": {\n" +
                 "  \"data\": [\n" +

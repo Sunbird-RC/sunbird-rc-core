@@ -13,10 +13,9 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,31 +26,31 @@ import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = { RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,
-  EncryptionServiceImpl.class, APIMessage.class, DBConnectionInfoMgr.class})
+@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,
+        EncryptionServiceImpl.class, APIMessage.class, DBConnectionInfoMgr.class})
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RegistryDaoImplTest extends RegistryTestBase {
- private static Logger logger = LoggerFactory.getLogger(RegistryDaoImplTest.class);
- private static Graph graph;
+class RegistryDaoImplTest extends RegistryTestBase {
+    private static Logger logger = LoggerFactory.getLogger(RegistryDaoImplTest.class);
+    private static Graph graph;
 
- AuditRecordReader auditRecordReader;
- @Autowired
- private Environment environment;
- @Autowired
- private RegistryDaoImpl registryDao;
- @Value("${registry.context.base}")
- private String registryContext;
+    AuditRecordReader auditRecordReader;
+    @Autowired
+    private Environment environment;
+    @Autowired
+    private RegistryDaoImpl registryDao;
+    @Value("${registry.context.base}")
+    private String registryContext;
 
- @BeforeEach
- public void initializeGraph() {
-  graph = TinkerGraph.open();
- }
+    @BeforeEach
+    void initializeGraph() {
+        graph = TinkerGraph.open();
+    }
 
- @AfterEach
- public void shutDown() throws Exception {
-  if (graph != null) {
-   graph.close();
-  }
- }
+    @AfterEach
+    void shutDown() throws Exception {
+        if (graph != null) {
+            graph.close();
+        }
+    }
 }

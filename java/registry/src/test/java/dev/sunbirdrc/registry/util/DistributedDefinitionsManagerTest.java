@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {OSResourceLoader.class, ObjectMapper.class, JedisPool.class, Jedis.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class DistributedDefinitionsManagerTest {
+class DistributedDefinitionsManagerTest {
     private static final String SCHEMA = "SCHEMA_";
     private static final String SCHEMA_WILDCARD = SCHEMA + "*";
 

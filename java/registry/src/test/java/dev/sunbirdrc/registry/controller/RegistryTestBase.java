@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-abstract public class RegistryTestBase {
+public abstract class RegistryTestBase {
 
 	public static final String FORMAT = "JSON-LD";
 	private static final String INVALID_SUBJECT_LABEL = "ex:Picasso";

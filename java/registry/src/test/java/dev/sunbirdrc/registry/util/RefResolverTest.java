@@ -14,18 +14,16 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {DefinitionsManager.class, OSResourceLoader.class, RefResolver.class, ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RefResolverTest {
+class RefResolverTest {
 
     @Autowired
     private DefinitionsManager definitionsManager;
@@ -39,12 +37,12 @@ public class RefResolverTest {
     private RefResolver refResolver;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         osResourceLoader = new OSResourceLoader(resourceLoader);
     }
 
     @Test
-    public void testShouldResolveSchemaRef() throws Exception {
+    void testShouldResolveSchemaRef() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Definition> definitionMap = new HashMap<>();
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());

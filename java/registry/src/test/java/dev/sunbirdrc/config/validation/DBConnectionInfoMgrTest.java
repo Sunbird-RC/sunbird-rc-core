@@ -2,35 +2,35 @@ package dev.sunbirdrc.config.validation;
 
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DBConnectionInfoMgrTest {
+class DBConnectionInfoMgrTest {
 
     private final static String NOT_EMPTY = "not empty value";
     private final static String EMPTY = "";
-    private final String[] DUPLICATE_SHARD_VALUES = { "shardval", "shardval" };
+    private final String[] DUPLICATE_SHARD_VALUES = {"shardval", "shardval"};
 
     private Validator validator;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
     }
 
     @Test
-    public void testEmptyUuidProperty() {
+    void testEmptyUuidProperty() {
         DBConnectionInfoMgr mgr = new DBConnectionInfoMgr();
         mgr.setProvider(NOT_EMPTY);
         mgr.setUuidPropertyName(EMPTY);
@@ -39,7 +39,7 @@ public class DBConnectionInfoMgrTest {
     }
 
     @Test
-    public void testEmptyProvider() {
+    void testEmptyProvider() {
         DBConnectionInfoMgr mgr = new DBConnectionInfoMgr();
         mgr.setProvider(EMPTY);
         mgr.setUuidPropertyName(NOT_EMPTY);
@@ -48,7 +48,7 @@ public class DBConnectionInfoMgrTest {
     }
 
     @Test
-    public void testEmptyShardId() {
+    void testEmptyShardId() {
         List<DBConnectionInfo> connectionInfos = new ArrayList<>();
         DBConnectionInfo ci = new DBConnectionInfo();
         ci.setShardId(EMPTY);
@@ -64,7 +64,7 @@ public class DBConnectionInfoMgrTest {
     }
 
     @Test
-    public void testEmptyShardLabel() {
+    void testEmptyShardLabel() {
         List<DBConnectionInfo> connectionInfos = new ArrayList<>();
         DBConnectionInfo ci0 = new DBConnectionInfo();
         ci0.setShardId(NOT_EMPTY);
@@ -85,7 +85,7 @@ public class DBConnectionInfoMgrTest {
     }
 
     @Test
-    public void testDuplicateShardValue() {
+    void testDuplicateShardValue() {
         List<DBConnectionInfo> connectionInfosWithDuplicateShardLabelValues = getDBConnectionInfoList(
                 DUPLICATE_SHARD_VALUES);
         DBConnectionInfoMgr mgr = new DBConnectionInfoMgr();

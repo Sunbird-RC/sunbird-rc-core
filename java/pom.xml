@@ -100,6 +100,9 @@
         <drools.version>9.44.0.Final</drools.version>
         <drools-decisiontables.version>9.44.0.Final</drools-decisiontables.version>
         <protobuf-java.version>4.27.3</protobuf-java.version>
+        <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.6.0</springdoc-openapi-starter-webmvc-ui.version>
+        <spring-boot-starter-actuator.version>3.3.3</spring-boot-starter-actuator.version>
 
     </properties>
 
@@ -114,7 +117,7 @@
         <module>view-templates</module>
         <module>sunbirdrc-actors</module>
         <module>sunbird-actor</module>
-        <!--        <module>claim</module>-->
+        <module>claim</module>
         <!--        <module>apitest</module>-->
         <module>plugins</module>
     </modules>

@@ -58,7 +58,7 @@ import static org.mockito.Mockito.*;
 
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 @SpringBootTest(classes = {ObjectMapper.class, KieConfiguration.class})
-public class RegistryHelperTest {
+class RegistryHelperTest {
 
     @NotNull
     private String getBaseDir() {
@@ -117,7 +117,7 @@ public class RegistryHelperTest {
     private KieContainer kieContainer;
 
     @BeforeEach
-    public void initMocks() {
+    void initMocks() {
         objectMapper = new ObjectMapper();
         registryHelper.setObjectMapper(objectMapper);
         MockitoAnnotations.openMocks(this);
@@ -131,7 +131,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void getAuditLogTest() throws Exception {
+    void getAuditLogTest() throws Exception {
         // Data creation
         String inputJson = "{\"Teacher\":{ \"filters\":{ \"recordId\":{\"eq\":\"12c61cc3-cc6a-4a96-8409-e506fb26ddbb\"} } } }";
 
@@ -154,7 +154,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldAbleToGetThePropertyIdForTheRequestBodyWhereTheExistingPropertyHasNestedObjects() throws Exception {
+    void shouldAbleToGetThePropertyIdForTheRequestBodyWhereTheExistingPropertyHasNestedObjects() throws Exception {
         String entityName = "Student";
         String entityId = "7890";
         JsonNode requestBody = new ObjectMapper().readTree("{\n" +
@@ -248,7 +248,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldAbleToGetThePropertyIdForTheRequestBody() throws Exception {
+    void shouldAbleToGetThePropertyIdForTheRequestBody() throws Exception {
         String entityName = "Student";
         String entityId = "7890";
         JsonNode requestBody = new ObjectMapper().readTree("{\n" +
@@ -328,7 +328,7 @@ public class RegistryHelperTest {
     NotificationHelper notificationHelper;
 
     @Test
-    public void shouldCreateOwnersForInvite() throws Exception {
+    void shouldCreateOwnersForInvite() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
         mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
@@ -344,7 +344,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldSendInviteInvitationsAfterCreatingOwners() throws Exception {
+    void shouldSendInviteInvitationsAfterCreatingOwners() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
         mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
@@ -372,7 +372,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldSendMultipleInviteInvitationsAfterCreatingOwners() throws Exception {
+    void shouldSendMultipleInviteInvitationsAfterCreatingOwners() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"contactNumber\": \"123123\", \"adminEmail\": \"admin@email.com\",\n" +
                 "  \"adminMobile\": \"1234\"\n" +
                 "}}");
@@ -389,7 +389,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldAbleToRemoveTheFormatAttributeFromDocumentObject() throws JsonProcessingException {
+    void shouldAbleToRemoveTheFormatAttributeFromDocumentObject() throws JsonProcessingException {
         JsonNode requestBody = new ObjectMapper().readTree("{\n" +
                 "    \"program\": \"lol\",\n" +
                 "    \"graduationYear\": \"2021\",\n" +
@@ -424,7 +424,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldAbleToInvalidateTheAttestation() throws Exception {
+    void shouldAbleToInvalidateTheAttestation() throws Exception {
         String testInputJsonPath = getBaseDir() + "registryHelper/invalidateAttestation.json";
         String entity = "Student";
         String entityId = "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f";
@@ -457,7 +457,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldTriggerNextAttestationFlow() throws Exception {
+    void shouldTriggerNextAttestationFlow() throws Exception {
         mockDefinitionManager();
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
                 .policyName("test")
@@ -496,7 +496,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldNotTriggerNextAttestationFlowIfOnCompleteIsNotPresent() throws Exception {
+    void shouldNotTriggerNextAttestationFlowIfOnCompleteIsNotPresent() throws Exception {
         mockDefinitionManager();
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
                 .policyName("test")
@@ -527,7 +527,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldTriggerConcatFunctionOnAttestationCompleted() throws Exception {
+    void shouldTriggerConcatFunctionOnAttestationCompleted() throws Exception {
         mockDefinitionManager();
         FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
         ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
@@ -568,7 +568,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldTriggerProviderFunctionOnAttestationCompleted() throws Exception {
+    void shouldTriggerProviderFunctionOnAttestationCompleted() throws Exception {
         mockDefinitionManager();
         FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
         ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
@@ -610,14 +610,14 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldReturnFalseIfEntityContainsOwnershipAttributes() throws IOException {
+    void shouldReturnFalseIfEntityContainsOwnershipAttributes() throws IOException {
         mockDefinitionManager();
         String entity = "Student";
         assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
     }
 
     @Test
-    public void shouldReturnTrueIfEntityContainsManageRoles() throws IOException {
+    void shouldReturnTrueIfEntityContainsManageRoles() throws IOException {
         mockDefinitionManager();
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
         String entity = "Student";
@@ -625,7 +625,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
+    void shouldReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
         mockDefinitionManager();
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
@@ -634,7 +634,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldDeleteReturnTrueIfEntityContainsManageRoles() throws IOException {
+    void shouldDeleteReturnTrueIfEntityContainsManageRoles() throws IOException {
         mockDefinitionManager();
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
         String entity = "Student";
@@ -642,7 +642,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldDeleteReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
+    void shouldDeleteReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
         mockDefinitionManager();
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
         definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
@@ -651,7 +651,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldTriggerAsyncFlow() throws Exception {
+    void shouldTriggerAsyncFlow() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
         when(shardManager.getShard(any())).thenReturn(new Shard());
 
@@ -664,7 +664,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldRaiseClaimIfAttestationTypeIsAutomated() throws Exception {
+    void shouldRaiseClaimIfAttestationTypeIsAutomated() throws Exception {
         mockDefinitionManager();
         ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
         ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
@@ -774,7 +774,7 @@ public class RegistryHelperTest {
         verify(notificationHelper, times(1)).sendNotification(any(), any());
     }
 
-    public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
+    void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
         when(shardManager.getShard(any())).thenReturn(new Shard());
         when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         registryHelper.revokeExistingCredentials("Student", "student-osid", "userId", "signed-data", false);
@@ -782,7 +782,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldNotStoredSignedDataIfNullOrEmptyInRevokedCredentialsRegistry() throws Exception {
+    void shouldNotStoredSignedDataIfNullOrEmptyInRevokedCredentialsRegistry() throws Exception {
         when(shardManager.getShard(any())).thenReturn(new Shard());
         when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         registryHelper.revokeExistingCredentials("Student", "student-osid", "userId", "", false);
@@ -792,7 +792,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldReturnTrueIFSignedDataIsRevoked() throws Exception {
+    void shouldReturnTrueIFSignedDataIsRevoked() throws Exception {
         JsonNode searchResponse = JsonNodeFactory.instance.objectNode()
                 .set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.objectNode()
                         .set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()
@@ -802,7 +802,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldReturnFalseIfSignedDataIsNotRevoked() throws Exception {
+    void shouldReturnFalseIfSignedDataIsNotRevoked() throws Exception {
         JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL,
                 JsonNodeFactory.instance.objectNode()
                         .set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()));
@@ -811,7 +811,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldNotContainShardIdInAsyncMode() throws Exception {
+    void shouldNotContainShardIdInAsyncMode() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
         Shard shard = mock(Shard.class);
         when(shard.getShardLabel()).thenReturn("1");
@@ -827,7 +827,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldContainShardIdInSyncMode() throws Exception {
+    void shouldContainShardIdInSyncMode() throws Exception {
         mockDefinitionManager();
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
         Shard shard = mock(Shard.class);
@@ -856,7 +856,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldRaiseRequiredExceptions() throws Exception {
+    void shouldRaiseRequiredExceptions() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\"}}");
         mockDefinitionManager();
         mockValidationService();
@@ -874,7 +874,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldNotRaiseRequiredExceptionsIFFlagDisabled() throws Exception {
+    void shouldNotRaiseRequiredExceptionsIFFlagDisabled() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\"}}");
         mockDefinitionManager();
         mockValidationService();
@@ -892,7 +892,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldUpdateEntityAndSendNotificationToOwners() throws Exception {
+    void shouldUpdateEntityAndSendNotificationToOwners() throws Exception {
         JsonNode updateJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\", \"instituteName\": \"Insitute1\", \"osid\": \"123\"}}");
         JsonNode existingJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\", \"instituteName\": \"Insitute2\", \"osid\": \"123\"}}");
         mockDefinitionManager();
@@ -908,7 +908,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldNotFetchAttestationPolicyFromDBIfDisabled() throws Exception {
+    void shouldNotFetchAttestationPolicyFromDBIfDisabled() throws Exception {
         mockDefinitionManager();
         ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
         ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
@@ -929,7 +929,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldFetchAttestationPolicyFromDBIfEnabled() throws Exception {
+    void shouldFetchAttestationPolicyFromDBIfEnabled() throws Exception {
         mockDefinitionManager();
         ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
         ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();

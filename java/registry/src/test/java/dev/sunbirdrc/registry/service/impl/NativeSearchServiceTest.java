@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
         OSResourceLoader.class, ShardManager.class, DefaultShardAdvisor.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 @TestMethodOrder(MethodOrderer.MethodName.class)
-public class NativeSearchServiceTest {
+class NativeSearchServiceTest {
 
     private static Graph graph;
     private DatabaseProvider databaseProvider;

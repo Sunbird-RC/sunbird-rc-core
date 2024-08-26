@@ -5,16 +5,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FullEmitStrategyTest {
+class FullEmitStrategyTest {
     private FullEmitStrategy fullEmitStrategy;
 
     @BeforeEach
-    public void setUp() throws Exception {
+     void setUp() throws Exception {
         fullEmitStrategy = new FullEmitStrategy();
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+     void shouldEmitCompleteValueAsIs() {
         final String value = "testValue";
         final String expectedValue = "testValue";
         final String actualValue = fullEmitStrategy.updateValue(value);

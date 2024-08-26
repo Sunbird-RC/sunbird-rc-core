@@ -14,18 +14,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class DefinitionsManagerTest {
+class DefinitionsManagerTest {
 
     private DefinitionsManager definitionsManager;
 
     @BeforeEach
-    public void setup() throws IOException {
+    void setup() throws IOException {
         definitionsManager = new DefinitionsManager();
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Definition> definitionMap = new HashMap<>();
@@ -36,12 +39,12 @@ public class DefinitionsManagerTest {
     }
 
     @Test
-    public void testIfResourcesCountMatchesFileDefinitions() {
+    void testIfResourcesCountMatchesFileDefinitions() {
         assertTrue(definitionsManager.getAllKnownDefinitions().size() == 1);
     }
 
     @Test
-    public void testShouldReturnGetOwnershipAttributes() {
+    void testShouldReturnGetOwnershipAttributes() {
         String entity = "TrainingCertificate";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(1, ownershipsAttributes.size());
@@ -51,33 +54,33 @@ public class DefinitionsManagerTest {
     }
 
     @Test
-    public void testGetOwnershipAttributesForInvalidEntity() {
+    void testGetOwnershipAttributesForInvalidEntity() {
         String entity = "UnknownEntity";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(0, ownershipsAttributes.size());
     }
 
     @Test
-    public void testGetOwnershipAttributesShouldReturnEmpty() {
+    void testGetOwnershipAttributesShouldReturnEmpty() {
         String entity = "Common";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(0, ownershipsAttributes.size());
     }
 
     @Test
-    public void testShouldReturnTrueForValidEntityName() {
+    void testShouldReturnTrueForValidEntityName() {
         String entity = "TrainingCertificate";
         assertTrue(definitionsManager.isValidEntityName(entity));
     }
 
     @Test
-    public void testShouldReturnFalseForInValidEntityName() {
+    void testShouldReturnFalseForInValidEntityName() {
         String entity = "XYZ";
         assertFalse(definitionsManager.isValidEntityName(entity));
     }
 
     @Test
-    public void testShouldReturnEntitiesWithAnonymousInviteRoles() throws IOException {
+    void testShouldReturnEntitiesWithAnonymousInviteRoles() throws IOException {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         schema = schema.replaceAll("TrainingCertificate", "SkillCertificate");
         definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
@@ -86,7 +89,7 @@ public class DefinitionsManagerTest {
     }
 
     @Test
-    public void testShouldReturnEntitiesWithAnonymousManageRoles() throws IOException {
+    void testShouldReturnEntitiesWithAnonymousManageRoles() throws IOException {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         schema = schema.replaceAll("TrainingCertificate", "SkillCertificate");
         schema = schema.replaceAll("admin", "anonymous");
