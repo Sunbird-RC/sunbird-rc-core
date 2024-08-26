@@ -413,7 +413,18 @@ public class JSONUtil {
 	 * @return
 	 */
 	public static JsonNode diffJsonNode(JsonNode existingNode, JsonNode latestNode) {
-        return JsonDiff.asJson(existingNode, latestNode);
+
+		final JsonToken existingNodeToken = (existingNode != null) ? existingNode.asToken() : JsonToken.NOT_AVAILABLE;
+
+		final JsonToken latestNodeToken = (latestNode != null) ? latestNode.asToken() : JsonToken.NOT_AVAILABLE;
+
+		if (existingNodeToken == JsonToken.NOT_AVAILABLE) {
+			existingNode = null;
+		}
+		if (latestNodeToken == JsonToken.NOT_AVAILABLE) {
+			latestNode = null;
+		}
+		return JsonDiff.asJson(existingNode, latestNode);
 	}
 
 
