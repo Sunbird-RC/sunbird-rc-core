@@ -17,7 +17,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.tinkerpop.gremlin.process.traversal.PBiPredicate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,7 +66,7 @@ public class SearchDaoImpl implements SearchDao {
     private GraphTraversal<Vertex, Vertex> getFilteredResultTraversal(
             GraphTraversal<Vertex, Vertex> resultGraphTraversal, List<Filter> filterList) {
 
-        BiPredicate<String, String> condition = null;
+        PBiPredicate<String, String> condition = null;
         // Ensure the root label is correct
         if (filterList != null) {
             for (Filter filter : filterList) {

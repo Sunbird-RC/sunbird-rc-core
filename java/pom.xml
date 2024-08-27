@@ -79,7 +79,7 @@
         <protobuf-java.version>3.6.1</protobuf-java.version>
         <akka-remote.version>2.6.0-M2</akka-remote.version>
         <okhttp.version>5.0.0-alpha.2</okhttp.version>
-        <tinkerpop.version>3.3.3</tinkerpop.version>
+        <tinkerpop.version>3.7.2</tinkerpop.version>
         <janusgraph.version>0.3.1</janusgraph.version>
         <elasticsearch.version>6.6.0</elasticsearch.version>
         <handlebars.version>4.0.0</handlebars.version>
