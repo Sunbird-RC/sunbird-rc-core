@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-java:jdk8-slim
+FROM eclipse-temurin:21-jdk
 #COPY ./java/registry/target/registry.jar /home/sunbirdrc/registry.jar
 COPY ./BOOT-INF/lib /home/sunbirdrc/BOOT-INF/lib
 COPY ./META-INF  /home/sunbirdrc/META-INF
