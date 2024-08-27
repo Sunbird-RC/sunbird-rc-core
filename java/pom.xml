@@ -84,7 +84,7 @@
         <elasticsearch.version>6.6.0</elasticsearch.version>
         <handlebars.version>4.0.0</handlebars.version>
         <orientdb-gremlin.version>3.0.0</orientdb-gremlin.version>
-        <sqlg-postgres.version>2.0.0</sqlg-postgres.version>
+        <sqlg-postgres.version>3.1.0</sqlg-postgres.version>
         <commons-text.version>1.9</commons-text.version>
         <neo4j-tinkerpop.version>0.7-3.2.3</neo4j-tinkerpop.version>
         <mssql-jdbc.version>12.8.0.jre11</mssql-jdbc.version>
@@ -103,6 +103,7 @@
         <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.6.0</springdoc-openapi-starter-webmvc-ui.version>
         <spring-boot-starter-actuator.version>3.3.3</spring-boot-starter-actuator.version>
+        <spring-kafka.version>3.2.3</spring-kafka.version>
 
     </properties>
 

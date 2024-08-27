@@ -35,7 +35,6 @@ class DefinitionsManagerTest {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         definitionMap.put("TrainingCertificate", new Definition(objectMapper.readTree(schema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
-        ReflectionTestUtils.setField(definitionsManager, "objectMapper", objectMapper);
     }
 
     @Test

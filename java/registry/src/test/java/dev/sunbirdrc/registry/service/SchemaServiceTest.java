@@ -60,7 +60,6 @@ class SchemaServiceTest {
         trainingCertificateSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         definitionMap.put(TRAINING_CERTIFICATE, new Definition(objectMapper.readTree(trainingCertificateSchema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
-        ReflectionTestUtils.setField(definitionsManager, "objectMapper", objectMapper);
         ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
     }
 

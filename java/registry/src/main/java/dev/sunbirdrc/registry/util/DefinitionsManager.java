@@ -29,9 +29,6 @@ public class DefinitionsManager implements IDefinitionsManager {
     @Autowired
     private ResourceLoader resourceLoader;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     /**
      * Loads the definitions from the _schemas folder
      */
@@ -157,6 +154,7 @@ public class DefinitionsManager implements IDefinitionsManager {
     @Override
     public void removeDefinition(JsonNode jsonNode) {
         try {
+            final ObjectMapper objectMapper = new ObjectMapper();
             String schemaAsText = jsonNode.asText("{}");
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
             String schemaTitle = schemaJsonNode.get(TITLE).asText();

@@ -8,7 +8,6 @@ import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +17,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Qualifier("async")
@@ -46,21 +44,15 @@ public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements Reg
                 .build();
         String message = objectMapper.writeValueAsString(createEntityMessage);
         String transactionId = UUID.randomUUID().toString();
-        ListenableFuture<SendResult<String, String>> future =
-                kafkaTemplate.send(createEntityTopic, transactionId, message);
-
-        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
-
-            @Override
-            public void onSuccess(SendResult<String, String> result) {
-                logger.debug("Sent message=[{}] with offset=[{}]", message, result.getRecordMetadata().offset());
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable e) {
-                logger.error("Unable to send message=[{}] due to : {}", message, ExceptionUtils.getStackTrace(e));
-            }
+        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(createEntityTopic, transactionId, message);
+        future
+                .thenAccept(result ->
+                        logger.debug("Sent message=[{}] with offset=[{}]", message, result.getRecordMetadata().offset()))
+                .exceptionally(e -> {
+                    logger.error("Unable to send message=[{}] due to : {}", message, ExceptionUtils.getStackTrace(e));
+                    return null;
         });
+
         return transactionId;
     }
 

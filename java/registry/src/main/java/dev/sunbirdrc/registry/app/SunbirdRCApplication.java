@@ -51,7 +51,7 @@ public class SunbirdRCApplication {
     }
 
     @Bean
-    public FilterRegistrationBean corsFilter() {
+    public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
@@ -63,9 +63,7 @@ public class SunbirdRCApplication {
         config.addAllowedMethod("OPTIONS");
         config.addAllowedMethod("PUT");
         source.registerCorsConfiguration("/**", config);
-        FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
-        bean.setOrder(0);
-        return bean;
+        return new CorsFilter(source);
     }
 
     @Bean
