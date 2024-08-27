@@ -80,7 +80,7 @@
         <akka-remote.version>2.6.0-M2</akka-remote.version>
         <okhttp.version>5.0.0-alpha.2</okhttp.version>
         <tinkerpop.version>3.7.2</tinkerpop.version>
-        <janusgraph.version>0.3.1</janusgraph.version>
+        <janusgraph.version>1.1.0-20240822-065119.1a7f5ab</janusgraph.version>
         <elasticsearch.version>6.6.0</elasticsearch.version>
         <handlebars.version>4.0.0</handlebars.version>
         <orientdb-gremlin.version>3.0.0</orientdb-gremlin.version>
@@ -124,6 +124,15 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.9.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
