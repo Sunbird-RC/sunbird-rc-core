@@ -104,6 +104,11 @@
         <springdoc-openapi-starter-webmvc-ui.version>2.6.0</springdoc-openapi-starter-webmvc-ui.version>
         <spring-boot-starter-actuator.version>3.3.3</spring-boot-starter-actuator.version>
         <spring-kafka.version>3.2.3</spring-kafka.version>
+        <httpclient-cache.version>4.5.14</httpclient-cache.version>
+        <httpcore.version>4.4.16</httpcore.version>
+        <guava.version>33.3.0-jre</guava.version>
+        <minio.version>8.5.12</minio.version>
+        <karate-junit5.version>1.4.1</karate-junit5.version>
 
     </properties>
 

@@ -167,12 +167,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient-cache</artifactId>
-            <version>4.5.4</version>
+            <version>${httpclient-cache.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.8</version>
+            <version>${httpcore.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -182,12 +182,12 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>33.3.0-jre</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.5.12</version>
+            <version>${minio.version}</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
@@ -242,7 +242,7 @@
         <dependency>
             <groupId>com.intuit.karate</groupId>
             <artifactId>karate-junit5</artifactId>
-            <version>1.0.1</version>
+            <version>${karate-junit5.version}</version>
             <scope>test</scope>
         </dependency>
 
