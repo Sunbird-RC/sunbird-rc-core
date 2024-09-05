@@ -9,7 +9,7 @@ import wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import QRCode from 'qrcode';
-import JSZip from 'jszip';
+import {generateQRCode } from '@mosip/pixelpass';
 
 @Injectable()
 export class RenderingUtilsService {
@@ -19,17 +19,9 @@ export class RenderingUtilsService {
     try {
       let qrData = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
       if(process?.env?.QR_TYPE === "W3C_VC") {
-        const zip = new JSZip();
-        zip.file("certificate.json", JSON.stringify(cred), {
-          compression: "DEFLATE"
-        });
-        qrData = await zip.generateAsync({type: 'string', compression: "DEFLATE"})
-          .then(function (content) {
-            return content;
-          });
-        return QRCode.toDataURL(qrData, {scale: 3});
+        return generateQRCode(JSON.stringify(cred));
       }
-      return QRCode.toDataURL(qrData);
+      return generateQRCode(qrData);
     } catch (err) {
       this.logger.error('Error rendering QR: ', err);
       throw new InternalServerErrorException('Error rendering QR');
