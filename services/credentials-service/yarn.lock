@@ -885,10 +885,10 @@
   resolved "https://registry.yarnpkg.com/@lukeed/ms/-/ms-2.0.2.tgz#07f09e59a74c52f4d88c6db5c1054e819538e2a8"
   integrity sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==
 
-"@mosip/pixelpass@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@mosip/pixelpass/-/pixelpass-0.2.1.tgz#6919909bef10fc39d0cc77c6af89af7b1fce2ad5"
-  integrity sha512-phAQJtGuZLIdrTSicg9KBZe2ciKcdPn8ic50knTwO5qg3K4IKgn0PeJNWphJV/lCSSxN9G7UVfWSjtulSBPqNw==
+"@mosip/pixelpass@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@mosip/pixelpass/-/pixelpass-0.1.6.tgz#6b63dc7cc0d19ab0c483ab3e3eab8e6efc2b05db"
+  integrity sha512-IXYEglpSJAS78qmZtLJbbLwdQ/V7xtayIFHO4pCMpaIwtQaAeLVvrnZIOiQSFVUfkFLWsAVVF82YhuIm+4wilA==
   dependencies:
     base45-web "^1.0.2"
     cbor-web "^9.0.2"

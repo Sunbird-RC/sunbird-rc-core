@@ -30,7 +30,7 @@
     "@digitalbazaar/vc": "^6.3.0",
     "@fastify/static": "^7.0.4",
     "@fastify/view": "^9.1.0",
-    "@mosip/pixelpass": "^0.2.1",
+    "@mosip/pixelpass": "^0.1.6",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
