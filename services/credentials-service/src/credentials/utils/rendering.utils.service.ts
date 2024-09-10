@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import * as wkhtmltopdf from 'wkhtmltopdf';
+import wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';
-import * as QRCode from 'qrcode';
+import QRCode from 'qrcode';
 import JSZip from 'jszip';
 
 @Injectable()
