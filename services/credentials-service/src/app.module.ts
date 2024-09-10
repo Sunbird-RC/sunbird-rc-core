@@ -1,10 +1,10 @@
-import { HttpModule, HttpService } from '@nestjs/axios';
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CredentialsModule } from './credentials/credentials.module';
-import { HealthCheckService, TerminusModule } from '@nestjs/terminus';
+import { TerminusModule } from '@nestjs/terminus';
 import { HealthCheckUtilsService } from './credentials/utils/healthcheck.utils.service';
 import { PrismaClient } from '@prisma/client';
 import { RevocationList } from './revocation-list/revocation-list.helper';
@@ -21,6 +21,6 @@ import { RevocationListModule } from './revocation-list/revocation-list.module';
     RevocationListModule,
   ],
   controllers: [AppController],
-  providers: [HttpService, HealthCheckService, AppService, ConfigService, PrismaClient, HealthCheckUtilsService, RevocationList, RevocationListImpl, RevocationListService],
+  providers: [ AppService, ConfigService, PrismaClient, HealthCheckUtilsService, RevocationList, RevocationListImpl, RevocationListService],
 })
 export class AppModule {}
