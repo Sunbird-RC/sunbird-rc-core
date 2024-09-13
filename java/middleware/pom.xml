@@ -22,25 +22,6 @@
     <version>2.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.sunbirdrc.middleware</groupId>
-                <artifactId>jsonld-conversion</artifactId>
-                <version>${jsonldConversionVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.sunbirdrc</groupId>
-                <artifactId>authorization</artifactId>
-                <version>${authorizationVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.sunbirdrc</groupId>
-                <artifactId>validation</artifactId>
-                <version>${validationVersion}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <modules>
         <module>registry-middleware</module>
     </modules>

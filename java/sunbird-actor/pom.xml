@@ -3,6 +3,18 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.sunbirdrc</groupId>
+        <artifactId>sunbird-rc</artifactId>
+        <version>2.0.4-SNAPSHOT</version>
+    </parent>
+    <repositories>
+        <repository>
+            <id>akka-repository</id>
+            <name>Akka library repository</name>
+            <url>https://repo.akka.io/maven</url>
+        </repository>
+    </repositories>
     <groupId>org.sunbird.akka</groupId>
     <artifactId>sunbird-actor</artifactId>
     <version>2.0.4-SNAPSHOT</version>
@@ -15,18 +27,25 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <properties>
-        <akka-remote.version>2.9.0-M1</akka-remote.version>
-        <okhttp.version>5.0.0-alpha.2</okhttp.version>
-        <commons-lang3.version>3.16.0</commons-lang3.version>
-        <protobuf-java.version>4.27.3</protobuf-java.version>
-        <sunbird.revision>2.0.4-SNAPSHOT</sunbird.revision>
-    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-bom_${scala.binary.version}</artifactId>
+                <version>${akka-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-remote_2.12</artifactId>
-            <version>${akka-remote.version}</version>
+            <artifactId>akka-actor_${scala.binary.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-remote_${scala.binary.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -42,18 +61,8 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
-                <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.3</version>
                 <executions>
                     <execution>
                         <id>repackage</id>
@@ -70,7 +79,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>default-cli</id>

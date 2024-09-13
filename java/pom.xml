@@ -109,6 +109,8 @@
         <guava.version>33.3.0-jre</guava.version>
         <minio.version>8.5.12</minio.version>
         <karate-junit5.version>1.4.1</karate-junit5.version>
+        <scala.binary.version>2.13</scala.binary.version>
+        <akka-bom.version>2.9.5</akka-bom.version>
 
     </properties>
 

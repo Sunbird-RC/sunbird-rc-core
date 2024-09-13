@@ -20,23 +20,6 @@
         </license>
     </licenses>
 
-
-    <properties>
-        <runSuite>**/RegistryTestSuite.class</runSuite>
-        <basePath>../../</basePath>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.sunbirdrc</groupId>
-                <artifactId>validators</artifactId>
-                <version>${sunbird.revision}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
 
         <dependency>
@@ -239,14 +222,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.intuit.karate</groupId>
-            <artifactId>karate-junit5</artifactId>
-            <version>${karate-junit5.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-
         <dependency>
             <groupId>org.umlg</groupId>
             <artifactId>sqlg-postgres</artifactId>

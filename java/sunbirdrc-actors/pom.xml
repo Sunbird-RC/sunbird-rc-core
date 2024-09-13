@@ -4,6 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.sunbirdrc</groupId>
+        <artifactId>sunbird-rc</artifactId>
+        <version>2.0.4-SNAPSHOT</version>
+    </parent>
     <groupId>dev.sunbirdrc.actors</groupId>
     <artifactId>sunbirdrc-actors</artifactId>
     <version>2.0.4-SNAPSHOT</version>
@@ -16,13 +21,15 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <properties>
-        <akka-remote.version>2.9.0-M1</akka-remote.version>
-        <okhttp.version>5.0.0-alpha.14</okhttp.version>
-        <commons-lang3.version>3.16.0</commons-lang3.version>
-        <protobuf-java.version>4.27.3</protobuf-java.version>
-        <sunbird.revision>2.0.4-SNAPSHOT</sunbird.revision>
-    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.retry</groupId>
+                <artifactId>spring-retry</artifactId>
+                <version>${spring.retry.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.sunbird.akka</groupId>
@@ -33,6 +40,12 @@
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
             <version>${sunbird.revision}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.retry</groupId>
+                    <artifactId>spring-retry</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
@@ -43,18 +56,8 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
-                <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.2</version>
                 <executions>
                     <execution>
                         <id>repackage</id>
@@ -71,7 +74,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>default-cli</id>
