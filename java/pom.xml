@@ -14,7 +14,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.2</version>
+        <version>3.3.3</version>
         <relativePath/>
     </parent>
     <licenses>
@@ -52,7 +52,7 @@
         <authorizationVersion>${sunbird.revision}</authorizationVersion>
         <validationVersion>${sunbird.revision}</validationVersion>
         <signaturePresenceValidationVersion>${sunbird.revision}</signaturePresenceValidationVersion>
-        <springframework.version>3.3.2</springframework.version>
+        <springframework.version>3.3.3</springframework.version>
         <findbugs.version>3.0.1</findbugs.version>
         <perf4j.version>0.9.16</perf4j.version>
         <neo4j.version>3.2.3</neo4j.version>
@@ -66,18 +66,16 @@
         <jsonld-java.version>0.13.6</jsonld-java.version>
         <json-path.version>2.9.0</json-path.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <keycloak-admin-client.version>25.0.4</keycloak-admin-client.version>
-        <keycloak-spring-security-adapter.version>25.0.3</keycloak-spring-security-adapter.version>
+        <keycloak-admin-client.version>14.0.0</keycloak-admin-client.version>
+        <keycloak-spring-security-adapter.version>14.0.0</keycloak-spring-security-adapter.version>
         <com-auth0.version>2.12.0</com-auth0.version>
-        <elastic.search.version>6.6.0</elastic.search.version>
         <spring.retry.version>2.0.8</spring.retry.version>
-        <everit.json.schema.version>1.12.2</everit.json.schema.version>
+        <everit.json.schema.version>1.14.4</everit.json.schema.version>
         <commons-jexl.version>2.1.1</commons-jexl.version>
         <json-path.version>2.9.0</json-path.version>
         <jackson-databind.version>2.17.2</jackson-databind.version>
         <slf4j-api.version>2.0.16</slf4j-api.version>
         <protobuf-java.version>3.6.1</protobuf-java.version>
-        <akka-remote.version>2.6.0-M2</akka-remote.version>
         <okhttp.version>5.0.0-alpha.2</okhttp.version>
         <tinkerpop.version>3.7.2</tinkerpop.version>
         <janusgraph.version>1.1.0-20240822-065119.1a7f5ab</janusgraph.version>
@@ -85,7 +83,7 @@
         <handlebars.version>4.0.0</handlebars.version>
         <orientdb-gremlin.version>3.0.0</orientdb-gremlin.version>
         <sqlg-postgres.version>3.1.0</sqlg-postgres.version>
-        <commons-text.version>1.9</commons-text.version>
+        <commons-text.version>1.12.0</commons-text.version>
         <neo4j-tinkerpop.version>0.7-3.2.3</neo4j-tinkerpop.version>
         <mssql-jdbc.version>12.8.0.jre11</mssql-jdbc.version>
         <sqlg-mssqlserver.version>3.0.4</sqlg-mssqlserver.version>
@@ -94,6 +92,7 @@
         <neo4j-java-driver.version>5.23.0</neo4j-java-driver.version>
         <jakarta.ws.rs-api.version>4.0.0</jakarta.ws.rs-api.version>
         <httpclient5.version>5.3.1</httpclient5.version>
+        <httclient.version>4.5.14</httclient.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <jakarta.validation-api.version>3.1.0</jakarta.validation-api.version>
         <jakarta.el.version>5.0.0-M1</jakarta.el.version>
@@ -111,8 +110,13 @@
         <karate-junit5.version>1.4.1</karate-junit5.version>
         <scala.binary.version>2.13</scala.binary.version>
         <akka-bom.version>2.9.5</akka-bom.version>
-
+        <logback.version>1.5.8</logback.version>
+        <resteasy-client.version>3.13.2.Final</resteasy-client.version>
+        <resteasy-jackson2-provider.version>6.2.10.Final</resteasy-jackson2-provider.version>
+        <javax.ws.rs-api.version>2.1.1</javax.ws.rs-api.version>
+        <jersey-server.version>3.0.8</jersey-server.version>
     </properties>
+
 
     <modules>
         <module>pojos</module>

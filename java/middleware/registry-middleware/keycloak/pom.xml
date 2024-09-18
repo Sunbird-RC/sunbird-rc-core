@@ -49,6 +49,11 @@
             <artifactId>identity-provider</artifactId>
             <version>${sunbird.revision}</version>
         </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>${jakarta.ws.rs-api.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

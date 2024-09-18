@@ -26,7 +26,7 @@ public class AppStartupRunner implements ApplicationRunner {
     private boolean signatureEnabled;
     @Value("${signature.provider}")
     private String signatureProvider;
-
+    private static volatile boolean initializationComplete = false;
     @Override
     public void run(ApplicationArguments args) throws Exception {
         logger.info("On Boot starts loading: parent vertex and shard records");
@@ -39,5 +39,10 @@ public class AppStartupRunner implements ApplicationRunner {
             credentialSchemaService.ensureCredentialSchemas();
         }
         logger.info("Startup completed!");
+        initializationComplete = true;
+    }
+
+    public static boolean isInitializationComplete() {
+        return initializationComplete;
     }
 }

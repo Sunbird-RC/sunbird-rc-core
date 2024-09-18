@@ -9,6 +9,13 @@
         <artifactId>sunbird-rc</artifactId>
         <version>2.0.4-SNAPSHOT</version>
     </parent>
+    <repositories>
+        <repository>
+            <id>akka-repository</id>
+            <name>Akka library repository</name>
+            <url>https://repo.akka.io/maven</url>
+        </repository>
+    </repositories>
     <groupId>dev.sunbirdrc.actors</groupId>
     <artifactId>sunbirdrc-actors</artifactId>
     <version>2.0.4-SNAPSHOT</version>

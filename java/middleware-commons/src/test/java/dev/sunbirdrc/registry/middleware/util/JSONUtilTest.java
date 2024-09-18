@@ -113,7 +113,6 @@ class JSONUtilTest {
                 "$.address.street",
                 "$.address.pincode",
                 "$.education[0]",
-                "$.education[0].fromDate",
                 "$.education[2]",
                 "$.education[1].fromDate"
         ));

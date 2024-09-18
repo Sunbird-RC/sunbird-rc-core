@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -38,9 +39,27 @@ public class ValueType {
             // Decimal number
             result = entryVal.asDouble();
         }
+
         return result;
     }
 
+
+    public static String getArrayValue(JsonNode entryVal) {
+        if (!entryVal.isArray()) {
+            throw new IllegalArgumentException("Input JsonNode is not an array");
+        }
+
+        ArrayNode arrayNode = (ArrayNode) entryVal;
+        StringBuilder result = new StringBuilder("[");
+        for (int i = 0; i < arrayNode.size(); i++) {
+            if (i > 0) {
+                result.append(", ");
+            }
+            result.append("\"").append(getValue(arrayNode.get(i))).append("\"");
+        }
+        result.append("]");
+        return result.toString();
+    }
 
     /**
      * Sets the contentNode to the corresponding value.

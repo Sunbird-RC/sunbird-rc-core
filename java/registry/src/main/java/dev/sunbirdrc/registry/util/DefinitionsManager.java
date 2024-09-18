@@ -37,6 +37,7 @@ public class DefinitionsManager implements IDefinitionsManager {
     public void loadDefinition() throws Exception {
 
         loadResourcesFromPath(Constants.RESOURCE_LOCATION);
+        loadResourcesFromPath(Constants.SCHEMA_FILE_LOCATION);
         loadResourcesFromPath(Constants.INTERNAL_RESOURCE_LOCATION);
         derivedDefinitionMap.putAll(definitionMap);
         Set<Definition> loadedDefinitionsSet = new HashSet<>(definitionMap.values());

@@ -1,44 +1,53 @@
 package dev.sunbirdrc.registry.authorization;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SchemaAuthFilter implements Filter {
+public class SchemaAuthFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(SchemaAuthFilter.class);
     private static final String INVITE_URL_PATTERN = "/api/v1/([A-Za-z0-9_])+/invite(/)?";
 
-    private final Set<String> anonymousInviteSchemas =  new HashSet<>();
-    private final Set<String> anonymousSchemas =  new HashSet<>();
+    private final Set<String> anonymousInviteSchemas = new HashSet<>();
+    private final Set<String> anonymousSchemas = new HashSet<>();
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
-        HttpServletRequest request = (HttpServletRequest) servletRequest;
-        String requestUri = request.getRequestURI();
+    protected void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
+
+        String requestUri = servletRequest.getRequestURI();
+
         try {
             if (requestUri.matches(INVITE_URL_PATTERN) &&
                     anonymousInviteSchemas.stream()
-                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\\\?.*)?", d))
+                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\?.*)?", d))
                             .anyMatch(requestUri::matches)) {
-                servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
+                servletRequest.getRequestDispatcher(servletRequest.getServletPath()).forward(servletRequest, servletResponse);
                 return;
-            } else if (!requestUri.matches(INVITE_URL_PATTERN) && anonymousSchemas.stream()
-                    .map(d -> String.format("/api/v1/%s(/.*)?(((\\\\?)|(\\\\%s)).*)?", d, "%3F"))
-                    .anyMatch(requestUri::matches)) {
-                servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
+            } else if (!requestUri.matches(INVITE_URL_PATTERN) &&
+                    anonymousSchemas.stream()
+                            .map(d -> String.format("/api/v1/%s([^/]+)?(((\\?)|(\\%s)).*)?", d, "%3F"))
+                            .anyMatch(requestUri::matches)) {
+                logger.debug("Forwarded NON Invite and Anonymous to : {} anonymousSchemas {} ", servletRequest.getServletPath(), anonymousSchemas);
+                servletRequest.getRequestDispatcher(servletRequest.getServletPath()).forward(servletRequest, servletResponse);
                 return;
             }
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (Exception e) {
             logger.error("Exception while applying security filters: ", e);
             throw e;
+        } finally {
+            logger.debug("Exiting SchemaAuthFilter for URI: {} ", requestUri);
         }
+
     }
 
     public void appendAnonymousInviteSchema(String schema) {
@@ -62,4 +71,6 @@ public class SchemaAuthFilter implements Filter {
         anonymousSchemas.remove(schema);
         anonymousInviteSchemas.remove(schema);
     }
+
+
 }

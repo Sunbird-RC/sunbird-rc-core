@@ -310,10 +310,13 @@ public class RegistryServiceImpl implements RegistryService {
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
-        try (OSGraph osGraph = databaseProvider.getOSGraph()) {
+        OSGraph osGraph = null;
+        try {
+            osGraph = databaseProvider.getOSGraph();
             Graph graph = osGraph.getGraphStore();
-            try (Transaction tx = databaseProvider.startTransaction(graph)) {
-
+            Transaction tx = null;
+            try {
+                tx = databaseProvider.startTransaction(graph);
                 // Read the node and
                 // TODO - decrypt properties to pass validation
                 ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
@@ -392,6 +395,29 @@ public class RegistryServiceImpl implements RegistryService {
                 if (isEventsEnabled) {
                     maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
                 }
+            } catch (Exception e) {
+                if (tx != null) {
+                    tx.close();
+                }
+                if (tx != null) {
+                    tx.close();
+                }
+                logger.error("Error while updating entity inner", e);
+                throw e;
+            } finally {
+                if (osGraph != null) {
+                    osGraph.close();
+                }
+                if (tx != null) {
+                    tx.close();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error while creating osGraph before updating entity", e);
+            throw e;
+        } finally {
+            if (osGraph != null) {
+                osGraph.close();
             }
         }
     }
@@ -535,8 +561,14 @@ public class RegistryServiceImpl implements RegistryService {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
                             vertexWriter.createArrayNode(existingVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
-                    } else {
+                    }
+                    else if(oneElement.getValue().isArray()){
+                        existingVertex.property(oneElement.getKey(), ValueType.getArrayValue(oneElement.getValue()));
+                        logger.debug("After Value node, going to update {}", oneElement.getKey());
+                    }
+                    else {
                         existingVertex.property(oneElement.getKey(), ValueType.getValue(oneElement.getValue()));
+                        logger.debug("After Value node, going to update {}", oneElement.getKey());
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());

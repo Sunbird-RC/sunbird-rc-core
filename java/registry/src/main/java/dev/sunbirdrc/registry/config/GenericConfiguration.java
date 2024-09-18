@@ -3,8 +3,6 @@ package dev.sunbirdrc.registry.config;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import dev.sunbirdrc.actors.services.NotificationService;
 import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
@@ -48,10 +46,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.context.annotation.*;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
@@ -63,7 +59,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
-import org.sunbird.akka.core.SunbirdActorFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -82,15 +77,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
     @Getter
     private static String signatureProvider;
 
-    static {
-        Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
-
-        SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
-        sunbirdActorFactory.init("sunbirdrc-actors");
-    }
-
     private final String NONE_STR = "none";
     @Autowired
+    @Lazy
     private IDefinitionsManager iDefinitionsManager;
     @Value("${service.connection.timeout}")
     private int connectionTimeout;

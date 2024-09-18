@@ -35,6 +35,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public void loadDefinition() throws Exception {
         loadResourcesFromPath(Constants.RESOURCE_LOCATION);
+        loadResourcesFromPath(Constants.SCHEMA_FILE_LOCATION);
         loadResourcesFromPath(Constants.INTERNAL_RESOURCE_LOCATION);
         logger.info("loaded schema resource(s): ");
     }

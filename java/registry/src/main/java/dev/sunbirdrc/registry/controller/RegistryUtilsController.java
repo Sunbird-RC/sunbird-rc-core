@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import dev.sunbirdrc.pojos.*;
+import dev.sunbirdrc.registry.app.AppStartupRunner;
 import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.helper.SignatureHelper;
@@ -239,22 +240,27 @@ public class RegistryUtilsController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
 
-        try {
-            Shard shard = shardManager.getDefaultShard();
-            HealthCheckResponse healthCheckResult = healthCheckService.health(shard);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
-            responseParams.setErrmsg("");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
-            logger.debug("Application heath checked : {}", healthCheckResult.toString());
-        } catch (Exception e) {
-            logger.error("Error in health checking!, {}", ExceptionUtils.getStackTrace(e));
-            HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API,
-                    false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("Error during health check");
+        if (AppStartupRunner.isInitializationComplete()) {
+            try {
+                Shard shard = shardManager.getDefaultShard();
+                HealthCheckResponse healthCheckResult = healthCheckService.health(shard);
+                response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+                responseParams.setErrmsg("");
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+                logger.debug("Application heath checked : {}", healthCheckResult.toString());
+            } catch (Exception e) {
+                logger.error("Error in health checking!, {}", ExceptionUtils.getStackTrace(e));
+                HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API,
+                        false, null);
+                response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg("Error during health check");
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(response, HttpStatus.PROCESSING);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+
     }
 
     @ResponseBody

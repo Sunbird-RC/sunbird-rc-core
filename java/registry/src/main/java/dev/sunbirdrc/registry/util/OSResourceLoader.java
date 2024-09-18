@@ -7,6 +7,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -31,8 +32,12 @@ public class OSResourceLoader {
      * @throws IOException
      */
     public Resource[] getResources(String pattern) throws IOException {
-        Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(pattern);
-        return resources;
+        try {
+            return ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(pattern);
+        } catch (FileNotFoundException e) {
+            logger.warn("OSLoader did not find files at specified location pattern: {} ", pattern);
+            return new Resource[0];
+        }
     }
 
     public void loadResource(String path) throws Exception {
