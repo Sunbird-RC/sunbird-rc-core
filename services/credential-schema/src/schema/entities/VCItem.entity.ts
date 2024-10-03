@@ -34,4 +34,5 @@ export class VCItem implements VerifiableCredentialSchema {
   createdBy: string;
   updatedBy: string;
   deprecatedId: string;
+  cordSchemaId: string | null;
 }

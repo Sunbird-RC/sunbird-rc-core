@@ -13,6 +13,7 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { AnchorCordUtilsServices } from './utils/cord.utils.service';
 import * as jsigs from 'jsonld-signatures';
 import * as jsonld from 'jsonld';
 import { DOCUMENTS } from './documents';
@@ -41,7 +42,8 @@ export class CredentialsService {
     private readonly prisma: PrismaClient,
     private readonly identityUtilsService: IdentityUtilsService,
     private readonly renderingUtilsService: RenderingUtilsService,
-    private readonly schemaUtilsService: SchemaUtilsSerivce
+    private readonly schemaUtilsService: SchemaUtilsSerivce,
+    private readonly anchorCordUtilsServices: AnchorCordUtilsServices
   ) {
     this.init();
   }
@@ -148,6 +150,11 @@ export class CredentialsService {
 
   async verifyCredential(credToVerify: Verifiable<W3CCredential>, status?: VCStatus) {
     try {
+
+       // If ANCHOR_TO_CORD is true, delegate verification to Cord Verification MiddleWare service
+      if (this.shouldAnchorToCord()) {
+        return await this.anchorCordUtilsServices.verifyCredentialOnCord(credToVerify);
+      }
       // calling identity service to verify the issuer DID
       const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
@@ -265,44 +272,204 @@ export class CredentialsService {
     })
   }
 
+  // async issueCredential(issueRequest: IssueCredentialDTO) {
+  //   this.logger.debug(`Received issue credential request`);
+  //   const credInReq = issueRequest.credential;
+  //   // check for issuance date
+  //   if (!credInReq.issuanceDate)
+  //     credInReq.issuanceDate = new Date(Date.now()).toISOString();
+  //   // Verify the credential with the credential schema using ajv
+  //   // get the credential schema
+  //   const schema = await this.schemaUtilsService.getCredentialSchema(
+  //     issueRequest.credentialSchemaId,
+  //     issueRequest.credentialSchemaVersion
+  //   );
+  //   this.logger.debug('fetched schema');
+  //   const { valid, errors } =
+  //     await this.schemaUtilsService.verifyCredentialSubject(
+  //       credInReq,
+  //       schema.schema
+  //     );
+  //   if (!valid) {
+  //     this.logger.error('Invalid credential schema', errors);
+  //     throw new BadRequestException(errors);
+  //   }
+  //   this.logger.debug('validated schema');
+  //   // generate the DID for credential
+  //   const credDID: ReadonlyArray<DIDDocument> =
+  //     await this.identityUtilsService.generateDID(
+  //       [],
+  //       issueRequest.method
+  //     );
+  //   this.logger.debug('generated DID');
+  //   try {
+  //     credInReq.id = credDID[0].id;
+  //   } catch (err) {
+  //     this.logger.error('Invalid response from generate DID', err);
+  //     throw new InternalServerErrorException('Problem creating DID');
+  //   }
+  //   // sign the credential
+  //   let signedCredential: W3CCredential = {};
+  //   try {
+  //     signedCredential = await this.identityUtilsService.signVC(
+  //       credInReq as CredentialPayload,
+  //       credInReq.issuer
+  //     );
+  //   } catch (err) {
+  //     this.logger.error('Error signing the credential');
+  //     throw new InternalServerErrorException('Problem signing the credential');
+  //   }
+
+  //   this.logger.debug('signed credential');
+
+  //   // TODO: add created by and updated by
+  //   const newCred = await this.prisma.verifiableCredentials.create({
+  //     data: {
+  //       id: signedCredential.id,
+  //       type: signedCredential.type,
+  //       issuer: signedCredential.issuer as IssuerType as string,
+  //       issuanceDate: signedCredential.issuanceDate,
+  //       expirationDate: signedCredential.expirationDate,
+  //       subject: signedCredential.credentialSubject as JwtCredentialSubject,
+  //       subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
+  //       proof: signedCredential.proof as Proof,
+  //       credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
+  //       signed: signedCredential as object,
+  //       tags: issueRequest.tags,
+  //     },
+  //   });
+
+  //   if (!newCred) {
+  //     this.logger.error('Problem saving credential to db');
+  //     throw new InternalServerErrorException('Problem saving credential to db');
+  //   }
+  //   this.logger.debug('saved credential to db');
+
+  //   const res = newCred.signed;
+  //   delete res['options'];
+  //   return {
+  //     credential: res,
+  //     credentialSchemaId: newCred.credential_schema,
+  //     createdAt: newCred.updated_at.toISOString(),
+  //     updatedAt: newCred.updated_at.toISOString(),
+  //     createdBy: '',
+  //     updatedBy: '',
+  //     tags: newCred.tags,
+  //   };
+  // }
+
+
   async issueCredential(issueRequest: IssueCredentialDTO) {
     this.logger.debug(`Received issue credential request`);
     const credInReq = issueRequest.credential;
-    // check for issuance date
-    if (!credInReq.issuanceDate)
+  
+    // Check for issuance date
+    if (!credInReq.issuanceDate) {
       credInReq.issuanceDate = new Date(Date.now()).toISOString();
-    // Verify the credential with the credential schema using ajv
-    // get the credential schema
-    const schema = await this.schemaUtilsService.getCredentialSchema(
+    }
+  
+    // Get the credential schema and Cord schema ID
+    const { schema, cordSchemaId } = await this.schemaUtilsService.getCredentialSchema(
       issueRequest.credentialSchemaId,
       issueRequest.credentialSchemaVersion
     );
-    this.logger.debug('fetched schema');
-    const { valid, errors } =
-      await this.schemaUtilsService.verifyCredentialSubject(
-        credInReq,
-        schema.schema
-      );
+    
+    this.logger.debug('fetched schema', schema);
+    
+    const { valid, errors } = await this.schemaUtilsService.verifyCredentialSubject(
+      credInReq,
+      schema.schema
+    );
+    
     if (!valid) {
       this.logger.error('Invalid credential schema', errors);
       throw new BadRequestException(errors);
     }
+    
     this.logger.debug('validated schema');
-    // generate the DID for credential
-    const credDID: ReadonlyArray<DIDDocument> =
-      await this.identityUtilsService.generateDID(
-        [],
-        issueRequest.method
-      );
+  
+    // Generate the DID for the credential
+    const credDID: ReadonlyArray<DIDDocument> = await this.identityUtilsService.generateDID([], issueRequest.method);
     this.logger.debug('generated DID');
+    
     try {
       credInReq.id = credDID[0].id;
     } catch (err) {
       this.logger.error('Invalid response from generate DID', err);
       throw new InternalServerErrorException('Problem creating DID');
     }
-    // sign the credential
+    
+    this.logger.debug('Generated DID and validated schema');
+  
+    let response: any = null;
+  
+    // Check if ANCHOR_TO_CORD is true, anchor the unsigned credential using cordSchemaId from the schema
+    if (this.shouldAnchorToCord()) {
+      response = await this.anchorCredentialToCord(credInReq, cordSchemaId, issueRequest);
+    } else {
+      response = await this.signAndStoreCredential(credInReq, issueRequest);
+    }
+  
+    return response;
+  }
+  
+  /**
+   * Determines if ANCHOR_TO_CORD environment variable is true
+   */
+  private shouldAnchorToCord(): boolean {
+    return process.env.ANCHOR_TO_CORD && process.env.ANCHOR_TO_CORD.toLowerCase().trim() === 'true';
+  }
+  
+  /**
+   * Anchors the credential to Cord blockchain and saves to the DB
+   */
+  private async anchorCredentialToCord(credInReq: any, cordSchemaId: string, issueRequest: IssueCredentialDTO) {
+    if (!cordSchemaId) {
+      this.logger.error('Cord Schema ID is required for anchoring but is missing');
+      throw new BadRequestException('Cord Schema ID is missing');
+    }
+  
+    try {
+      this.logger.debug('Anchoring unsigned credential to Cord blockchain with schema ID:', cordSchemaId);
+  
+      const anchorResponse = await this.anchorCordUtilsServices.anchorCredential({
+        ...credInReq,
+        cordSchemaId,
+      });
+  
+      this.logger.debug('Credential successfully anchored to Cord:', anchorResponse);
+
+    const {
+       id , issuer, issuanceDate, validUntil: expirationDate, credentialSubject, proof ,
+    } = anchorResponse.vc;
+
+    const anchoredCredentialData = {
+      id,
+      type: issueRequest.credential.type,
+      issuer,
+      issuanceDate,
+      expirationDate,
+      subject: credentialSubject,
+      subjectId: (credentialSubject as JwtCredentialSubject).id,
+      proof,
+      credential_schema: issueRequest.credentialSchemaId,
+      signed: anchorResponse.vc as object,
+      tags: issueRequest.tags,
+    };
+    
+      return this.saveCredentialToDatabase(anchoredCredentialData);
+    } catch (err) {
+      this.logger.error('Error anchoring credential to Cord blockchain:', err);
+      throw new InternalServerErrorException('Error anchoring credential to Cord blockchain');
+    }
+  }
+  
+  /**
+   * Signs the credential locally and saves it to the database
+   */
+  private async signAndStoreCredential(credInReq: any, issueRequest: IssueCredentialDTO) {
     let signedCredential: W3CCredential = {};
+  
     try {
       signedCredential = await this.identityUtilsService.signVC(
         credInReq as CredentialPayload,
@@ -312,34 +479,46 @@ export class CredentialsService {
       this.logger.error('Error signing the credential');
       throw new InternalServerErrorException('Problem signing the credential');
     }
-
-    this.logger.debug('signed credential');
-
-    // TODO: add created by and updated by
+  
+    this.logger.debug('Signed credential');
+  
+    const newCredData = {
+      id: signedCredential.id,
+      type: signedCredential.type,
+      issuer: signedCredential.issuer as IssuerType as string,
+      issuanceDate: signedCredential.issuanceDate,
+      expirationDate: signedCredential.expirationDate,
+      subject: signedCredential.credentialSubject as JwtCredentialSubject,
+      subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
+      proof: signedCredential.proof as Proof,
+      credential_schema: issueRequest.credentialSchemaId,
+      signed: signedCredential as object,
+      tags: issueRequest.tags,
+    };
+  
+    return this.saveCredentialToDatabase(newCredData);
+  }
+  
+  /**
+   * Saves the credential to the database and returns the response
+   */
+  private async saveCredentialToDatabase(credentialData: any) {
+  
     const newCred = await this.prisma.verifiableCredentials.create({
-      data: {
-        id: signedCredential.id,
-        type: signedCredential.type,
-        issuer: signedCredential.issuer as IssuerType as string,
-        issuanceDate: signedCredential.issuanceDate,
-        expirationDate: signedCredential.expirationDate,
-        subject: signedCredential.credentialSubject as JwtCredentialSubject,
-        subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
-        proof: signedCredential.proof as Proof,
-        credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
-        signed: signedCredential as object,
-        tags: issueRequest.tags,
-      },
+      data: credentialData,
     });
 
     if (!newCred) {
       this.logger.error('Problem saving credential to db');
       throw new InternalServerErrorException('Problem saving credential to db');
     }
+  
     this.logger.debug('saved credential to db');
-
+  
     const res = newCred.signed;
+
     delete res['options'];
+    
     return {
       credential: res,
       credentialSchemaId: newCred.credential_schema,
@@ -350,7 +529,7 @@ export class CredentialsService {
       tags: newCred.tags,
     };
   }
-
+  
   async deleteCredential(id: string) {
     try {
       const credential = await this.prisma.verifiableCredentials.update({

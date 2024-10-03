@@ -58,6 +58,7 @@ export class SchemaService {
         createdBy: schema.createdBy,
         updatedBy: schema.updatedBy,
         deprecatedId: schema.deprecatedId,
+        cordSchemaId: schema.cordSchemaId,
       } as GetCredentialSchemaDTO;
     } else {
       this.logger.error('schema not found for userInput', userWhereUniqueInput);
@@ -118,6 +119,7 @@ export class SchemaService {
         createdBy: schema.createdBy,
         updatedBy: schema.updatedBy,
         deprecatedId: schema.deprecatedId,
+        cordSchemaId: schema.cordSchemaId,
       };
     });
   }
@@ -129,6 +131,7 @@ export class SchemaService {
   ) {
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
+    let cordSchemaId: string | null = null;
 
     // verify the Credential Schema
     if (validate(data)) {
@@ -152,6 +155,28 @@ export class SchemaService {
         this.logger.debug('DID received from identity service', did);
       }
 
+      // Anchor the schema to Cord blockchain only if ANCHOR_TO_CORD is set to 'True' or 'true'
+      if (
+        process.env.ANCHOR_TO_CORD &&
+        process.env.ANCHOR_TO_CORD.toLowerCase().trim() === 'true'
+      ) {
+        try {
+          const anchorResponse = await this.utilService.anchorSchema({
+            schema: data,
+          });
+
+          cordSchemaId = anchorResponse.schemaId;
+          this.logger.debug(
+            'Schema successfully anchored to Cord blockchain',
+            anchorResponse,
+          );
+        } catch (err) {
+          this.logger.error('Failed to anchor schema to Cord blockchain', err);
+          throw new InternalServerErrorException(
+            'Failed to anchor schema to Cord blockchain',
+          );
+        }
+      }
       const credSchema = {
         schema: {
           type: data.type,
@@ -166,6 +191,7 @@ export class SchemaService {
         tags: tags,
         status: createCredentialDto.status,
         deprecatedId: createCredentialDto.deprecatedId,
+        cordSchemaId: cordSchemaId,
       };
 
       // sign the credential schema (only the schema part of the credSchema object above since it is the actual schema)
@@ -189,6 +215,7 @@ export class SchemaService {
             proof: credSchema.schema.proof as Prisma.JsonValue || undefined,
             tags: credSchema.tags as string[],
             deprecatedId: deprecatedId,
+            cordSchemaId: (credSchema.cordSchemaId as string) || null,
           },
         });
 
@@ -235,6 +262,7 @@ export class SchemaService {
         createdBy: schema?.createdBy,
         updatedBy: schema?.updatedBy,
         deprecatedId: schema?.deprecatedId,
+        cordSchemaId: schema?.cordSchemaId,
       }),
     );
   }
