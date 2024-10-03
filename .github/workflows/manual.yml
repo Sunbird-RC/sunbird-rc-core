@@ -57,7 +57,7 @@ jobs: # This workflow contains a single job called "greet"
       - name: Configure Dependencies
         run: |
           sh configure-dependencies.sh
-          cd java && ./mvnw clean install -X
+          cd java && ./mvnw clean install
           rm -rf java/claim/target/*.jar
           jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./
 
