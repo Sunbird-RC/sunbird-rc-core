@@ -38,7 +38,7 @@ jobs: # This workflow contains a single job called "greet"
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: 'maven'
       - name: Setup Golang
         uses: actions/setup-go@v3
