@@ -1,16 +1,24 @@
+.PHONY: show-dir
+show-dir:
+	@echo "Current directory: $$(pwd)"
+	@echo "Files in current directory:"
+	@ls -l
+
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v2.0.1
+RELEASE_VERSION = 2.0.4-SNAPSHOT
 IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-claim-ms \
 			ghcr.io/sunbird-rc/sunbird-rc-notification-service ghcr.io/sunbird-rc/sunbird-rc-metrics \
 			ghcr.io/sunbird-rc/id-gen-service ghcr.io/sunbird-rc/encryption-service \
 			ghcr.io/sunbird-rc/sunbird-rc-identity-service ghcr.io/sunbird-rc/sunbird-rc-credential-schema \
 			ghcr.io/sunbird-rc/sunbird-rc-credentials-service
 build: java/registry/target/registry.jar
-	echo ${SOURCES}
+	#echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
-	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t ghcr.io/sunbird-rc/sunbird-rc-core .
+	@$(MAKE) show-dir
+	mkdir -p target
+	cd target && rm -rf * &&cp ../java/registry/target/registry-$(RELEASE_VERSION).jar ./registry.jar && cp ../java/Dockerfile ./ && docker build -t ghcr.io/sunbird-rc/sunbird-rc-core .
 	make -C java/claim
 	make -C services/notification-service docker
 	make -C services/metrics docker
@@ -22,7 +30,7 @@ build: java/registry/target/registry.jar
 
 
 java/registry/target/registry.jar: $(SOURCES)
-	echo $(SOURCES)
+	#echo $(SOURCES)
 	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
