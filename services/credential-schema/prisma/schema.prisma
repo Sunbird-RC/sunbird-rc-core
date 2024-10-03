@@ -35,6 +35,7 @@ model VerifiableCredentialSchema {
   tags         String[]
   status       SchemaStatus @default(DRAFT)
   deprecatedId String?
+  cordSchemaId String? 
 
   @@id([id, version])
   @@index([type], type: Hash)
