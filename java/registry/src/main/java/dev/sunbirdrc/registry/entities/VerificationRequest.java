@@ -5,5 +5,5 @@ import lombok.Data;
 
 @Data
 public class VerificationRequest {
-	JsonNode signedCredentials;
+    JsonNode signedCredentials;
 }

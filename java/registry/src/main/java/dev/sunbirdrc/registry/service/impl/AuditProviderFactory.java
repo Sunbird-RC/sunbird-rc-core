@@ -1,17 +1,15 @@
 package dev.sunbirdrc.registry.service.impl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.PostConstruct;
-
+import dev.sunbirdrc.registry.service.IAuditService;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import dev.sunbirdrc.registry.service.IAuditService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Audit service implementation for audit layer in the application
@@ -20,26 +18,25 @@ import dev.sunbirdrc.registry.service.IAuditService;
 public class AuditProviderFactory {
 
     private static Logger logger = LoggerFactory.getLogger(AuditProviderFactory.class);
-   
-    private Map<String, IAuditService> auditServiceMap  = new HashMap<String, IAuditService>();
-    
-	@Autowired
-	List<IAuditService> auditServiceList ;
-	
-	@Autowired
-    public void setAuditServiceList(List<IAuditService> auditServiceList){
+    @Autowired
+    List<IAuditService> auditServiceList;
+    private Map<String, IAuditService> auditServiceMap = new HashMap<String, IAuditService>();
+
+    @Autowired
+    public void setAuditServiceList(List<IAuditService> auditServiceList) {
         this.auditServiceList = auditServiceList;
     }
 
-	@PostConstruct
-	private void init(){
-		for (IAuditService auditService : auditServiceList) {
-			auditServiceMap.put(auditService.getAuditProvider(), auditService);
-		}
-	}
-	public IAuditService getAuditService(String auditProvider) {
-		IAuditService auditService =auditServiceMap.get(auditProvider);
-		return auditService;
-	}
-  
+    @PostConstruct
+    private void init() {
+        for (IAuditService auditService : auditServiceList) {
+            auditServiceMap.put(auditService.getAuditProvider(), auditService);
+        }
+    }
+
+    public IAuditService getAuditService(String auditProvider) {
+        IAuditService auditService = auditServiceMap.get(auditProvider);
+        return auditService;
+    }
+
 }

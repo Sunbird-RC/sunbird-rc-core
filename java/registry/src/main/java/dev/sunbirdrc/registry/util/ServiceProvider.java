@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
  * This class provides methods that instantiates the class providers, either elastic-search or native that perform read/search operations
  */
 public class ServiceProvider {
-    private static Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
     private static final String DEFAULT_SEARCH_ADVISOR = "dev.sunbirdrc.registry.service.NativeSearchService";
     private static final String DEFAULT_READ_ADVISOR = "dev.sunbirdrc.registry.service.NativeReadService";
+    private static Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
 
     public ISearchService getSearchInstance(String advisorProviderName, boolean elasticSearchEnabled) {
 
@@ -26,7 +26,7 @@ public class ServiceProvider {
             searchService = (ISearchService) advisorClass.newInstance();
             logger.info("Invoked search provider class with classname: " + advisorProviderName);
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
-                | IllegalArgumentException e) {
+                 | IllegalArgumentException e) {
             logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, ExceptionUtils.getStackTrace(e));
         }
 
@@ -46,7 +46,7 @@ public class ServiceProvider {
             logger.info("Invoked search provider class with classname: " + advisorProviderName);
 
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
-                | IllegalArgumentException e) {
+                 | IllegalArgumentException e) {
             logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, ExceptionUtils.getStackTrace(e));
         }
 

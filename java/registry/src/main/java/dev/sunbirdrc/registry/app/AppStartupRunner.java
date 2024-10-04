@@ -18,28 +18,31 @@ public class AppStartupRunner implements ApplicationRunner {
 
     private static Logger logger = LoggerFactory.getLogger(AppStartupRunner.class);
 
-	@Autowired
-	EntityParenter entityParenter;
-
-	@Value("${signature.enabled}")
-	private boolean signatureEnabled;
-	@Value("${signature.provider}")
-	private String signatureProvider;
-	@Autowired(required = false)
-	CredentialSchemaService credentialSchemaService;
-
-
+    @Autowired
+    EntityParenter entityParenter;
+    @Autowired(required = false)
+    CredentialSchemaService credentialSchemaService;
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
+    @Value("${signature.provider}")
+    private String signatureProvider;
+    private static volatile boolean initializationComplete = false;
     @Override
     public void run(ApplicationArguments args) throws Exception {
-    	logger.info("On Boot starts loading: parent vertex and shard records");
-    	entityParenter.ensureKnownParenters();
-    	entityParenter.loadDefinitionIndex();
-		entityParenter.ensureIndexExists();
-		entityParenter.saveIdFormat();
-		if(signatureEnabled && Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
-			logger.info("On Boot starts loading: credential schemas");
-			credentialSchemaService.ensureCredentialSchemas();
-		}
-		logger.info("Startup completed!");
+        logger.info("On Boot starts loading: parent vertex and shard records");
+        entityParenter.ensureKnownParenters();
+        entityParenter.loadDefinitionIndex();
+        entityParenter.ensureIndexExists();
+        entityParenter.saveIdFormat();
+        if (signatureEnabled && Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
+            logger.info("On Boot starts loading: credential schemas");
+            credentialSchemaService.ensureCredentialSchemas();
+        }
+        logger.info("Startup completed!");
+        initializationComplete = true;
+    }
+
+    public static boolean isInitializationComplete() {
+        return initializationComplete;
     }
 }

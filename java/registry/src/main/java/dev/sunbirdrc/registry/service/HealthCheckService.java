@@ -9,13 +9,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -39,7 +36,7 @@ public class HealthCheckService {
                 try {
                     healthInfo = healthIndicator.getHealthInfo();
                 } catch (RestClientException e) {
-                    logger.error("RestClientException when checking the health of the {}: {}",healthIndicator.getServiceName(), ExceptionUtils.getStackTrace(e));
+                    logger.error("RestClientException when checking the health of the {}: {}", healthIndicator.getServiceName(), ExceptionUtils.getStackTrace(e));
                     healthInfo = new ComponentHealthInfo(healthIndicator.getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
                 }
                 checks.add(healthInfo);

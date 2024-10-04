@@ -13,27 +13,28 @@ import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSystemFieldsHelper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class AuditServiceImplTest {
+class AuditServiceImplTest {
 
     @Value("${audit.enabled}")
     private boolean auditEnabled;
@@ -68,9 +69,9 @@ public class AuditServiceImplTest {
     @InjectMocks
     private AuditServiceImpl auditService;
 
-    @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+    @BeforeEach
+    void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
         setField(auditService, "auditEnabled", auditEnabled);
         setField(auditService, "auditFrameStore", auditFrameStore);
         setField(auditService, "auditSuffix", auditSuffix);
@@ -85,14 +86,14 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void shouldAudit_ReturnsTrueWhenFileAuditEnabled() throws Exception {
+    void shouldAudit_ReturnsTrueWhenFileAuditEnabled() throws Exception {
         setField(auditService, "auditFrameStore", Constants.FILE);
         boolean result = auditService.shouldAudit("EntityType");
         assertTrue(result);
     }
 
     @Test
-    public void shouldAudit_ReturnsTrueWhenDBAuditEnabledAndDefinitionNotNull() throws Exception {
+    void shouldAudit_ReturnsTrueWhenDBAuditEnabledAndDefinitionNotNull() throws Exception {
         when(definitionsManager.getDefinition(anyString())).thenReturn(mock(Definition.class));
         setField(auditService, "auditFrameStore", Constants.DATABASE);
         boolean result = auditService.shouldAudit("EntityType");
@@ -100,28 +101,28 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void shouldAudit_ReturnsFalseWhenNoAuditingEnabled() throws Exception {
+    void shouldAudit_ReturnsFalseWhenNoAuditingEnabled() throws Exception {
         setField(auditService, "auditEnabled", false);
         boolean result = auditService.shouldAudit("EntityType");
         assertFalse(result);
     }
 
     @Test
-    public void isAuditAction_ReturnsAuditActionForMatchingSuffix() {
+    void isAuditAction_ReturnsAuditActionForMatchingSuffix() {
         String entityType = auditSuffix;
         String action = auditService.isAuditAction(entityType);
         assertEquals(Constants.AUDIT_ACTION_AUDIT, action);
     }
 
     @Test
-    public void isAuditAction_ReturnsSearchActionForNonMatchingSuffix() {
+    void isAuditAction_ReturnsSearchActionForNonMatchingSuffix() {
         String entityType = "NonMatchingEntity";
         String action = auditService.isAuditAction(entityType);
         assertEquals(Constants.AUDIT_ACTION_SEARCH, action);
     }
 
     @Test
-    public void createAuditInfo_ReturnsAuditInfoList() {
+    void createAuditInfo_ReturnsAuditInfoList() {
         String auditAction = "AuditAction";
         String entityType = "EntityType";
         List<AuditInfo> auditInfoList = auditService.createAuditInfo(auditAction, entityType);
@@ -133,13 +134,10 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void convertAuditRecordToJson_ReturnsJsonNode() throws IOException {
+    void convertAuditRecordToJson_ReturnsJsonNode() throws IOException {
         // Given
         AuditRecord auditRecord = new AuditRecord();
-        JsonNode inputNode = mock(JsonNode.class);
-        Shard shard = mock(Shard.class);
         String vertexLabel = "VertexLabel";
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         // When
         JsonNode result = auditService.convertAuditRecordToJson(auditRecord, vertexLabel);
@@ -150,7 +148,7 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void createAuditInfoWithJson_ReturnsAuditInfoListFromJson() throws JsonProcessingException {
+    void createAuditInfoWithJson_ReturnsAuditInfoListFromJson() throws JsonProcessingException {
         // Given
         String auditAction = "AuditAction";
         JsonNode differenceJson = mock(JsonNode.class);
@@ -167,7 +165,7 @@ public class AuditServiceImplTest {
     }
 
     @Test
-    public void testDoAudit() throws AuditFailedException {
+    void testDoAudit() throws AuditFailedException {
         // Given
         AuditRecord auditRecord = mock(AuditRecord.class);
         JsonNode inputNode = mock(JsonNode.class);
@@ -183,4 +181,3 @@ public class AuditServiceImplTest {
         verify(auditProvider, times(1)).doAudit(auditRecord, inputNode, shard);
     }
 }
-

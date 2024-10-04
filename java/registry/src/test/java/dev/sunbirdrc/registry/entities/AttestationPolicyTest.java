@@ -1,22 +1,20 @@
 package dev.sunbirdrc.registry.entities;
 
-import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AttestationPolicyTest {
+class AttestationPolicyTest {
     private AttestationPolicy attestationPolicy;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         attestationPolicy = new AttestationPolicy();
     }
 
     @Test
-    public void shouldAbleToGetTheEntityFromPluginUrl() {
+    void shouldAbleToGetTheEntityFromPluginUrl() {
         String expectedVal = "Teacher";
         String attestorPlugin = "did:internal:ClaimPluginActor?entity=Teacher";
         attestationPolicy.setAttestorPlugin(attestorPlugin);
@@ -24,17 +22,17 @@ public class AttestationPolicyTest {
     }
 
     @Test
-    public void shouldReturnCompletionType() {
+    void shouldReturnCompletionType() {
         attestationPolicy.setOnComplete("attestation:instituteAffiliationCbse");
-        Assert.assertEquals(FlowType.ATTESTATION, attestationPolicy.getCompletionType());
-        Assert.assertEquals("instituteAffiliationCbse", attestationPolicy.getCompletionValue());
+        assertEquals(FlowType.ATTESTATION, attestationPolicy.getCompletionType());
+        assertEquals("instituteAffiliationCbse", attestationPolicy.getCompletionValue());
         attestationPolicy.setOnComplete("function:#/functionDefinitions/concat($.pen, $.email, $.instituteName)");
-        Assert.assertEquals(FlowType.FUNCTION, attestationPolicy.getCompletionType());
-        Assert.assertEquals("#/functionDefinitions/concat($.pen, $.email, $.instituteName)", attestationPolicy.getCompletionValue());
-        Assert.assertEquals("concat", attestationPolicy.getCompletionFunctionName());
+        assertEquals(FlowType.FUNCTION, attestationPolicy.getCompletionType());
+        assertEquals("#/functionDefinitions/concat($.pen, $.email, $.instituteName)", attestationPolicy.getCompletionValue());
+        assertEquals("concat", attestationPolicy.getCompletionFunctionName());
         attestationPolicy.setOnComplete("function:#/functionDefinitions/userDefinedConcat");
-        Assert.assertEquals(FlowType.FUNCTION, attestationPolicy.getCompletionType());
-        Assert.assertEquals("#/functionDefinitions/userDefinedConcat", attestationPolicy.getCompletionValue());
-        Assert.assertEquals("userDefinedConcat", attestationPolicy.getCompletionFunctionName());
+        assertEquals(FlowType.FUNCTION, attestationPolicy.getCompletionType());
+        assertEquals("#/functionDefinitions/userDefinedConcat", attestationPolicy.getCompletionValue());
+        assertEquals("userDefinedConcat", attestationPolicy.getCompletionFunctionName());
     }
 }

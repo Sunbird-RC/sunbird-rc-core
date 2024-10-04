@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -51,9 +51,9 @@ public class FileStorageController {
 
     @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile file,
-                                                  @PathVariable String entity,
-                                                  @PathVariable String entityId,
-                                                  HttpServletRequest httpServletRequest) {
+                                                    @PathVariable String entity,
+                                                    @PathVariable String entityId,
+                                                    HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
@@ -70,16 +70,16 @@ public class FileStorageController {
                     .body(documentsResponse);
         }
         objectPath = objectPath.substring(0, objectPath.lastIndexOf("/"));
-        DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(new MultipartFile[] {file}, objectPath);
+        DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(new MultipartFile[]{file}, objectPath);
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 
     @DeleteMapping("/api/v1/{entity}/{entityId}/{property}/documents")
     public ResponseEntity<DocumentsResponse> deleteMultipleFiles(@PathVariable String entity,
-                                                    @PathVariable String entityId,
-                                                    @PathVariable String property,
-                                                    @RequestBody List<String> files,
-                                                    HttpServletRequest httpServletRequest) {
+                                                                 @PathVariable String entityId,
+                                                                 @PathVariable String property,
+                                                                 @RequestBody List<String> files,
+                                                                 HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
@@ -92,10 +92,10 @@ public class FileStorageController {
 
     @DeleteMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity deleteAFile(@PathVariable String entity,
-                              @PathVariable String entityId,
-                              @PathVariable String property,
-                              @PathVariable String documentId,
-                              HttpServletRequest httpServletRequest) {
+                                      @PathVariable String entityId,
+                                      @PathVariable String property,
+                                      @PathVariable String documentId,
+                                      HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {

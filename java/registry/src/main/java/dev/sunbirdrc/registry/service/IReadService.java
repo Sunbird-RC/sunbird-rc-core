@@ -1,7 +1,6 @@
 package dev.sunbirdrc.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 

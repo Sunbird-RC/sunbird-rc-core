@@ -13,7 +13,7 @@ class E2ETests {
         Results results = Runner.path("classpath:e2e")
                 .tags("~@ignore")
                 //.outputCucumberJson(true)
-                .parallel(5);
+                .parallel(1);
         assertEquals(0, results.getFailCount(), results.getErrorMessages());
     }
 

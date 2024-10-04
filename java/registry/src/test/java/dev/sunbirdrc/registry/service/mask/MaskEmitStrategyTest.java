@@ -1,20 +1,20 @@
 package dev.sunbirdrc.registry.service.mask;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class MaskEmitStrategyTest {
+class MaskEmitStrategyTest {
     private MaskEmitStrategy maskEmitStrategy;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         maskEmitStrategy = new MaskEmitStrategy();
     }
 
     @Test
-    public void shouldEmitMaskedValue() {
+    void shouldEmitMaskedValue() {
         final String value = "testValue";
         final String expectedValue = "XXXXValue";
         final String actualValue = maskEmitStrategy.updateValue(value);

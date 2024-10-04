@@ -35,6 +35,8 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 @ConditionalOnExpression("${signature.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl')")
 public class CredentialSchemaService implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(CredentialSchemaService.class);
+    @Autowired
+    IDefinitionsManager definitionsManager;
     @Value("${signature.v2.schema.healthCheckURL}")
     private String healthCheckUrl;
     @Value("${signature.v2.schema.createSchemaURL}")
@@ -45,12 +47,8 @@ public class CredentialSchemaService implements HealthIndicator {
     private String getByIdAndVersionUrl;
     @Value("${signature.v2.schema.getSchemaByTagsURL}")
     private String getByTagsUrl;
-
     @Autowired(required = false)
     private DIDService didService;
-    @Autowired
-    IDefinitionsManager definitionsManager;
-
     @Value("${signature.v2.schema.author}")
     private String authorName;
     @Value("${signature.v2.schema.authorDidMethod}")
@@ -64,12 +62,12 @@ public class CredentialSchemaService implements HealthIndicator {
         String name = "Proof of " + title + " Credential";
         String schemaId = "Proof-of-" + title + "-Credential";
         String templateJsonString = null;
-        if(credTemplate instanceof LinkedHashMap || credTemplate instanceof JsonNode) {
+        if (credTemplate instanceof LinkedHashMap || credTemplate instanceof JsonNode) {
             templateJsonString = JSONUtil.convertObjectJsonString(credTemplate);
         } else {
             templateJsonString = (String) credTemplate;
         }
-        JsonNode credSchema = JSONUtil.convertStringJsonNode("{\"type\":\"https://w3c-ccg.github.io/vc-json-schemas/\",\"version\":\"1.0.0\",\"name\":\""+name+"\",\"author\":\"\",\"authored\":\"\",\"schema\":{\"$id\":\""+schemaId+"\",\"$schema\":\"https://json-schema.org/draft/2019-09/schema\",\"description\":\"\",\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}}");
+        JsonNode credSchema = JSONUtil.convertStringJsonNode("{\"type\":\"https://w3c-ccg.github.io/vc-json-schemas/\",\"version\":\"1.0.0\",\"name\":\"" + name + "\",\"author\":\"\",\"authored\":\"\",\"schema\":{\"$id\":\"" + schemaId + "\",\"$schema\":\"https://json-schema.org/draft/2019-09/schema\",\"description\":\"\",\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}}");
         JsonNode node = JSONUtil.convertStringJsonNode(templateJsonString);
         JsonNode subject = node.get("credentialSubject");
         JsonNode schemaProperties = credSchema.get("schema").get("properties");
@@ -89,25 +87,26 @@ public class CredentialSchemaService implements HealthIndicator {
         Map<String, Object> credTemplates = new HashMap<>();
         this.definitionsManager.getAllDefinitions().forEach(definition -> {
             Object credTemplate = definition.getOsSchemaConfiguration().getCredentialTemplate();
-            if(credTemplate != null && !credTemplate.toString().isEmpty()) credTemplates.put(definition.getTitle(), credTemplate);
+            if (credTemplate != null && !credTemplate.toString().isEmpty())
+                credTemplates.put(definition.getTitle(), credTemplate);
             definition.getOsSchemaConfiguration().getAttestationPolicies().forEach(attestationPolicy -> {
-                if(attestationPolicy.getCredentialTemplate() != null && !attestationPolicy.getCredentialTemplate().toString().isEmpty()) {
+                if (attestationPolicy.getCredentialTemplate() != null && !attestationPolicy.getCredentialTemplate().toString().isEmpty()) {
                     String name = String.format("%s_%s", definition.getTitle(), attestationPolicy.getName());
                     credTemplates.put(name, attestationPolicy.getCredentialTemplate());
                 }
             });
         });
         credTemplates.forEach((key, value) -> {
-                    try {
-                        this.ensureCredentialSchema(
-                                key,
-                                value, null);
-                        logger.info("Ensured credential schema for : {}", key);
-                    } catch (Exception e) {
-                        logger.error("Exception occurred while ensuring credential Schema for {} : {}", key, ExceptionUtils.getStackTrace(e));
-                        throw new RuntimeException(e);
-                    }
-                });
+            try {
+                this.ensureCredentialSchema(
+                        key,
+                        value, null);
+                logger.info("Ensured credential schema for : {}", key);
+            } catch (Exception e) {
+                logger.error("Exception occurred while ensuring credential Schema for {} : {}", key, ExceptionUtils.getStackTrace(e));
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void ensureCredentialSchema(String title, Object credTemplate, String status) throws Exception {
@@ -125,13 +124,15 @@ public class CredentialSchemaService implements HealthIndicator {
             ObjectNode prevProps = (ObjectNode) prevSchema.get("schema").get("schema").get("properties");
             ObjectNode currProps = (ObjectNode) schema.get("schema").get("properties");
             AtomicBoolean updateRequired = new AtomicBoolean(false);
-            if(status != null) updateRequired.set(!prevSchema.get("status").asText().equals(status));
-            if(!updateRequired.get()) currProps.fieldNames().forEachRemaining(d -> updateRequired.set(updateRequired.get() || !prevProps.has(d)));
-            if(!updateRequired.get()) prevProps.fieldNames().forEachRemaining(d -> updateRequired.set(updateRequired.get() || !currProps.has(d)));
+            if (status != null) updateRequired.set(!prevSchema.get("status").asText().equals(status));
+            if (!updateRequired.get())
+                currProps.fieldNames().forEachRemaining(d -> updateRequired.set(updateRequired.get() || !prevProps.has(d)));
+            if (!updateRequired.get())
+                prevProps.fieldNames().forEachRemaining(d -> updateRequired.set(updateRequired.get() || !currProps.has(d)));
             String did = prevSchema.get("schema").get("id").asText();
             String version = prevSchema.get("schema").get("version").asText();
-            if(updateRequired.get()) {
-                if(status == null) status = prevSchema.get("status").asText();
+            if (updateRequired.get()) {
+                if (status == null) status = prevSchema.get("status").asText();
                 updateSchema(did, version, schema, status);
                 logger.debug("Updated credential schema for {}", title);
             }
@@ -144,7 +145,7 @@ public class CredentialSchemaService implements HealthIndicator {
         ArrayNode tags = JsonNodeFactory.instance.arrayNode();
         tags.add(title);
         node.set("tags", tags);
-        if(status == null) status = "DRAFT";
+        if (status == null) status = "DRAFT";
         node.set("status", JsonNodeFactory.instance.textNode(status));
         HttpEntity<String> request = createPayloadFromJsonNode(node);
         ResponseEntity<String> response = retryRestTemplate.postForEntity(createUrl, request);
@@ -173,8 +174,8 @@ public class CredentialSchemaService implements HealthIndicator {
         final AtomicReference<JsonNode> latestSchema = new AtomicReference<>();
         List<String> discardedSchemaStatus = Arrays.asList("DEPRECATED", "REVOKED");
         schemas.forEach(d -> {
-            if(!discardedSchemaStatus.contains(d.get("status").asText())) {
-                if(latestSchema.get() == null || d.get("schema").get("version").asText()
+            if (!discardedSchemaStatus.contains(d.get("status").asText())) {
+                if (latestSchema.get() == null || d.get("schema").get("version").asText()
                         .compareTo(latestSchema.get().get("schema").get("version").asText()) > 0) {
                     latestSchema.set(d);
                 }
@@ -216,7 +217,7 @@ public class CredentialSchemaService implements HealthIndicator {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
             JsonNode responseBody = JSONUtil.convertStringJsonNode(response.getBody());
-            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK","UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
+            if (!StringUtils.isEmpty(response.getBody()) && Stream.of("OK", "UP").anyMatch(d -> d.equalsIgnoreCase(responseBody.get("status").asText()))) {
                 logger.debug("{} service running!", this.getServiceName());
                 return new ComponentHealthInfo(getServiceName(), true);
             } else {

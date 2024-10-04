@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.middleware.util;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -412,15 +413,18 @@ public class JSONUtil {
 	 * @return
 	 */
 	public static JsonNode diffJsonNode(JsonNode existingNode, JsonNode latestNode) {
-		ObjectMapper objectMapper = new ObjectMapper();
-		if(existingNode == null) {
-			existingNode = objectMapper.createObjectNode();
+
+		final JsonToken existingNodeToken = (existingNode != null) ? existingNode.asToken() : JsonToken.NOT_AVAILABLE;
+
+		final JsonToken latestNodeToken = (latestNode != null) ? latestNode.asToken() : JsonToken.NOT_AVAILABLE;
+
+		if (existingNodeToken == JsonToken.NOT_AVAILABLE) {
+			existingNode = null;
 		}
-		if(latestNode == null) {
-			latestNode = objectMapper.createObjectNode();
+		if (latestNodeToken == JsonToken.NOT_AVAILABLE) {
+			latestNode = null;
 		}
-		JsonNode patchNode = JsonDiff.asJson(existingNode, latestNode);
-		return patchNode;
+		return JsonDiff.asJson(existingNode, latestNode);
 	}
 
 

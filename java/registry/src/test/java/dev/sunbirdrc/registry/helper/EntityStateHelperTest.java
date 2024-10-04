@@ -3,32 +3,32 @@ package dev.sunbirdrc.registry.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
-import dev.sunbirdrc.registry.identity_providers.pojos.OwnerCreationException;
-import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.EntityCreationException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.identity_providers.pojos.OwnerCreationException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
+import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.workflow.KieConfiguration;
+import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.api.runtime.KieContainer;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +38,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ObjectMapper.class,
-        ConditionResolverService.class, ClaimRequestClient.class, KieConfiguration.class})
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {ObjectMapper.class, ConditionResolverService.class,
+        ClaimRequestClient.class, KieConfiguration.class})
 @Import(EntityStateHelperTestConfiguration.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class EntityStateHelperTest {
+class EntityStateHelperTest {
 
     @Mock
     ConditionResolverService conditionResolverService;
@@ -66,9 +65,9 @@ public class EntityStateHelperTest {
 
     ObjectMapper m = new ObjectMapper();
 
-    @Before
-    public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
+    @BeforeEach
+    void initMocks() throws IOException {
+        MockitoAnnotations.openMocks(this);
         definitionsManager = new DefinitionsManager();
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Definition> definitionMap = new HashMap<>();
@@ -90,7 +89,7 @@ public class EntityStateHelperTest {
         assertEquals(expected, updated);
     }
 
-    public void shouldMarkAsDraftWhenThereIsNewEntry() throws IOException {
+    void shouldMarkAsDraftWhenThereIsNewEntry() throws IOException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldMarkAsDraftWhenThereIsNewEntry.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"),
                 definitionsManager.getDefinition("Student").getOsSchemaConfiguration().getAttestationPolicies());
@@ -101,56 +100,53 @@ public class EntityStateHelperTest {
         return this.getClass().getResource("../../../../").getPath() + "entityStateHelper/";
     }
 
-    public void shouldMarkAsDraftIfThereIsAChange() throws IOException {
+    void shouldMarkAsDraftIfThereIsAChange() throws IOException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldMarkAsDraftIfThereIsAChange.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"), Collections.emptyList());
     }
 
     @Test
-    public void shouldBeNoStateChangeIfTheDataDidNotChange() throws IOException {
+    void shouldBeNoStateChangeIfTheDataDidNotChange() throws IOException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldBeNoStateChangeIfTheDataDidNotChange.json"));
         JsonNode beforeUpdate = test.get("updated").deepCopy();
         runTest(test.get("existing"), test.get("updated"), test.get("existing"), Collections.emptyList());
     }
 
     @Test
-    public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
+    void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
         when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
-        when(identityManager.createUser(any())).thenReturn("456");
+    void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
-        when(identityManager.createUser(any())).thenReturn("456");
+    void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyExistingOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotAllowUserModifyingOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
+    void shouldNotAllowUserModifyingOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyOwnerDetails.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
+    void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyOsStateByUser.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldRemovePasswordOwnershipFields() throws IOException, OwnerCreationException, IdentityException {
+    void shouldRemovePasswordOwnershipFields() throws IOException, OwnerCreationException, IdentityException {
         when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldRemovePasswordOwnershipFields.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
-
 }

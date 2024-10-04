@@ -14,15 +14,15 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 
 @TestConfiguration
-public class EntityStateHelperTestConfiguration {
+class EntityStateHelperTestConfiguration {
 
     @Bean
     RestTemplate mockRestTemplate() {
-        return  Mockito.mock(RestTemplate.class);
+        return Mockito.mock(RestTemplate.class);
     }
 
     @Bean
-    public KieContainer kieContainer() {
+    KieContainer kieContainer() {
         KieServices kieServices = KieServices.Factory.get();
         KieFileSystem kieFileSystem = kieServices.newKieFileSystem();
         kieFileSystem.write(ResourceFactory.newFileResource(new File("src/main/resources/workflow/statetransitions.drl")));

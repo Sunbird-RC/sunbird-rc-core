@@ -15,32 +15,32 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
 public class MinioClientConfig {
 
-	private static final Logger logger = LoggerFactory.getLogger(MinioClientConfig.class);
-	@Value("${filestorage.url}")
-	String url;
-	@Value("${filestorage.accesskey}")
-	String accessKey;
-	@Value("${filestorage.secretkey}")
-	String secretKey;
-	@Value("${filestorage.bucketname}")
-	String bucketName;
+    private static final Logger logger = LoggerFactory.getLogger(MinioClientConfig.class);
+    @Value("${filestorage.url}")
+    String url;
+    @Value("${filestorage.accesskey}")
+    String accessKey;
+    @Value("${filestorage.secretkey}")
+    String secretKey;
+    @Value("${filestorage.bucketname}")
+    String bucketName;
 
-	@Bean("minioClient")
-	public MinioClient minioClient() {
-		MinioClient minioClient = MinioClient.builder()
-				.endpoint(url)
-				.credentials(accessKey, secretKey)
-				.build();
-		try {
-			boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-			if (!found) {
-				minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-			} else {
-				logger.info("Minio bucket already exists: {}", bucketName);
-			}
-		} catch (Exception e) {
-			logger.error("Minio initialization failed: {}", ExceptionUtils.getStackTrace(e));
-		}
-		return minioClient;
-	}
+    @Bean("minioClient")
+    public MinioClient minioClient() {
+        MinioClient minioClient = MinioClient.builder()
+                .endpoint(url)
+                .credentials(accessKey, secretKey)
+                .build();
+        try {
+            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!found) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            } else {
+                logger.info("Minio bucket already exists: {}", bucketName);
+            }
+        } catch (Exception e) {
+            logger.error("Minio initialization failed: {}", ExceptionUtils.getStackTrace(e));
+        }
+        return minioClient;
+    }
 }

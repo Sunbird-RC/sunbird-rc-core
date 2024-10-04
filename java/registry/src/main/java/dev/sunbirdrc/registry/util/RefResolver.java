@@ -16,9 +16,8 @@ import java.util.Map;
 
 @Component
 public class RefResolver {
-    private static Logger logger = LoggerFactory.getLogger(RefResolver.class);
     private final static String REF = "$ref";
-
+    private static Logger logger = LoggerFactory.getLogger(RefResolver.class);
     private final IDefinitionsManager definitionsManager;
 
     public RefResolver(IDefinitionsManager definitionsManager) {

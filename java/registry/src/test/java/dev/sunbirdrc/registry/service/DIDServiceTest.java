@@ -1,10 +1,5 @@
 package dev.sunbirdrc.registry.service;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
-import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,22 +11,27 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.service.impl.RetryRestTemplate;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestClientException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
+import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class DIDServiceTest {
+class DIDServiceTest {
 
     @Mock
     private RetryRestTemplate retryRestTemplate;
@@ -52,13 +52,13 @@ public class DIDServiceTest {
     private static final String authorSchemaName = "Issuer";
     private static final String didPropertyName = "did";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         // Setup any initial configurations or mocks
     }
 
     @Test
-    public void testGetDid() throws Exception {
+    void testGetDid() throws Exception {
         String name = "John Doe";
 
         // Mocking the searchService to return a mock JsonNode
@@ -70,17 +70,11 @@ public class DIDServiceTest {
 
         // Negative test case when no results are found
         when(searchService.search(any(), anyString())).thenReturn(createEmptyJsonNode());
-        try {
-            didService.getDid(name);
-            fail("Expected RuntimeException to be thrown");
-        } catch (RuntimeException e) {
-            // Expected exception
-            assertTrue(e.getMessage().contains("did John Doe not found"));
-        }
+        assertThrows(RuntimeException.class, () -> didService.getDid(name));
     }
 
     @Test
-    public void testFindDidForProperty() throws Exception {
+    void testFindDidForProperty() throws Exception {
         String propertyName = "name";
         String value = "John Doe";
 
@@ -104,17 +98,11 @@ public class DIDServiceTest {
         // Negative test case when no results are found
         resultsNode.set(authorSchemaName, JsonNodeFactory.instance.objectNode().set(ENTITY_LIST, JsonNodeFactory.instance.arrayNode()));
         when(searchService.search(any(), anyString())).thenReturn(resultsNode);
-        try {
-            didService.findDidForProperty(propertyName, value);
-            fail("Expected RuntimeException to be thrown");
-        } catch (RuntimeException e) {
-            // Expected exception
-            assertTrue(e.getMessage().contains("name John Doe not found"));
-        }
+        assertThrows(RuntimeException.class, () -> didService.findDidForProperty(didPropertyName, value));
     }
 
     @Test
-    public void testEnsureDidForName() throws Exception {
+    void testEnsureDidForName() throws Exception {
         String name = "John Doe";
         String method = "method";
         String generatedDid = "0987654321";
@@ -138,12 +126,12 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testGenerateDid() throws Exception {
+    void testGenerateDid() throws Exception {
         // Positive test case
         String method = "method";
         String did = "1234";
         Map<String, Object> content = new HashMap<>();
-        JsonNode rootNode = readTree("[{\"id\":\"" + did +"\"}]");
+        JsonNode rootNode = readTree("[{\"id\":\"" + did + "\"}]");
         when(retryRestTemplate.postForEntity(any(), any())).thenReturn(ResponseEntity.ok(rootNode.toString()));
         String generatedDid = didService.generateDid(method, content);
         assertNotNull(generatedDid);
@@ -156,7 +144,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testResolveDid() throws Exception {
+    void testResolveDid() throws Exception {
         String didId = "1234567890";
 
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
@@ -180,7 +168,7 @@ public class DIDServiceTest {
     }
 
     @Test
-    public void testGetHealthInfo() throws Exception {
+    void testGetHealthInfo() throws Exception {
         // Mocking the RetryRestTemplate to return a ResponseEntity with a successful response
         ResponseEntity<String> successResponse = ResponseEntity.ok("{\"status\": \"UP\"}");
         when(retryRestTemplate.getForEntity(any())).thenReturn(successResponse);

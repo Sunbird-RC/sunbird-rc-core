@@ -1,7 +1,6 @@
 package dev.sunbirdrc.registry.transform;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 public class Transformer {
 

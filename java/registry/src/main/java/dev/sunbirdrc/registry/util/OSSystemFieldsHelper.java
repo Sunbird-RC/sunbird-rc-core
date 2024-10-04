@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.middleware.util.DateUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class OSSystemFieldsHelper {
@@ -22,7 +23,7 @@ public class OSSystemFieldsHelper {
 
     /**
      * ensure the system fields(createdAt, createdBy) at time of adding a fresh record/node
-     * 
+     *
      * @param title
      * @param node
      * @param userId
@@ -37,7 +38,7 @@ public class OSSystemFieldsHelper {
 
     /**
      * ensure the system fields(updatedAt, updatedBy) at time of updating a record/node
-     * 
+     *
      * @param title
      * @param node
      * @param userId
@@ -53,11 +54,11 @@ public class OSSystemFieldsHelper {
 
     /**
      * adds a system property to given node
-     * 
-     * @param field       propertyName
+     *
+     * @param field     propertyName
      * @param node
      * @param userId
-     * @param timeStamp 
+     * @param timeStamp
      */
     public void addSystemProperty(String field, JsonNode node, String userId, String timeStamp, boolean isCreate) {
         try {
@@ -92,8 +93,8 @@ public class OSSystemFieldsHelper {
 
     }
 
-    public void ensureNotToUpdateUniqueIdentifierFields (String vertexLabel, JsonNode node ) {
-        Definition definition =  definitionsManager.getDefinition(vertexLabel);
+    public void ensureNotToUpdateUniqueIdentifierFields(String vertexLabel, JsonNode node) {
+        Definition definition = definitionsManager.getDefinition(vertexLabel);
         List<UniqueIdentifierField> uniqueIdentifierFields = definition.getOsSchemaConfiguration().getUniqueIdentifierFields();
         for (UniqueIdentifierField unqIdField : uniqueIdentifierFields) {
             ((ObjectNode) node).remove(unqIdField.getField());

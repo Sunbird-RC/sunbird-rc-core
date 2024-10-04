@@ -1,14 +1,15 @@
 package dev.sunbirdrc.registry.middleware.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DateUtilTest {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class DateUtilTest {
 
     @Test
-    public void getTimeStamp() {
+    void getTimeStamp() {
         String date = DateUtil.getTimeStamp();
-        Assert.assertNotNull(date);
+        assertNotNull(date);
     }
 
 }

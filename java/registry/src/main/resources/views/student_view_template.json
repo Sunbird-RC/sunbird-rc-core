@@ -1,0 +1,22 @@
+{
+  "id": "studentView",
+  "subject": "Student",
+  "fields": [
+    {
+      "name": "userDetails",
+      "title": "userDetails",
+      "display": true
+    },
+    {
+      "title": "contactDetails",
+      "function": "#/functionDefinitions/removePath($contactDetails, $.mobile)",
+      "$comment": "This is a virtual field not defined in the schema"
+    }
+  ],
+  "functionDefinitions": [
+    {
+      "name": "removePath",
+      "provider": "dev.sunbirdrc.provider.RemovePathFunctionProvider"
+    }
+  ]
+}

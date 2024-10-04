@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,36 +17,36 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AttestationRequest {
-	private String entityName;
-	private String entityId;
-	private String name;
-	private String userId;
-	private JsonNode additionalInput;
-//	private Map<String, List<String>> propertiesOSID;
-	private JsonNode propertyData;
-	private String emailId;
-	private String osCreatedAt;
-	private Map<String, Object> additionalProperties = new HashMap<>();
+    private String entityName;
+    private String entityId;
+    private String name;
+    private String userId;
+    private JsonNode additionalInput;
+    //	private Map<String, List<String>> propertiesOSID;
+    private JsonNode propertyData;
+    private String emailId;
+    private String osCreatedAt;
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
-	@JsonAnySetter
-	public void setAdditionalProperty(String name, Object value) {
-		additionalProperties.put(name, value);
-	}
+    public static String PropertiesUUIDKey(String uuidPropertyName) {
+        return "properties" + uuidPropertyName.toUpperCase();
+    }
 
-	@JsonAnyGetter
-	public Map<String, Object> getAdditionalProperties() {
-		return additionalProperties;
-	}
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, Object value) {
+        additionalProperties.put(name, value);
+    }
 
-	public Object getProperty(String name) {
-		return additionalProperties.get(name);
-	}
+    @JsonAnyGetter
+    public Map<String, Object> getAdditionalProperties() {
+        return additionalProperties;
+    }
 
-	public static String PropertiesUUIDKey(String uuidPropertyName) {
-		return "properties" + uuidPropertyName.toUpperCase();
-	}
+    public Object getProperty(String name) {
+        return additionalProperties.get(name);
+    }
 
-	public Map<String, List<String>> getPropertiesUUID(String uuidPropertyName) {
-		return (Map<String, List<String>>) getProperty(PropertiesUUIDKey(uuidPropertyName));
-	}
+    public Map<String, List<String>> getPropertiesUUID(String uuidPropertyName) {
+        return (Map<String, List<String>>) getProperty(PropertiesUUIDKey(uuidPropertyName));
+    }
 }

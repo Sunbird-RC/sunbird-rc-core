@@ -2,10 +2,10 @@ package dev.sunbirdrc.registry.config.validation;
 
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.stereotype.Component;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
 import java.util.List;
 
 @Component
@@ -16,14 +16,14 @@ public class DatabaseConfigValidator implements ConstraintValidator<ValidDatabas
 
         boolean isValidFlag = false;
         String message = null;
-        
+
         if (mgr.getProvider().isEmpty() || mgr.getUuidPropertyName().isEmpty()) {
             message = "database.provider or database.uuidPropertyName is empty";
         }
         if (mgr.getConnectionInfo().size() < 1) {
             message = "At least one connectionInfo must be specified";
         }
-        
+
         boolean nShardsExist = mgr.getConnectionInfo().size() > 1;
         for (DBConnectionInfo info : mgr.getConnectionInfo()) {
             if (info.getShardId().isEmpty() || info.getUri().isEmpty()) {

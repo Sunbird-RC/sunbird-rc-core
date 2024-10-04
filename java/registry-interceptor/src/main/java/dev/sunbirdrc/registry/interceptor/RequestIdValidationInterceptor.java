@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 public class RequestIdValidationInterceptor implements HandlerInterceptor {
@@ -35,6 +35,7 @@ public class RequestIdValidationInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 		RequestWrapper wrapper = apiMessage.getRequestWrapper();
+//		cannot access javax.servlet.http.HttpServletRequestWrapper
 		String expectedAPI = requestIdMap.getOrDefault(wrapper.getRequestURI(), "");
 
 		boolean validRequest = !expectedAPI.isEmpty() && (apiMessage.getRequest().getId().compareTo(expectedAPI) == 0);

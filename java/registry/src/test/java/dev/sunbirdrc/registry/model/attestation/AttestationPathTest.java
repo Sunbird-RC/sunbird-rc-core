@@ -3,17 +3,20 @@ package dev.sunbirdrc.registry.model.attestation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AttestationPathTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class AttestationPathTest {
 
     private static final ObjectMapper m = new ObjectMapper();
     private JsonNode node;
@@ -28,13 +31,13 @@ public class AttestationPathTest {
         return pointers.stream().map(EntityPropertyURI::getPropertyURI).collect(Collectors.toSet());
     }
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws IOException {
         node = m.readTree(new File(getBaseDir() + "/attestationPathTest/example.json"));
     }
 
     @Test
-    public void testGetPointers_nestedArray() throws Exception {
+    void testGetPointers_nestedArray() throws Exception {
         List<String> expectedUUIDPaths = Arrays.asList(
                 "/education/1-324a-123/courses/0/0",
                 "/education/1-324a-123/courses/0/1",
@@ -56,21 +59,22 @@ public class AttestationPathTest {
         Set<EntityPropertyURI> pointers = new AttestationPath("education/[]/courses/[]/[]").getEntityPropertyURIs(node, UUID_PROP);
         assertTrue(convertToJsonPaths(pointers).containsAll(expectedUUIDPaths));
     }
+
     @Test
-    public void testGetPointers_fieldPath() throws Exception {
+    void testGetPointers_fieldPath() throws Exception {
         Set<EntityPropertyURI> pointers = new AttestationPath("education").getEntityPropertyURIs(node, UUID_PROP);
         assertEquals(1, pointers.size());
         assertTrue(convertToJsonPaths(pointers).contains("/education"));
     }
 
     @Test
-    public void testGetPointers_fieldInsideArray() throws Exception {
+    void testGetPointers_fieldInsideArray() throws Exception {
         Set<EntityPropertyURI> pointers = new AttestationPath("education/[]/courses").getEntityPropertyURIs(node, UUID_PROP);
         assertEquals(2, pointers.size());
     }
 
     @Test
-    public void testGetPointers_twoArrayAncestors() throws Exception {
+    void testGetPointers_twoArrayAncestors() throws Exception {
         List<String> expectedUUIDPaths = Arrays.asList(
                 "/education/1-324a-123/awards/1-awd-001",
                 "/education/1-324a-123/awards/1-awd-002",

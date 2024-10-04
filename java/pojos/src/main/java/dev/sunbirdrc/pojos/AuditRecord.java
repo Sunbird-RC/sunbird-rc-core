@@ -30,57 +30,57 @@ public class AuditRecord {
 		return this;
 	}
 
-    public List<Object> getTransactionId() {
-        return transactionId;
-    }
+	public List<Object> getTransactionId() {
+		return transactionId;
+	}
 
-    public AuditRecord setTransactionId(List<Object> transactionId) {
-        this.transactionId = transactionId;
-        return this;
-    }
+	public AuditRecord setTransactionId(List<Object> transactionId) {
+		this.transactionId = transactionId;
+		return this;
+	}
 
-    public String getUserId() {
-        return userId;
-    }
+	public String getUserId() {
+		return userId;
+	}
 
-    public AuditRecord setUserId(String userId) {
-        this.userId = userId;
-        return this;
-    }
+	public AuditRecord setUserId(String userId) {
+		this.userId = userId;
+		return this;
+	}
 
-    public List<AuditInfo> getAuditInfo() {
-        return auditInfo;
-    }
+	public List<AuditInfo> getAuditInfo() {
+		return auditInfo;
+	}
 
-    public AuditRecord setAuditInfo(List<AuditInfo> auditInfo) {
-        this.auditInfo = auditInfo;
-        return this;
-    }
+	public AuditRecord setAuditInfo(List<AuditInfo> auditInfo) {
+		this.auditInfo = auditInfo;
+		return this;
+	}
 
-    public String getRecordId() {
-        return recordId;
-    }
+	public String getRecordId() {
+		return recordId;
+	}
 
-    public AuditRecord setRecordId(String recordId) {
-        this.recordId = recordId;
-        return this;
-    }
+	public AuditRecord setRecordId(String recordId) {
+		this.recordId = recordId;
+		return this;
+	}
 
-    public String getAuditId() {
-        return auditId;
-    }
+	public String getAuditId() {
+		return auditId;
+	}
 
-    public AuditRecord setAuditId(String auditId) {
-        this.auditId = auditId;
-        return this;
-    }
+	public AuditRecord setAuditId(String auditId) {
+		this.auditId = auditId;
+		return this;
+	}
 
-    public String getTimestamp() {
-        return timestamp;
-    }
+	public String getTimestamp() {
+		return timestamp;
+	}
 
-    public AuditRecord setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-        return this;
-    }
+	public AuditRecord setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+		return this;
+	}
 }

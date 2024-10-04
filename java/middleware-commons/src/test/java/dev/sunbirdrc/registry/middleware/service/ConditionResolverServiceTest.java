@@ -3,7 +3,7 @@ package dev.sunbirdrc.registry.middleware.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,16 +11,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ConditionResolverServiceTest {
+class ConditionResolverServiceTest {
     private static final Logger logger = LoggerFactory.getLogger(ConditionResolverServiceTest.class);
     ConditionResolverService conditionResolverService = new ConditionResolverService();
+
     @Test
-    public void shouldAbleToResolveRequesterPaths() throws IOException {
+    void shouldAbleToResolveRequesterPaths() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hod')))";
         String matcher = "REQUESTER";
-        List<String[]> attributes = new ArrayList<String[]>(){{
+        List<String[]> attributes = new ArrayList<String[]>() {{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
         String expectedCondition = "(ATTESTOR#$.experience.[*].institute#.contains('Mary school') && (ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('hod')))";
@@ -29,7 +30,7 @@ public class ConditionResolverServiceTest {
     }
 
     @Test
-    public void shouldAbleToResolveAttestorPaths() throws IOException {
+    void shouldAbleToResolveAttestorPaths() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains('Mary school') && (ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('hod')))";
         String matcher = "ATTESTOR";
         List<String[]> attributes = new ArrayList<>();
@@ -38,9 +39,9 @@ public class ConditionResolverServiceTest {
     }
 
     @Test
-    public void shouldReturnTrueForValidExpression() throws IOException {
+    void shouldReturnTrueForValidExpression() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hod')))";
-        List<String[]> attributes = new ArrayList<String[]>(){{
+        List<String[]> attributes = new ArrayList<String[]>() {{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
         String requester = "REQUESTER";
@@ -57,9 +58,9 @@ public class ConditionResolverServiceTest {
     }
 
     @Test
-    public void shouldReturnFalseForInvalidExpression() throws IOException {
+    void shouldReturnFalseForInvalidExpression() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('boa') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hoda')))";
-        List<String[]> attributes = new ArrayList<String[]>(){{
+        List<String[]> attributes = new ArrayList<String[]>() {{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
         String requester = "REQUESTER";
@@ -68,6 +69,7 @@ public class ConditionResolverServiceTest {
         resolve = conditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);
         assertFalse(conditionResolverService.evaluate(resolve));
     }
+
     private JsonNode getTeacherJsonNode() throws IOException {
         String nodeStr = "{\n" +
                 "   \"identityDetails\":{\n" +

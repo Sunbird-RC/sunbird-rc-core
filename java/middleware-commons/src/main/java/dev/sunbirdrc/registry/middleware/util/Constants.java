@@ -94,6 +94,7 @@ public class Constants {
 	
 	//class path for json resources from _schemas folder
 	public static final String RESOURCE_LOCATION = "classpath*:public/_schemas/*.json";
+	public static final String SCHEMA_FILE_LOCATION = "./public/_schemas/*.json";
 	public static final String INTERNAL_RESOURCE_LOCATION = "classpath*:internal/_schemas/*.json";
 
 	//elastic search document type

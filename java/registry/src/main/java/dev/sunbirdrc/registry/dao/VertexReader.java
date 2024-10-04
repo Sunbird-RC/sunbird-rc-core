@@ -18,14 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
 
@@ -73,6 +66,7 @@ public class VertexReader {
 
     /**
      * Returns whether or not the given key could be added in response or not.
+     *
      * @param key
      * @return
      */
@@ -80,7 +74,7 @@ public class VertexReader {
         boolean canAdd = true;
         if (key.equals(Constants.ROOT_KEYWORD)) {
             canAdd &= configurator.isIncludeRootIdentifiers();
-        } else if (key.equals(uuidPropertyName)){
+        } else if (key.equals(uuidPropertyName)) {
             canAdd &= configurator.isIncludeIdentifiers();
         }
         return canAdd;
@@ -160,14 +154,14 @@ public class VertexReader {
             try {
                 Iterator<Vertex> signatureArrayIter = currVertex.vertices(Direction.IN, Constants.SIGNATURES_STR);
                 Vertex signatureArrayV = signatureArrayIter.next();
-                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT, Constants.SIGNATURE_FOR+Constants.ARRAY_ITEM);
+                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT, Constants.SIGNATURE_FOR + Constants.ARRAY_ITEM);
 
                 signatures = JsonNodeFactory.instance.arrayNode();
                 while (signatureVertices.hasNext()) {
                     Vertex oneSignature = signatureVertices.next();
-                    if( oneSignature.label().equalsIgnoreCase(Constants.SIGNATURES_STR) &&
+                    if (oneSignature.label().equalsIgnoreCase(Constants.SIGNATURES_STR) &&
                             !(oneSignature.property(Constants.STATUS_KEYWORD).isPresent() &&
-                            oneSignature.property(Constants.STATUS_KEYWORD).value().toString().equalsIgnoreCase(Constants.STATUS_INACTIVE))) {
+                                    oneSignature.property(Constants.STATUS_KEYWORD).value().toString().equalsIgnoreCase(Constants.STATUS_INACTIVE))) {
                         ObjectNode signatureNode = constructObject(oneSignature);
                         signatures.add(signatureNode);
                         logger.debug("Added signature node for " + signatureNode.get(Constants.SIGNATURE_FOR));
@@ -199,6 +193,7 @@ public class VertexReader {
 
     /**
      * Populates the internal maps with uuid, Node and uuid, Vertex pairs
+     *
      * @param node
      * @param vertex
      */
@@ -223,8 +218,8 @@ public class VertexReader {
         int tempCurrLevel = currLevel;
         while (otherVertices.hasNext()) {
             Vertex currVertex = otherVertices.next();
-            if(currVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
-                    currVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)){
+            if (currVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
+                    currVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)) {
                 continue;
             }
             VertexProperty internalTypeProp = currVertex.property(Constants.INTERNAL_TYPE_KEYWORD);
@@ -370,11 +365,11 @@ public class VertexReader {
     }
 
 
-
     /**
      * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
      * SqlG does not support custom id, but the result is direct from the database without client side filtering
-     *      unlike Neo4j.
+     * unlike Neo4j.
+     *
      * @param uuidPropertyValue the uuidPropertyValue of vertex to be loaded
      * @return the vertex associated with uuidPropertyValue passed
      */
@@ -408,6 +403,7 @@ public class VertexReader {
 
     /**
      * Returns the root vertex of the entity.
+     *
      * @return
      */
     public Vertex getRootVertex() {
@@ -416,6 +412,7 @@ public class VertexReader {
 
     /**
      * Given the array node root vertex, returns a set of string of item uuids
+     *
      * @param blankArrayVertex
      * @return
      */
@@ -434,8 +431,8 @@ public class VertexReader {
     /**
      * Hits the database to read contents
      * This is the entry function to read contents of a given entity
-     * @param uuidPropertyValue
-     *            the id to be read
+     *
+     * @param uuidPropertyValue the id to be read
      * @return
      * @throws Exception
      */
@@ -444,7 +441,7 @@ public class VertexReader {
         return readInternal(rootVertex);
     }
 
-    public JsonNode read(String uuidPropertyValue) throws  Exception {
+    public JsonNode read(String uuidPropertyValue) throws Exception {
         rootVertex = getVertex(null, uuidPropertyValue);
         return readInternal(rootVertex);
     }
@@ -485,7 +482,7 @@ public class VertexReader {
         // objects.
         // The properties could exist anywhere. Refer to the local arrMap.
         expandChildObject(rootNode, 0);
-        if(expandReferenceObj)
+        if (expandReferenceObj)
             expandReferenceNodes(rootNode);
         entityNode.set(entityType, rootNode);
 
@@ -498,8 +495,8 @@ public class VertexReader {
     private void expandReferenceNodes(ObjectNode rootNode) {
         rootNode.fields().forEachRemaining(entry -> {
             // Regex pattern to check for a DID
-            String pattern = "^"+ DID_TYPE+":[^:]+:[^:]+";
-            if(entry.getValue().isValueNode() && entry.getValue().asText().matches(pattern)) {
+            String pattern = "^" + DID_TYPE + ":[^:]+:[^:]+";
+            if (entry.getValue().isValueNode() && entry.getValue().asText().matches(pattern)) {
                 String[] dids = entry.getValue().asText().split(":");
                 String uuidPropertyValue = RecordIdentifier.parse(dids[2]).getUuid();
                 Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, uuidPropertyValue);
@@ -513,7 +510,7 @@ public class VertexReader {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    if(references != null) {
+                    if (references != null) {
                         entry.setValue(references);
                     }
                 }
@@ -524,6 +521,7 @@ public class VertexReader {
     /**
      * Trims out local helper attributes like the type, uuid depending on the
      * ReadConfigurator
+     *
      * @param entityNode
      */
     private void trimAttributes(ObjectNode entityNode) {
@@ -539,6 +537,7 @@ public class VertexReader {
     /**
      * Returns the map of uuid and vertices read.
      * Using this without executing the read function is not advised.
+     *
      * @return
      */
     public HashMap<String, Vertex> getUuidVertexMap() {

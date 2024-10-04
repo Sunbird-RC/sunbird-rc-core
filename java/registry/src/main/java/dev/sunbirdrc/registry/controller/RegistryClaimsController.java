@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +36,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
 
 @RestController
 @ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
-public class RegistryClaimsController extends AbstractController{
+public class RegistryClaimsController extends AbstractController {
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;
     private final RegistryHelper registryHelper;
@@ -123,8 +123,8 @@ public class RegistryClaimsController extends AbstractController{
         return additionalInputs;
     }
 
-    @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST},value = "/api/v1/send")
-    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody AttestationRequest attestationRequest)  {
+    @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST}, value = "/api/v1/send")
+    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody AttestationRequest attestationRequest) {
         try {
             registryHelper.authorize(attestationRequest.getEntityName(), attestationRequest.getEntityId(), request);
         } catch (Exception e) {
@@ -143,10 +143,10 @@ public class RegistryClaimsController extends AbstractController{
                             attestationRequest.getEntityId(), false, null, false)
                     .get(attestationRequest.getEntityName());
             JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(uuidPropertyName, entityNode, attestationPolicy.getAttestationProperties(), attestationRequest.getPropertiesUUID(uuidPropertyName));
-            if(!propertyData.isNull()) {
+            if (!propertyData.isNull()) {
                 attestationRequest.setPropertyData(propertyData);
             }
-            attestationRequest.setOsCreatedAt(LocalDateTime.ofInstant(new Date().toInstant(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")) );
+            attestationRequest.setOsCreatedAt(LocalDateTime.ofInstant(new Date().toInstant(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
             String attestationUUID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);

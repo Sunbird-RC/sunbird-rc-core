@@ -2,7 +2,7 @@ package dev.sunbirdrc.registry.authorization.pojos;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 public class OAuth2Resources {

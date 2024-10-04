@@ -48,7 +48,7 @@ public class FunctionExecutor {
 		String[] argumentsPath = getArgumentsPath(functionCallStr);
 		List<Object> arguments = new ArrayList<>();
 		for (String path : argumentsPath) {
-			arguments.add(objectMapper.convertValue(documentContext.read(path), JsonNode.class).asText());
+			arguments.add(objectMapper.convertValue(documentContext.read(path.trim()), JsonNode.class).asText());
 		}
 		arguments.add(documentContext.read("$"));
 		return arguments;

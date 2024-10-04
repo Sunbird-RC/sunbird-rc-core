@@ -5,9 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 public class MaskEmitStrategy implements IEmitStrategy {
     @Override
     public String updateValue(String value) {
-        if(value != null) {
-            String replacement = StringUtils.repeat('X', value.length()/2);
-            return value.replace(value.substring(0, value.length()/2), replacement);
+        if (value != null) {
+            String replacement = StringUtils.repeat('X', value.length() / 2);
+            return value.replace(value.substring(0, value.length() / 2), replacement);
         }
         return "";
     }
