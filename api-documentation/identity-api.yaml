@@ -1,7 +1,7 @@
 ---
 openapi: 3.0.0
 info:
-  title: Sunbird RC - Identity APIs 
+  title: Sunbird RC - Identity APIs
   description: Identity APIs
   termsOfService: https://sunbirdrc.dev/
   contact:
@@ -11,16 +11,16 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-- url: https://sunbirdrc.dev/api/v1
+  - url: https://sunbirdrc.dev/api/v1
 security:
-- Authorization: []
+  - Authorization: []
 tags:
-- name: Health
-  description: Health Check API
-- name: Identity
-  description: The following APIs are defined for generating and resolving a DID
-- name: Utils
-  description: Some common utilities
+  - name: Health
+    description: Health Check API
+  - name: Identity
+    description: The following APIs are defined for generating and resolving a DID
+  - name: Utils
+    description: Some common utilities
 paths:
   /health:
     get:
@@ -29,7 +29,7 @@ paths:
       operationId: AppController_checkHealth
       parameters: []
       responses:
-        '200':
+        "200":
           description: The Health Check is successful
           content:
             application/json:
@@ -75,7 +75,7 @@ paths:
                           type: string
                       additionalProperties:
                         type: string
-        '503':
+        "503":
           description: The Health Check is not successful
           content:
             application/json:
@@ -141,19 +141,19 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/GenerateDidDTO'
+                $ref: "#/components/schemas/GenerateDidDTO"
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DidResponseDTO'
+                  $ref: "#/components/schemas/DidResponseDTO"
           description: DID Generated
-        '400':
+        "400":
           description: Bad request
-  /did/resolve/{id}:
+  "/did/resolve/{id}":
     get:
       tags:
         - Identity
@@ -167,15 +167,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/DidResponseDTO'
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DidResponseDTO"
           description: DID resolved
-        '400':
+        "400":
           description: Bad Request
-        '404':
+        "404":
           description: DID not found
   /utils/sign:
     post:
@@ -189,17 +189,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SignJsonDTO'
+              $ref: "#/components/schemas/SignJsonDTO"
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SignedVCDTO'
+                $ref: "#/components/schemas/SignedVCDTO"
           description: VC Signed
-        '400':
+        "400":
           description: Bad Request
-        '500':
+        "500":
           description: Internal Server Error
   /utils/verify:
     post:
@@ -213,15 +213,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerifyJsonDTO'
+              $ref: "#/components/schemas/VerifyJsonDTO"
       responses:
-        '201':
+        "201":
           content:
             application/json:
               schema:
                 type: boolean
                 example: true
-          description: ''
+          description: ""
 components:
   schemas:
     GenerateDidDTO:
@@ -247,24 +247,16 @@ components:
               serviceEndpoint:
                 type: object
             additionalProperties: true
-            example: '{
-                        "id": "IdentityHub",
-                        "type": "IdentityHub",
-                        "serviceEndpoint": {
-                            "@context": "schema.identity.foundation/hub",
-                            "@type": "UserServiceEndpoint",
-                            "instance": [
-                                "did:test:hub.id"
-                            ]
-                        }
-                    }'
+            example: '{ "id": "IdentityHub", "type": "IdentityHub", "serviceEndpoint": {
+              "@context": "schema.identity.foundation/hub", "@type":
+              "UserServiceEndpoint", "instance": [ "did:test:hub.id" ] } }'
         method:
           type: string
           description: The method of DID.
       required:
-      - alsoKnownAs
-      - services
-      - method
+        - alsoKnownAs
+        - services
+        - method
     SignJsonDTO:
       type: object
       properties:
@@ -274,42 +266,27 @@ components:
         payload:
           type: string
           description: JSON string of the unsigned VC.
-          example: '{
-        "@context": [
-            "https://www.w3.org/2018/credentials/v1",
-            "https://www.w3.org/2018/credentials/examples/v1"
-        ],
-        "id": "did:ulp:b4a191af-d86e-453c-9d0e-dd4771067235",
-        "type": [
-            "VerifiableCredential",
-            "UniversityDegreeCredential"
-        ],
-        "issuer": "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff",
-        "expirationDate": "2023-02-08T11:56:27.259Z",
-        "credentialSubject": {
-            "id": "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff",
-            "grade": "9.23",
-            "programme": "B.Tech",
-            "certifyingInstitute": "IIIT Sonepat",
-            "evaluatingInstitute": "NIT Kurukshetra"
-        },
-        "options": {
-            "created": "2020-04-02T18:48:36Z",
-            "credentialStatus": {
-                "type": "RevocationList2020Status"
-            }
-        }
-    }'
+          example: '{ "@context": [ "https://www.w3.org/2018/credentials/v1",
+            "https://www.w3.org/2018/credentials/examples/v1" ], "id":
+            "did:ulp:b4a191af-d86e-453c-9d0e-dd4771067235", "type": [
+            "VerifiableCredential", "UniversityDegreeCredential" ], "issuer":
+            "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff", "expirationDate":
+            "2023-02-08T11:56:27.259Z", "credentialSubject": { "id":
+            "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff", "grade": "9.23",
+            "programme": "B.Tech", "certifyingInstitute": "IIIT Sonepat",
+            "evaluatingInstitute": "NIT Kurukshetra" }, "options": { "created":
+            "2020-04-02T18:48:36Z", "credentialStatus": { "type":
+            "RevocationList2020Status" } } }'
       required:
-      - DID
-      - payload
+        - DID
+        - payload
     VerifyJsonDTO:
       type: object
       properties:
         DID:
           type: string
       required:
-      - DID
+        - DID
     DidResponseDTO:
       type: object
       properties:
@@ -336,17 +313,9 @@ components:
               serviceEndpoint:
                 type: object
             additionalProperties: true
-            example: '{
-                        "id": "IdentityHub",
-                        "type": "IdentityHub",
-                        "serviceEndpoint": {
-                            "@context": "schema.identity.foundation/hub",
-                            "@type": "UserServiceEndpoint",
-                            "instance": [
-                                "did:test:hub.id"
-                            ]
-                        }
-                    }'
+            example: '{ "id": "IdentityHub", "type": "IdentityHub", "serviceEndpoint": {
+              "@context": "schema.identity.foundation/hub", "@type":
+              "UserServiceEndpoint", "instance": [ "did:test:hub.id" ] } }'
         verificationMethod:
           type: object
           properties:
@@ -371,7 +340,9 @@ components:
         publicKey:
           type: object
           description: Public Key of issuer
-          example: '{"kty": "EC","crv": "secp256k1","x": "1iTtnvgP141NM-4qC6BgmkeTAjV7u-gZWni71G7cAKo","y": "VSGqq6yS0w7riXXRqFxXwKvHgIpQaUNMlFQKh-xgKMI"}'
+          example: '{"kty": "EC","crv": "secp256k1","x":
+            "1iTtnvgP141NM-4qC6BgmkeTAjV7u-gZWni71G7cAKo","y":
+            "VSGqq6yS0w7riXXRqFxXwKvHgIpQaUNMlFQKh-xgKMI"}'
         signed:
           type: string
           description: Signed VC
