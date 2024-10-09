@@ -123,6 +123,32 @@ export class SchemaService {
       };
     });
   }
+  private shouldAnchorToCord(): boolean {
+    return (
+      process.env.ANCHOR_TO_CORD &&
+      process.env.ANCHOR_TO_CORD.toLowerCase().trim() === 'true'
+    );
+  }
+
+  private async anchorSchemaToCord(schemaData: any): Promise<string | null> {
+    try {
+      const anchorResponse = await this.utilService.anchorSchema({
+        schema: schemaData,
+      });
+  
+      this.logger.debug(
+        'Schema successfully anchored to Cord blockchain',
+        anchorResponse,
+      );
+  
+      return anchorResponse.schemaId;
+    } catch (err) {
+      this.logger.error('Failed to anchor schema to Cord blockchain', err);
+      throw new InternalServerErrorException(
+        'Failed to anchor schema to Cord blockchain',
+      );
+    }
+  }
 
   async createCredentialSchema(
     createCredentialDto: CreateCredentialDTO,
@@ -156,26 +182,8 @@ export class SchemaService {
       }
 
       // Anchor the schema to Cord blockchain only if ANCHOR_TO_CORD is set to 'True' or 'true'
-      if (
-        process.env.ANCHOR_TO_CORD &&
-        process.env.ANCHOR_TO_CORD.toLowerCase().trim() === 'true'
-      ) {
-        try {
-          const anchorResponse = await this.utilService.anchorSchema({
-            schema: data,
-          });
-
-          cordSchemaId = anchorResponse.schemaId;
-          this.logger.debug(
-            'Schema successfully anchored to Cord blockchain',
-            anchorResponse,
-          );
-        } catch (err) {
-          this.logger.error('Failed to anchor schema to Cord blockchain', err);
-          throw new InternalServerErrorException(
-            'Failed to anchor schema to Cord blockchain',
-          );
-        }
+      if (this.shouldAnchorToCord()) {
+        cordSchemaId = await this.anchorSchemaToCord(data);
       }
       const credSchema = {
         schema: {
