@@ -14,7 +14,6 @@ export class SchemaUtilsSerivce {
   private logger = new Logger(SchemaUtilsSerivce.name);
   async getCredentialSchema(schemaId: string, version: string) {
     let credSchema: AxiosResponse;
-    let cordSchemaId: string | null = null;
     try {
       credSchema = await this.httpService.axiosRef.get(
         `${process.env.SCHEMA_BASE_URL}/credential-schema/${schemaId}/${version}`
@@ -38,22 +37,8 @@ export class SchemaUtilsSerivce {
         `Error fetching credential schema`
       );
     }
-     // If ANCHOR_TO_CORD is true, retrieve cordSchemaId
-    
-    if (process.env.ANCHOR_TO_CORD && process.env.ANCHOR_TO_CORD.toLowerCase().trim() === 'true') {
-      this.logger.debug('Fetching cordSchemaId as ANCHOR_TO_CORD is enabled');
-      cordSchemaId = credSchema?.data?.cordSchemaId || null;
 
-      if (!cordSchemaId) {
-        this.logger.warn(`Cord Schema ID not found for schema ID ${schemaId}`);
-        throw new BadRequestException(`Cord Schema ID missing for schema ID ${schemaId}`);
-      }
-    }
-
-    return {
-      schema: credSchema?.data?.schema,  
-      cordSchemaId: cordSchemaId         
-    };
+    return credSchema?.data?.schema;
   }
 
   async getTemplateById(templateId: string) {

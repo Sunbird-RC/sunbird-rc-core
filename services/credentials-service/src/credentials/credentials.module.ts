@@ -10,7 +10,7 @@ import { PrismaClient } from '@prisma/client';
 
 @Module({
   imports: [HttpModule],
-  providers: [HttpService, CredentialsService, PrismaClient, IdentityUtilsService, RenderingUtilsService, SchemaUtilsSerivce,AnchorCordUtilsServices],
+  providers: [ CredentialsService, PrismaClient, IdentityUtilsService, RenderingUtilsService, SchemaUtilsSerivce,AnchorCordUtilsServices],
   controllers: [CredentialsController],
   exports: [IdentityUtilsService]
 })

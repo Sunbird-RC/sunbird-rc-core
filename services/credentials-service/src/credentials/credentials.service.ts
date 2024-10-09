@@ -283,7 +283,7 @@ export class CredentialsService {
     }
   
     // Get the credential schema and Cord schema ID
-    const { schema, cordSchemaId } = await this.schemaUtilsService.getCredentialSchema(
+    const schema = await this.schemaUtilsService.getCredentialSchema(
       issueRequest.credentialSchemaId,
       issueRequest.credentialSchemaVersion
     );
@@ -319,7 +319,7 @@ export class CredentialsService {
   
     // Check if ANCHOR_TO_CORD is true, anchor the unsigned credential using cordSchemaId from the schema
     if (this.shouldAnchorToCord()) {
-      response = await this.anchorCredentialToCord(credInReq, cordSchemaId, issueRequest);
+      response = await this.anchorCredentialToCord(credInReq, issueRequest);
     } else {
       response = await this.signAndStoreCredential(credInReq, issueRequest);
     }
@@ -337,18 +337,19 @@ export class CredentialsService {
   /**
    * Anchors the credential to Cord blockchain and saves to the DB
    */
-  private async anchorCredentialToCord(credInReq: any, cordSchemaId: string, issueRequest: IssueCredentialDTO) {
-    if (!cordSchemaId) {
-      this.logger.error('Cord Schema ID is required for anchoring but is missing');
+  private async anchorCredentialToCord(credInReq: any, issueRequest: IssueCredentialDTO) {
+    if (!issueRequest.credentialSchemaId) {
+      
+      this.logger.error('Credential SchemaId Schema ID is required for anchoring but is missing');
       throw new BadRequestException('Cord Schema ID is missing');
     }
   
     try {
-      this.logger.debug('Anchoring unsigned credential to Cord blockchain with schema ID:', cordSchemaId);
+      this.logger.debug('Anchoring unsigned credential to Cord blockchain with schema ID:', issueRequest.credentialSchemaId);
   
       const anchorResponse = await this.anchorCordUtilsServices.anchorCredential({
         ...credInReq,
-        cordSchemaId,
+        schemaId: issueRequest.credentialSchemaId,
       });
   
       this.logger.debug('Credential successfully anchored to Cord:', anchorResponse);
