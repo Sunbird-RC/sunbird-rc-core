@@ -370,6 +370,8 @@ export class CredentialsService {
       credential_schema: issueRequest.credentialSchemaId,
       signed: anchorResponse.vc as object,
       tags: issueRequest.tags,
+      blockchainStatus:"ANCHORED"
+      
     };
     
       return this.saveCredentialToDatabase(anchoredCredentialData);
