@@ -885,6 +885,17 @@
   resolved "https://registry.yarnpkg.com/@lukeed/ms/-/ms-2.0.2.tgz#07f09e59a74c52f4d88c6db5c1054e819538e2a8"
   integrity sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==
 
+"@mosip/pixelpass@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@mosip/pixelpass/-/pixelpass-0.5.0.tgz#2a844ac057eeacdd682febbaeec61e363dc7d8a6"
+  integrity sha512-JDv8S5PvD0/xbUzrkLhU75wZq2xBV8S/YS4ejKXT8orE2NwbXcAo3NXqWoO3he6XdYLXC4n8K9aAJeup7GPh8A==
+  dependencies:
+    base45-web "^1.0.2"
+    cbor-web "^9.0.2"
+    jszip "^3.10.1"
+    pako "^2.1.0"
+    qrcode "^1.5.3"
+
 "@multiformats/base-x@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@multiformats/base-x/-/base-x-4.0.1.tgz#95ff0fa58711789d53aefb2590a8b7a4e715d121"
@@ -1947,6 +1958,11 @@ base-x@^3.0.2:
   dependencies:
     safe-buffer "^5.0.1"
 
+base45-web@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/base45-web/-/base45-web-1.0.2.tgz#890c11271656f83d005755b7dbb133334113a741"
+  integrity sha512-9GS/w7MkVbXIKWzG9FjIoSJP/kfxcbvkKEL8gemZxNB21MOyBypSCL7qqFFQSEi699E6bdUA6kPPXFu5THLAPg==
+
 base58-universal@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/base58-universal/-/base58-universal-2.0.0.tgz#243c8256591afa7d5210f87ad1655e05081f4be4"
@@ -2183,6 +2199,11 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
   integrity sha512-4tYFyifaFfGacoiObjJegolkwSU4xQNGbVgUiNYVUxbQ2x2lUsFvY4hVgVzGiIe6WLOPqycWXA40l+PWsxthUw==
+
+cbor-web@^9.0.2:
+  version "9.0.2"
+  resolved "https://registry.yarnpkg.com/cbor-web/-/cbor-web-9.0.2.tgz#1915f1ef1a72ea905db07480f71cf12ff601c661"
+  integrity sha512-N6gU2GsJS8RR5gy1d9wQcSPgn9FGJFY7KNvdDRlwHfz6kCxrQr2TDnrjXHmr6TFSl6Fd0FC4zRnityEldjRGvQ==
 
 chalk@4.1.2, chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.1, chalk@^4.1.2:
   version "4.1.2"
@@ -5328,7 +5349,7 @@ p-try@^2.0.0:
   resolved "https://registry.yarnpkg.com/p-try/-/p-try-2.2.0.tgz#cb2868540e313d61de58fafbe35ce9004d5540e6"
   integrity sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==
 
-pako@^2.0.4:
+pako@^2.0.4, pako@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/pako/-/pako-2.1.0.tgz#266cc37f98c7d883545d11335c00fbd4062c9a86"
   integrity sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==
