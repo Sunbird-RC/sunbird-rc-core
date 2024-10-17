@@ -16,7 +16,7 @@ IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-claim
 
 build: build-main build-legacy-services
 
-build-legacy-services: java/registry/target/registry.jar
+build-legacy-services:
 	make -C java/claim
 	make -C services/id-gen-service docker
 	make -C services/encryption-service docker
