@@ -2,6 +2,7 @@ package org.egov.enc.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.egov.enc.config.AppProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,9 +25,7 @@ public class AsymmetricEncryptionUtil {
     }
 
     @Autowired
-    public AsymmetricEncryptionUtil() {
-        init();
-    }
+    public AsymmetricEncryptionUtil() { init(); }
 
     //Initialize Security Provider to BouncyCastleProvider
     public static void init() {
