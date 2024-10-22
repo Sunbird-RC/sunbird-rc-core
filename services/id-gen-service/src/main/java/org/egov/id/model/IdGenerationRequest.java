@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 /**
  * <h1>IdGenerationRequest</h1>

@@ -3,9 +3,9 @@ package org.egov.enc.services;
 import org.egov.enc.models.Ciphertext;
 import org.egov.enc.models.Plaintext;
 
-import jakarta.crypto.BadPaddingException;
-import jakarta.crypto.IllegalBlockSizeException;
-import jakarta.crypto.NoSuchPaddingException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

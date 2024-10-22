@@ -8,10 +8,10 @@ import org.egov.enc.utils.SymmetricEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.crypto.BadPaddingException;
-import jakarta.crypto.IllegalBlockSizeException;
-import jakarta.crypto.NoSuchPaddingException;
-import jakarta.crypto.SecretKey;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;

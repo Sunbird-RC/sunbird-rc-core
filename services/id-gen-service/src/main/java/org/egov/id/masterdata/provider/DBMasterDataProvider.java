@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import jakarta.sql.DataSource;
+import javax.sql.DataSource;
 import java.util.List;
 
 @Service
