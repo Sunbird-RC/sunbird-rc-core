@@ -13,6 +13,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { TerminusModule } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
 import { VaultHealthIndicator } from './utils/vault.health';
+import { AnchorCordService } from './utils/cord.service';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { VaultHealthIndicator } from './utils/vault.health';
   ],
   controllers: [AppController, DidController],
   providers: [
-    PrismaService, DidService, VaultService,
+    PrismaService, DidService, VaultService,AnchorCordService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

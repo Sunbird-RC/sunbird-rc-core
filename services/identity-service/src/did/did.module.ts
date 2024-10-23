@@ -5,6 +5,7 @@ import { PrismaService } from 'src/utils/prisma.service';
 import { DidController } from './did.controller';
 import { DidService } from './did.service';
 import { VaultService } from '../utils/vault.service';
+import { AnchorCordService } from 'src/utils/cord.service';
 
 @Module({
   imports: [HttpModule],
@@ -13,6 +14,7 @@ import { VaultService } from '../utils/vault.service';
     DidService,
     PrismaService,
     VaultService,
+    AnchorCordService
   ],
 })
 export class DidModule {}
