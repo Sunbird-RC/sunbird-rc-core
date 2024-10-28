@@ -91,8 +91,34 @@ jobs:
     - name: Check disk space after build
       run: df -h
 
-  test:
+  test-v1:
     needs: [build-java-11]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+        cache: 'maven'
+    - name: Install Docker Compose
+      run: |
+        curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
+    ## debug step
+    # - name: Setup upterm session
+    #   uses: lhotari/action-upterm@v1
+    #   with:
+    #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+    #     limit-access-to-actor: true
+
+    - name: Run V1 tests
+      run: make test-v1
+
+  test-v2:
+    needs: [build-java-21]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -114,5 +140,6 @@ jobs:
     #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow
     #     limit-access-to-actor: true
 
-    - name: Run tests
-      run: make test
+    - name: Run V2 tests
+      run: make test-v2
+  
