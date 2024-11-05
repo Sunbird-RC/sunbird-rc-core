@@ -39,26 +39,22 @@ java/registry/target/registry.jar: $(SOURCES)
 	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
-test-v1: build
+test: build
 	@docker-compose -f docker-compose-v1.yml down
 	@sudo rm -rf db-data* es-data* || echo "no permission to delete"
+	# test with distributed definition manager and native search
 	@docker-compose -f docker-compose-v1.yml --env-file test_environments/test_with_distributedDefManager_nativeSearch.env up -d db keycloak registry certificate-signer certificate-api redis
-	@echo "Starting the native search test"
-	@sh build/wait_for_port.sh 8080
-	@sh build/wait_for_port.sh 8081
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose -f docker-compose-v1.yml ps
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
 	@sudo rm -rf db-data-1 || echo "no permission to delete"
-
-test-v2: build
-	@docker-compose -f docker-compose-v1.yml down
-	@sudo rm -rf db-data* es-data* || echo "no permission to delete"
+	# test with kafka(async), events, notifications,
 	@docker-compose -f docker-compose-v1.yml --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db es clickhouse redis keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
-	@echo "Starting the async events test"
-	@sh build/wait_for_port.sh 8080
-	@sh build/wait_for_port.sh 8081
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose -f docker-compose-v1.yml ps
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
