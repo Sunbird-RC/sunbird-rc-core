@@ -39,7 +39,7 @@ java/registry/target/registry.jar: $(SOURCES)
 	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
-test: build
+test:
 	@docker-compose -f docker-compose-v1.yml down
 	@sudo rm -rf db-data* es-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search
