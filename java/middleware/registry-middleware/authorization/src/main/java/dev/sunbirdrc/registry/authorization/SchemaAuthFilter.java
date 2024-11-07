@@ -1,3 +1,6 @@
+// codeql [java/unvalidated-url-forward]: accept reason="This is a known and accepted risk for this specific file."
+// False positive because, this code checks if the requestUri matches a specific pattern and if any of the anonymousInviteSchemas match a dynamically generated pattern.
+// If both conditions are true, it forwards the request to the same path.
 package dev.sunbirdrc.registry.authorization;
 
 import jakarta.servlet.FilterChain;

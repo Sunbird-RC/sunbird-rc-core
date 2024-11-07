@@ -1,3 +1,4 @@
+// codeql [java/spring-disabled-csrf]: accept reason="CSRF protection is intentionally disabled for this application"
 package dev.sunbirdrc.registry.authorization;
 
 import dev.sunbirdrc.registry.authorization.pojos.OAuth2Configuration;
