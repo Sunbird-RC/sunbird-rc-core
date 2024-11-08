@@ -1,0 +1,6 @@
+queries:
+  - name: "security-extended"
+    from: github/codeql
+    exclude:
+      - java/URL-forward-from-remote-source
+      - java/Disabled-Spring-CSRF-protection

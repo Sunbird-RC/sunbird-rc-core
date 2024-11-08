@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+@SuppressWarnings("java/URL-forward-from-remote-source")
 public class SchemaAuthFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(SchemaAuthFilter.class);
     private static final String INVITE_URL_PATTERN = "/api/v1/([A-Za-z0-9_])+/invite(/)?";

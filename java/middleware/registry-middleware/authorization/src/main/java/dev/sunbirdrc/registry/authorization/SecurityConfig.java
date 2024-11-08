@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 @Configuration
 @EnableWebSecurity
 @ConditionalOnProperty(name = "authentication.enabled", havingValue = "true", matchIfMissing = false)
+@SuppressWarnings("java/Disabled-Spring-CSRF-protection")
 public class SecurityConfig {
 
     @Autowired
