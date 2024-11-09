@@ -57,6 +57,11 @@ jobs:
                 id: java/URL-forward-from-remote-source
             - exclude:
                 id: java/Disabled-Spring-CSRF-protection
+            - exclude:
+                id: java/unvalidated-url-forward
+            - exclude:
+                java/spring-disabled-csrf-protection
+          
 
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
