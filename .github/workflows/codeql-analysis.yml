@@ -60,7 +60,7 @@ jobs:
             - exclude:
                 id: java/unvalidated-url-forward
             - exclude:
-                java/spring-disabled-csrf-protection
+                id: java/spring-disabled-csrf-protection
           
 
         # If you wish to specify custom queries, you can do so here or in a config file.
