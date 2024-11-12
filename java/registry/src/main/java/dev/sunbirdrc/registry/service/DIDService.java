@@ -25,7 +25,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
@@ -34,16 +36,14 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 @ConditionalOnProperty(value = "did.enabled", havingValue = "true")
 public class DIDService implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(DIDService.class);
+    private static final String authorSchemaName = "Issuer";
+    private static final String didPropertyName = "did";
     @Value("${did.healthCheckURL}")
     private String healthCheckUrl;
     @Value("${did.generateURL}")
     private String generateIdUrl;
     @Value("${did.resolveURL}")
     private String resolveIdUrl;
-
-    private static final String authorSchemaName = "Issuer";
-    private static final String didPropertyName = "did";
-
     @Autowired
     private RetryRestTemplate retryRestTemplate;
     @Autowired
@@ -70,7 +70,7 @@ public class DIDService implements HealthIndicator {
         filters.set(propertyName, JsonNodeFactory.instance.objectNode().put("eq", value));
         payload.set(FILTERS, filters);
         JsonNode results = searchService.search(payload, "");
-        if(results.get(authorSchemaName).get(ENTITY_LIST).isEmpty()) {
+        if (results.get(authorSchemaName).get(ENTITY_LIST).isEmpty()) {
             throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, propertyName));
         }
         return results.get(authorSchemaName).get(ENTITY_LIST).get(0).get(didPropertyName).asText();
@@ -95,13 +95,13 @@ public class DIDService implements HealthIndicator {
     public String generateDid(String method, Map<String, Object> content) {
         Map<String, Object> requestMap = new HashMap<>();
         Map<String, Object> map = new HashMap<>();
-        if(content != null) {
+        if (content != null) {
             map.putAll(content);
         }
-        if(!map.containsKey("service")) {
+        if (!map.containsKey("service")) {
             map.put("service", Collections.emptyList());
         }
-        if(!map.containsKey("alsoKnownAs")) {
+        if (!map.containsKey("alsoKnownAs")) {
             map.put("alsoKnownAs", Collections.emptyList());
         }
         map.put("method", method);

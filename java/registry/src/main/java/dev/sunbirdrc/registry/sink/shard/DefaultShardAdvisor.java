@@ -13,16 +13,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultShardAdvisor implements IShardAdvisor {
 
-	@Autowired
-	public DBConnectionInfoMgr dBConnectionInfoMgr;
+    @Autowired
+    public DBConnectionInfoMgr dBConnectionInfoMgr;
 
 
-	/**
-	 * Gets the default shard
-	 */
-	@Override
-	public DBConnectionInfo getShard(Object attributeValue) {
-		return dBConnectionInfoMgr.getConnectionInfo().get(0);
-	}
+    /**
+     * Gets the default shard
+     */
+    @Override
+    public DBConnectionInfo getShard(Object attributeValue) {
+        return dBConnectionInfoMgr.getConnectionInfo().get(0);
+    }
 
 }

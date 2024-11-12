@@ -19,6 +19,7 @@ public class KafkaEventService implements IEventService {
     String metricsTopic;
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+
     @Override
     public void pushEvents(Event event) throws JsonProcessingException {
         ObjectWriter objectMapper = new ObjectMapper().writer().withDefaultPrettyPrinter();

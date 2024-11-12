@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.*;
 
 public class AttestationPath {
-    private static final String ARRAY_STEP = "[]" ;
+    private static final String ARRAY_STEP = "[]";
     private static final String SEP = "/";
     private final String path;
     private transient List<String> steps;
@@ -22,7 +22,7 @@ public class AttestationPath {
 
         List<String> steps = new ArrayList<>();
         StringBuilder curr = new StringBuilder();
-        for (String step: path.split(SEP)) {
+        for (String step : path.split(SEP)) {
             if (!step.equals(ARRAY_STEP)) {
                 curr.append(SEP).append(step);
             } else {
@@ -40,11 +40,11 @@ public class AttestationPath {
     }
 
     public Set<EntityPropertyURI> getEntityPropertyURIs(JsonNode node, String uuidPropertyName) {
-        Queue<EntityPropertyURI> currPaths = new LinkedList<EntityPropertyURI>(){{
+        Queue<EntityPropertyURI> currPaths = new LinkedList<EntityPropertyURI>() {{
             add(new EntityPropertyURI("", ""));
         }};
         if (steps == null) setSteps();
-        for (String step: steps) {
+        for (String step : steps) {
             int currCount = currPaths.size();
             for (int i = 0; i < currCount; i++) {
                 EntityPropertyURI currPath = currPaths.remove();

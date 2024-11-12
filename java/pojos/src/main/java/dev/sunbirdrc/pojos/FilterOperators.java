@@ -1,5 +1,8 @@
 package dev.sunbirdrc.pojos;
 
+import lombok.Getter;
+
+@Getter
 public enum FilterOperators {
     gte(">="), lte("<="), contains("contains"),
     gt(">"), lt("<"), eq("="), neq("!="),
@@ -9,16 +12,12 @@ public enum FilterOperators {
     queryString("queryString");
     
 
-    private String value;
+    private final String value;
 
     FilterOperators(String value) {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
-       
     public static FilterOperators get(String name){
         FilterOperators filterOperators = null;
         try {

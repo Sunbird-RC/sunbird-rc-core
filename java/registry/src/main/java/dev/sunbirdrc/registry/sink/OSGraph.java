@@ -11,7 +11,7 @@ public class OSGraph implements AutoCloseable {
         supportsTransaction = graph.features().graph().supportsTransactions();
     }
 
-    public OSGraph (Graph g, boolean close) {
+    public OSGraph(Graph g, boolean close) {
         graph = g;
         closeRequired = close;
     }

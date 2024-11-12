@@ -3,21 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>registry-middleware</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>dev.sunbirdrc</groupId>
-        <version>2.0.3</version>
         <artifactId>middleware-bom</artifactId>
+        <version>2.0.4-SNAPSHOT</version>
     </parent>
-    <dependencies>
-        <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>pojos</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-    </dependencies>
     <modules>
         <module>authorization</module>
         <module>validation</module>
@@ -27,4 +20,24 @@
         <module>auth0</module>
         <module>generic-iam</module>
     </modules>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

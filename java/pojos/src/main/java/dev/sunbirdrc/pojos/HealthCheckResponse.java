@@ -1,44 +1,21 @@
 package dev.sunbirdrc.pojos;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Setter
+@Getter
+@AllArgsConstructor
 public class HealthCheckResponse {
 
 	private String name;
 	private boolean healthy;
 	private List<ComponentHealthInfo> checks;
 
-	public HealthCheckResponse(String name, boolean healthy, List<ComponentHealthInfo> checks) {
-		this.name = name;
-		this.healthy = healthy;
-		this.checks = checks;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public boolean isHealthy() {
-		return healthy;
-	}
-
-	public void setHealthy(boolean healthy) {
-		this.healthy = healthy;
-	}
-
-	public List<ComponentHealthInfo> getChecks() {
-		return checks;
-	}
-
-	public void setChecks(List<ComponentHealthInfo> checks) {
-		this.checks = checks;
-	}
-
-	@Override
+    @Override
 	public String toString() {
 		return "HealthCheckResponse{" + "name='" + name + '\'' + ", healthy=" + healthy + ", checks=" + checks + '}';
 	}

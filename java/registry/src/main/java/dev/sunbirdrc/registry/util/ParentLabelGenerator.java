@@ -12,6 +12,7 @@ public class ParentLabelGenerator {
 
     /**
      * Constructs the parent node label associated with the entityType
+     *
      * @param entityType
      * @return
      */
@@ -21,6 +22,7 @@ public class ParentLabelGenerator {
 
     /**
      * Tells what is the parent label identifier.
+     *
      * @return
      */
     public static String getParentLabelId() {

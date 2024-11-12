@@ -10,8 +10,9 @@ public class RefLabelHelper {
     /**
      * Generates the key that could be persisted for a given reference
      * and id
+     *
      * @param referenceName - the other reference
-     * @param id - the id to suffix
+     * @param id            - the id to suffix
      * @return
      */
     public static String getLabel(String referenceName, String id) {
@@ -21,8 +22,9 @@ public class RefLabelHelper {
     /**
      * Generates the key that could be persisted for a given reference
      * and id
+     *
      * @param referenceName - the other reference
-     * @param id - the id to suffix
+     * @param id            - the id to suffix
      * @return
      */
     public static String getArrayLabel(String referenceName, String id) {
@@ -32,6 +34,7 @@ public class RefLabelHelper {
     /**
      * Given a label and id, identifies if the label was
      * generated using this class.
+     *
      * @param lbl
      * @param id
      * @return
@@ -43,6 +46,7 @@ public class RefLabelHelper {
     /**
      * Given a label and id, identifies if the label was
      * generated using this class.
+     *
      * @param lbl
      * @param id
      * @return
@@ -54,6 +58,7 @@ public class RefLabelHelper {
     /**
      * Given a label read from the database, identifies what is the
      * reference to which this points to.
+     *
      * @param label
      * @return
      */
@@ -63,6 +68,7 @@ public class RefLabelHelper {
 
     /**
      * Identifies if the label belongs to a parent group
+     *
      * @param label
      * @return
      */

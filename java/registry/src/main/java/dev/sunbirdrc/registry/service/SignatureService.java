@@ -7,14 +7,14 @@ import java.util.Map;
 
 public interface SignatureService extends HealthIndicator {
 
-	Object sign(Map<String, Object> propertyValue)
-			throws SignatureException.UnreachableException, SignatureException.CreationException;
+    Object sign(Map<String, Object> propertyValue)
+            throws SignatureException.UnreachableException, SignatureException.CreationException;
 
-	boolean verify(Object propertyValue)
-			throws SignatureException.UnreachableException, SignatureException.VerificationException;
+    boolean verify(Object propertyValue)
+            throws SignatureException.UnreachableException, SignatureException.VerificationException;
 
-	String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException;
+    String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException;
 
-	void revoke(String entityName, String entityId, String signed);
+    void revoke(String entityName, String entityId, String signed);
 
 }

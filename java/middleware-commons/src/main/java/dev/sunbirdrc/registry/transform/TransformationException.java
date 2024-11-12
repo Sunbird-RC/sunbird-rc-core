@@ -1,5 +1,10 @@
 package dev.sunbirdrc.registry.transform;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class TransformationException extends Exception {
 
 	private ErrorCode errorCode;
@@ -14,7 +19,4 @@ public class TransformationException extends Exception {
 		this.errorCode = errorCode;
 	}
 
-	public ErrorCode getErrorCode() {
-		return errorCode;
-	}
 }

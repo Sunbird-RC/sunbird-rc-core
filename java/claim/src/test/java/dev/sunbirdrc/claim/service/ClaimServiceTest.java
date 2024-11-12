@@ -11,13 +11,12 @@ import dev.sunbirdrc.claim.exception.ResourceNotFoundException;
 import dev.sunbirdrc.claim.exception.UnAuthorizedException;
 import dev.sunbirdrc.claim.repository.ClaimNoteRepository;
 import dev.sunbirdrc.claim.repository.ClaimRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -26,29 +25,31 @@ import java.util.*;
 import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 import static dev.sunbirdrc.claim.model.ClaimStatus.CLOSED;
 import static dev.sunbirdrc.claim.model.ClaimStatus.OPEN;
-import static org.junit.Assert.assertEquals;
+import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ClaimServiceTest {
-    private ClaimService claimService;
+@ExtendWith(MockitoExtension.class)
+class ClaimServiceTest {
     @Mock
     ClaimRepository claimRepository;
     @Mock
     ClaimNoteRepository claimNoteRepository;
-    @Mock
+    @MockBean
     SunbirdRCClient sunbirdRCClient;
     @Mock
     ClaimsAuthorizer claimsAuthorizer;
+    private ClaimService claimService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         claimService = new ClaimService(claimRepository, claimNoteRepository, sunbirdRCClient, claimsAuthorizer);
     }
 
     @Test
-    public void shouldReturnOnlyAuthorizedClaims() {
+    void shouldReturnOnlyAuthorizedClaims() {
         Claim claim1 = getClaim("1");
         Claim claim2 = getClaim("2");
         Claim claim3 = getClaim("3");
@@ -68,7 +69,7 @@ public class ClaimServiceTest {
     }
 
     @Test
-    public void shouldReturnAppropriateClaimsInPaginationFormat() {
+    void shouldReturnAppropriateClaimsInPaginationFormat() {
         Claim claim1 = getClaim("1");
         Claim claim2 = getClaim("2");
         Claim claim3 = getClaim("3");
@@ -90,7 +91,7 @@ public class ClaimServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyClaimsIfOffsetGreaterThanClaimSize() {
+    void shouldReturnEmptyClaimsIfOffsetGreaterThanClaimSize() {
         Claim claim1 = getClaim("1");
         Claim claim2 = getClaim("2");
         Claim claim3 = getClaim("3");
@@ -111,35 +112,36 @@ public class ClaimServiceTest {
         assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
     }
 
-    @Test(expected = ResourceNotFoundException.class)
-    public void attestClaimShouldThrowExceptionIfTheClaimIsNotFound() {
+    @Test
+    void attestClaimShouldThrowExceptionIfTheClaimIsNotFound() {
         String id = "1";
         when(claimRepository.findById(id)).thenReturn(Optional.empty());
         JsonNode dummyNode = new ObjectMapper().nullNode();
-        claimService.attestClaim(id, dummyNode);
+        assertThrows(ResourceNotFoundException.class, () -> claimService.attestClaim(id, dummyNode));
     }
-    @Test(expected = ClaimAlreadyProcessedException.class)
-    public void attestClaimShouldThrowExceptionIfTheClaimIsAlreadyProcessed() {
+
+    @Test
+    void attestClaimShouldThrowExceptionIfTheClaimIsAlreadyProcessed() {
         String id = "1";
         Claim claim = getClaim(id);
         claim.setStatus(CLOSED.name());
         when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
         JsonNode dummyNode = new ObjectMapper().nullNode();
-        claimService.attestClaim(id, dummyNode);
+        assertThrows(ClaimAlreadyProcessedException.class, () -> claimService.attestClaim(id, dummyNode));
     }
 
-    @Test(expected = UnAuthorizedException.class)
-    public void attestClaimShouldThrowExceptionIfTheUserIsNotAuthorized() {
+    @Test
+    void attestClaimShouldThrowExceptionIfTheUserIsNotAuthorized() {
         String id = "1";
         Claim claim = getClaim(id);
         claim.setStatus(OPEN.name());
         JsonNode dummyNode = new ObjectMapper().nullNode();
         when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
-        claimService.attestClaim(id, dummyNode);
+        assertThrows(UnAuthorizedException.class, () -> claimService.attestClaim(id, dummyNode));
     }
 
     @Test
-    public void shouldAbleToAttestTheClaim() throws JsonProcessingException {
+    void shouldAbleToAttestTheClaim() throws JsonProcessingException {
         String id = "1";
         String addedBy = "Rogers";
         String notes = "what ?";
@@ -155,6 +157,7 @@ public class ClaimServiceTest {
         JsonNode dummyNode = new ObjectMapper().readTree(getStudentEntity());
         requestBody.set(ATTESTOR_INFO, dummyNode);
         requestBody.put(NOTES, notes);
+        requestBody.put(USER_ID, 1);
 
         when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
         when(claimsAuthorizer.isAuthorizedAttestor(claim, dummyNode)).thenReturn(true);
@@ -167,8 +170,14 @@ public class ClaimServiceTest {
 
         claimService.attestClaim(id, requestBody);
         verify(claimRepository, atLeastOnce()).save(any());
-        verify(claimNoteRepository, atLeastOnce()).save(expectedClaimNote);
+        verify(claimNoteRepository, atLeastOnce()).save(argThat(note ->
+                note.getNotes().equals(expectedClaimNote.getNotes()) &&
+                        note.getPropertyURI().equals(expectedClaimNote.getPropertyURI()) &&
+                        note.getEntityId().equals(expectedClaimNote.getEntityId()) &&
+                        note.getAddedBy().equals(expectedClaimNote.getAddedBy())
+        ));
     }
+
     private Claim getClaim(String id) {
         Claim claim = new Claim();
         claim.setId(id);

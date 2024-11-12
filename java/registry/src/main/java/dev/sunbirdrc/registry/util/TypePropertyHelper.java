@@ -4,6 +4,7 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 
 /**
  * TypePropertyHelper will hold functions related to the internal, LD-centric
+ *
  * @type definition.
  */
 public class TypePropertyHelper {
@@ -15,6 +16,7 @@ public class TypePropertyHelper {
 
     /**
      * Identifies whether the passed in property is type related
+     *
      * @param propertyName
      * @return
      */

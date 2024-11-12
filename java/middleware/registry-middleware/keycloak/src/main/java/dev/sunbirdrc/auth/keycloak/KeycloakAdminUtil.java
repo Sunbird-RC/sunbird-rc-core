@@ -2,12 +2,20 @@ package dev.sunbirdrc.auth.keycloak;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.identity_providers.pojos.*;
-import dev.sunbirdrc.pojos.HealthIndicator;
+import jakarta.ws.rs.core.Response;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.*;
+import org.apache.http.entity.ContentType;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.*;
+import org.keycloak.admin.client.resource.GroupsResource;
+import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -15,9 +23,10 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KEYCLOAK_SERVICE_NAME;
@@ -31,13 +40,42 @@ public class KeycloakAdminUtil implements IdentityManager {
     private static final String PASSWORD = "password";
     private final Keycloak keycloak;
 
+    HttpRequestInterceptor requestInterceptor = new HttpRequestInterceptor() {
+        @Override
+        public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+            logger.debug("RequestLine : {} ", request.getRequestLine());
+            logger.debug("Request URI: {} ", request.getRequestLine().getUri());
+            for (Header header : request.getAllHeaders()) {
+                logger.debug("Request Header: {} = {} ", header.getName(), header.getValue());
+            }
+            if (request instanceof HttpEntityEnclosingRequest entityRequest) {
+                if (entityRequest.getEntity() != null) {
+                    logger.info("Request body: {} ", EntityUtils.toString(entityRequest.getEntity()));
+                }
+            }
+
+        }
+    };
+    HttpResponseInterceptor responseInterceptor = new HttpResponseInterceptor() {
+        @Override
+        public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
+            logger.debug("Response StatusLine: {} ", response.getStatusLine());
+            if (response.getEntity() != null) {
+                String reposeBody = EntityUtils.toString(response.getEntity(), ContentType.getOrDefault(response.getEntity()).getCharset());
+                logger.debug("Response body: {} ", reposeBody);
+            }
+        }
+    };
+
     private final IdentityProviderConfiguration providerConfiguration;
+
     public KeycloakAdminUtil(IdentityProviderConfiguration identityProviderConfiguration) {
         this.providerConfiguration = identityProviderConfiguration;
         this.keycloak = buildKeycloak(identityProviderConfiguration);
     }
 
     private Keycloak buildKeycloak(IdentityProviderConfiguration configuration) {
+
         return KeycloakBuilder.builder()
                 .serverUrl(configuration.getUrl())
                 .realm(configuration.getRealm())
@@ -49,20 +87,30 @@ public class KeycloakAdminUtil implements IdentityManager {
                                 .connectionPoolSize(configuration.getHttpMaxConnections()).build()
                 )
                 .build();
+
     }
 
     @Override
-    public String createUser(CreateUserRequest createUserRequest) throws IdentityException {
-        logger.info("Creating user with mobile_number : " + createUserRequest.getUserName());
+    public String createUser(CreateUserRequest createUserRequest) throws IdentityException, IOException {
+        logger.info("Creating user with mobile_number : {} ", createUserRequest.getUserName());
         String groupId = createOrUpdateRealmGroup(createUserRequest.getEntity());
         UserRepresentation newUser = createUserRepresentation(createUserRequest);
         UsersResource usersResource = keycloak.realm(providerConfiguration.getRealm()).users();
-        try (Response response = usersResource.create(newUser)) {
+        ResponseWrapper responseWrapper = null;
+        try {
+            responseWrapper = new ResponseWrapper(usersResource.create(newUser));
+            Response response = responseWrapper.toJakartaResponse();
+            if (logger.isDebugEnabled() && response.getEntity() != null) {
+                InputStream entityStream = (InputStream) response.getEntity();
+                String responseBody = IOUtils.toString(entityStream, StandardCharsets.UTF_8);
+                logger.debug("Full response: {}", responseBody);
+            }
             if (response.getStatus() == 201) {
                 logger.info("Response |  Status: {} | Status Info: {}", response.getStatus(), response.getStatusInfo());
-                logger.info("User ID path" + response.getLocation().getPath());
+
+                logger.info("User ID path {} ", response.getLocation().getPath());
                 String userID = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-                logger.info("User ID : " + userID);
+                logger.info("User ID : {} ", userID);
                 if (!providerConfiguration.getUserActions().isEmpty()) {
                     usersResource.get(userID).executeActionsEmail(providerConfiguration.getUserActions());
                 }
@@ -75,15 +123,28 @@ public class KeycloakAdminUtil implements IdentityManager {
             } else {
                 throw new IdentityException("Username already invited / registered");
             }
+        } catch (Exception e) {
+            if (responseWrapper != null && responseWrapper.toJakartaResponse() != null) {
+                responseWrapper.toJakartaResponse().close();
+            }
+            logger.error("User creation failed", e);
+
+            throw new IdentityException("User creation failed");
         }
     }
 
-    private String createOrUpdateRealmGroup(String entityName) {
+    private String createOrUpdateRealmGroup(String entityName) throws IOException {
+        logger.debug("Creating or updating group: {}", entityName);
         RoleRepresentation roleRepresentation = createOrGetRealmRole(entityName);
         GroupsResource groupsResource = keycloak.realm(providerConfiguration.getRealm()).groups();
         GroupRepresentation groupRepresentation = new GroupRepresentation();
         groupRepresentation.setName(entityName);
-        Response groupAddResponse = groupsResource.add(groupRepresentation);
+        ResponseWrapper responseWrapper = new ResponseWrapper((groupsResource.add(groupRepresentation)));
+        Response groupAddResponse = responseWrapper.toJakartaResponse();
+        if (logger.isDebugEnabled()) {
+            printReqResponses(groupAddResponse);
+        }
+
         String groupId = "";
         if (groupAddResponse.getStatus() == 409) {
             Optional<GroupRepresentation> groupRepresentationOptional = groupsResource.groups().stream().filter(gp -> gp.getName().equalsIgnoreCase(entityName)).findFirst();
@@ -98,22 +159,32 @@ public class KeycloakAdminUtil implements IdentityManager {
         return groupId;
     }
 
+    private static void printReqResponses(Response groupAddResponse) throws IOException {
+        if (groupAddResponse.getEntity() != null) {
+            InputStream entityStream = (InputStream) groupAddResponse.getEntity();
+            String responseBody = IOUtils.toString(entityStream, StandardCharsets.UTF_8);
+            logger.debug("Full response create or update: {}", responseBody);
+            logger.debug("Status of groupAddResponse  {}", groupAddResponse.getStatus());
+        }
+    }
+
     private RoleRepresentation createOrGetRealmRole(String entityName) {
         RolesResource rolesResource = keycloak.realm(providerConfiguration.getRealm()).roles();
+
         try {
-             return rolesResource.get(entityName).toRepresentation();
-        } catch (NotFoundException ex) {
+            return rolesResource.get(entityName).toRepresentation();
+        } catch (javax.ws.rs.NotFoundException ex) {
             logger.error("Role {} not found. Creating role {}", entityName, entityName);
             RoleRepresentation roleRepresentation = new RoleRepresentation();
             roleRepresentation.setName(entityName);
             rolesResource.create(roleRepresentation);
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.error("Role creation exception", e);
         }
         return rolesResource.get(entityName).toRepresentation();
     }
 
-//    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile,
+    //    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile,
     private String updateExistingUserAttributes(CreateUserRequest createUserRequest, String groupId) throws IdentityException {
         Optional<UserResource> userRepresentationOptional = getUserByUsername(createUserRequest.getUserName());
         if (userRepresentationOptional.isPresent()) {

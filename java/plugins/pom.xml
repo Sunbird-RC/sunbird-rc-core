@@ -6,12 +6,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>plugins</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>dev.sunbirdrc</groupId>
-        <version>2.0.3</version>
+        <version>2.0.4-SNAPSHOT</version>
         <artifactId>sunbird-rc</artifactId>
     </parent>
 
@@ -24,13 +24,35 @@
         <dependency>
             <groupId>org.sunbird.akka</groupId>
             <artifactId>sunbird-actor</artifactId>
-            <version>1.0.0</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>dev.sunbirdrc</groupId>
+            <groupId>dev.sunbirdrc.actors</groupId>
             <artifactId>sunbirdrc-actors</artifactId>
-            <version>2.0.3</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

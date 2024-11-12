@@ -1,18 +1,19 @@
 package dev.sunbirdrc.views;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ViewTemplateTest {
 
     private ViewTemplate vt;
 
-    @Before
+    @BeforeEach
     public void init() {
         vt = new ViewTemplate();
         FunctionDefinition fd = new FunctionDefinition();
@@ -25,19 +26,15 @@ public class ViewTemplateTest {
 
     @Test
     public void testGetExpression() {
-
         FunctionDefinition fd = vt.getFunctionDefinition("name");
-
         assertEquals(vt.getFunctionDefinitions().get(0).getResult(), fd.getResult());
         assertNotEquals("unexpected", fd.getResult());
-
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testGetExpressionException() {
-
-        vt.getFunctionDefinition("invalid_name");
-
+        assertThrows(IllegalArgumentException.class, () -> {
+            vt.getFunctionDefinition("invalid_name");
+        });
     }
-
 }

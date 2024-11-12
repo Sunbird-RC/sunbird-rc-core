@@ -2,7 +2,7 @@ package dev.sunbirdrc.registry.sink;
 
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JElementIdProvider;
 import org.neo4j.driver.internal.InternalNode;
-import org.neo4j.driver.v1.types.Entity;
+import org.neo4j.driver.types.Entity;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -17,6 +17,7 @@ public class Neo4jIdProvider implements Neo4JElementIdProvider<String> {
     /**
      * When read back using labels, the library gives back only the id.
      * Here we are loading only the extra uuidPropertyValue for our convenience.
+     *
      * @param entity
      * @return
      */
@@ -33,6 +34,7 @@ public class Neo4jIdProvider implements Neo4JElementIdProvider<String> {
     /**
      * This is the globally unique identifier we want to use for every
      * record.
+     *
      * @return
      */
     public String generate() {
