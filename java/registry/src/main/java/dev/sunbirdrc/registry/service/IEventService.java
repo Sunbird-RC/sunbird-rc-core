@@ -29,5 +29,6 @@ public interface IEventService {
                 .build();
         return event;
     }
+
     void pushEvents(Event event) throws JsonProcessingException;
 }

@@ -61,9 +61,8 @@ public class CreateEntityConsumer {
         this.registryHelper = registryHelper;
         this.webhookService = webhookService;
     }
-
     @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
-    public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, Acknowledgment acknowledgment) {
+    public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
         PostCreateEntityMessage postCreateEntityMessage = PostCreateEntityMessage.builder().build();
         try {
             logger.debug("Received message: {}, key: {}", message, key);

@@ -6,14 +6,14 @@ import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.dao.ValueType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
@@ -24,12 +24,13 @@ public interface ISearchService {
     static Logger logger = LoggerFactory.getLogger(ISearchService.class);
 
     JsonNode search(JsonNode inputQueryNode, String userId) throws IOException;
-    
+
     /**
      * Building SearchQuery from given input search json
-     * @param inputQueryNode          request search json
-     * @param offset                  starting point
-     * @param limit                   size of object search result hold 
+     *
+     * @param inputQueryNode request search json
+     * @param offset         starting point
+     * @param limit          size of object search result hold
      * @return
      */
     default SearchQuery getSearchQuery(JsonNode inputQueryNode, int offset, int limit) {
@@ -75,13 +76,14 @@ public interface ISearchService {
 
     /**
      * For a given path filter, iterate through the fields given and set the filterList
+     *
      * @param path
      * @param inputQueryNode
      * @return
      */
     default void addToFilterList(String path, JsonNode inputQueryNode, List<Filter> filterList) {
         Iterator<Map.Entry<String, JsonNode>> searchFields = inputQueryNode.fields();
-     
+
         // Iterate and get the fields.
         while (searchFields.hasNext()) {
             Map.Entry<String, JsonNode> entry = searchFields.next();
@@ -90,7 +92,7 @@ public interface ISearchService {
             if (entryVal.isObject() && (entryVal.fields().hasNext())) {
                 Map.Entry<String, JsonNode> entryValMap = entryVal.fields().next();
                 String operatorStr = entryValMap.getKey();
-                
+
                 if (entryValMap.getValue().isObject()) {
                     // accumulating the path as it goes deep in to the heirarachy if nested separating each level by a '.'
                     String currpath = path == null ? entry.getKey() : path + "." + entry.getKey();
@@ -104,7 +106,7 @@ public interface ISearchService {
                         value = ValueType.getValue(entryValMap.getValue());
                     }
                     FilterOperators operator = FilterOperators.get(operatorStr);
-                    if(operator == null)
+                    if (operator == null)
                         throw new IllegalArgumentException("Search query cannot perform without operator!");
 
                     Filter filter = new Filter(property, operator, value);
@@ -112,18 +114,19 @@ public interface ISearchService {
                     filterList.add(filter);
                 }
             } else {
-                 throw new IllegalArgumentException("Search query is invalid!");
+                throw new IllegalArgumentException("Search query is invalid!");
             }
         }
     }
+
     /**
      * Return all values
-     * 
+     *
      * @param node
      * @return
      */
     default List<Object> getObjects(JsonNode node) {
-            
+
         List<Object> rangeValues = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             JsonNode entryVal = node.get(i);

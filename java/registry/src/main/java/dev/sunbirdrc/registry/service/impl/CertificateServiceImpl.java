@@ -34,13 +34,12 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_CERTIFICA
 @Component
 @ConditionalOnExpression("${certificate.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
 public class CertificateServiceImpl implements ICertificateService {
+    private static Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
     private final String templateBaseUrl;
     private final String certificateUrl;
     private final String certificateHealthCheckURL;
     private final RestTemplate restTemplate;
-
     private boolean signatureEnabled;
-    private static Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
 
     public CertificateServiceImpl(@Value("${certificate.templateBaseUrl}") String templateBaseUrl,
                                   @Value("${certificate.apiUrl}") String certificateUrl,
@@ -56,7 +55,7 @@ public class CertificateServiceImpl implements ICertificateService {
 
     @Override
     public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, String templateId, JsonNode entity) throws RestClientException, CertificateException {
-        if(Objects.equals(mediaType, MediaType.APPLICATION_JSON_VALUE)) {
+        if (Objects.equals(mediaType, MediaType.APPLICATION_JSON_VALUE)) {
             try {
                 return new ObjectMapper().readTree(certificateData.asText());
             } catch (JsonProcessingException e) {
@@ -65,7 +64,7 @@ public class CertificateServiceImpl implements ICertificateService {
         }
         String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
 
-        Map<String, Object> requestBody = new HashMap<String, Object>(){{
+        Map<String, Object> requestBody = new HashMap<String, Object>() {{
             put("templateUrl", finalTemplateUrl);
             put("certificate", certificateData.toString());
             put("entityId", entityId);

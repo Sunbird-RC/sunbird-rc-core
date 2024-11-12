@@ -5,11 +5,7 @@ import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.exception.IndexException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +17,10 @@ import java.util.UUID;
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
 public abstract class DatabaseProvider implements HealthIndicator {
+    private static Logger logger = LoggerFactory.getLogger(DatabaseProvider.class);
     private Constants.GraphDatabaseProvider provider;
     private String uuidPropertyName;
     private Optional<Boolean> supportsTransaction = Optional.empty();
-
-    private static Logger logger = LoggerFactory.getLogger(DatabaseProvider.class);
 
     public abstract void shutdown() throws Exception;
 
@@ -63,7 +58,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
     }
 
     private boolean supportsTransaction(Graph graph) {
-        if(!supportsTransaction.isPresent()){
+        if (!supportsTransaction.isPresent()) {
             supportsTransaction = Optional.ofNullable(graph.features().graph().supportsTransactions());
         }
         return supportsTransaction.get();
@@ -113,6 +108,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
     /**
      * For any object agnostic of database class, returns id.
      * CAUTION: Use this only for new nodes
+     *
      * @param o - any record object
      * @return
      */
@@ -142,12 +138,14 @@ public abstract class DatabaseProvider implements HealthIndicator {
     public void createIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
+
     /**
      * Creates unique index
      */
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) throws IndexException.LabelNotFoundException {
         //Does nothing, suppose to be overridden by extended classes.
     }
+
     /**
      * Creates composite index
      */

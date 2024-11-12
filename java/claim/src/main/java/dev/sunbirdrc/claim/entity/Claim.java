@@ -5,7 +5,7 @@ import dev.sunbirdrc.claim.model.ClaimStatus;
 import dev.sunbirdrc.pojos.dto.ClaimDTO;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity

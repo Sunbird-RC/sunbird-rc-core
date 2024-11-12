@@ -31,13 +31,10 @@ import java.util.stream.Collectors;
 @Component("entityParenter")
 public class EntityParenter {
     private static Logger logger = LoggerFactory.getLogger(EntityParenter.class);
-
-    @Autowired
-    private IndexHelper indexHelper;
-
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
-
+    @Autowired
+    private IndexHelper indexHelper;
     @Autowired
     private DBProviderFactory dbProviderFactory;
 
@@ -307,12 +304,12 @@ public class EntityParenter {
      */
 
     private void asyncAddIndex(DatabaseProvider dbProvider, String shardId, Vertex parentVertex,
-            Definition definition) {
+                               Definition definition) {
         logger.debug("asyncAddIndex starts");
         if (parentVertex != null && definition != null) {
 
             IndexFields inxFields = definitionIndexFields.get(definition.getTitle());
-            if(inxFields == null) {
+            if (inxFields == null) {
                 logger.info("Index Fields are null, reloading index fields for definition: {}", definition.getTitle());
                 this.loadDefinitionIndex(definition.getTitle(), shardId);
                 inxFields = definitionIndexFields.get(definition.getTitle());
@@ -321,12 +318,12 @@ public class EntityParenter {
                 Graph graph = osGraph.getGraphStore();
                 try (Transaction tx = dbProvider.startTransaction(graph)) {
 
-					Indexer indexer = new Indexer(dbProvider);
-					indexer.setSingleIndexFields(inxFields.getNewSingleIndexFields());
-					indexer.setCompositeIndexFields(inxFields.getNewCompositeIndexFields());
+                    Indexer indexer = new Indexer(dbProvider);
+                    indexer.setSingleIndexFields(inxFields.getNewSingleIndexFields());
+                    indexer.setCompositeIndexFields(inxFields.getNewCompositeIndexFields());
 
-					indexer.setUniqueIndexFields(inxFields.getNewUniqueIndexFields());
-					indexer.setCompositeUniqueIndexFields(inxFields.getNewCompositeUniqueIndexFields());
+                    indexer.setUniqueIndexFields(inxFields.getNewUniqueIndexFields());
+                    indexer.setCompositeUniqueIndexFields(inxFields.getNewCompositeUniqueIndexFields());
                     indexer.createIndex(graph, definition.getTitle());
                     dbProvider.commitTransaction(graph, tx);
 
@@ -353,7 +350,7 @@ public class EntityParenter {
      * @param indexUniqueFields
      */
     private void updateParentVertexIndexProperties(DatabaseProvider dbProvider, Vertex parentVertex,
-            List<String> indexFields, List<String> indexUniqueFields) throws Exception {
+                                                   List<String> indexFields, List<String> indexUniqueFields) throws Exception {
 
         try (OSGraph osGraph = dbProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
@@ -370,11 +367,11 @@ public class EntityParenter {
     }
 
     public void saveIdFormat() throws SchemaException {
-        if(!idGenEnabled) return;
+        if (!idGenEnabled) return;
         List<UniqueIdentifierField> list = this.definitionsManager.getAllDefinitions().stream()
                 .flatMap(definition -> definitionsManager.getUniqueIdentifierFields(definition.getTitle()).stream())
                 .filter(Objects::nonNull).collect(Collectors.toList());
-        if(!list.isEmpty()) {
+        if (!list.isEmpty()) {
             try {
                 idGenService.saveIdFormat(list);
             } catch (CustomException e) {

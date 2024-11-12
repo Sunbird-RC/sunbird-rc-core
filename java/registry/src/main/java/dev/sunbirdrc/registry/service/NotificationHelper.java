@@ -36,6 +36,7 @@ public class NotificationHelper {
     private EntityStateHelper entityStateHelper;
     private RegistryService registryService;
     private ObjectMapper objectMapper;
+
     @Autowired
     public NotificationHelper(@Value("${notification.service.enabled}") boolean notificationEnabled, IDefinitionsManager definitionsManager, EntityStateHelper entityStateHelper, RegistryService registryService, ObjectMapper objectMapper) {
         this.notificationEnabled = notificationEnabled;
@@ -50,14 +51,14 @@ public class NotificationHelper {
 
     public void sendNotification(JsonNode inputJson, String operationType) throws Exception {
         if (!notificationEnabled) return;
-        if(inputJson == null) {
+        if (inputJson == null) {
             throw new UnableToSendNotificationException("Notification input is null for action " + operationType);
         }
         String entityType = inputJson.fields().next().getKey();
         List<NotificationTemplate> templates = getNotificationTemplate(entityType, operationType);
         Map<String, Object> objectNodeMap = (Map<String, Object>) JSONUtil.convertJsonNodeToMap(inputJson).get(entityType);
         objectNodeMap.put("entityType", entityType);
-        for(NotificationTemplate template: templates) {
+        for (NotificationTemplate template : templates) {
             String bodyTemplate = template.getBody();
             String subjectTemplate = template.getSubject();
             String bodyString = compileMessageFromTemplate(bodyTemplate, objectNodeMap);
@@ -69,7 +70,7 @@ public class NotificationHelper {
 
     private void sendNotificationToOwners(List<ObjectNode> owners, String operation, String subject, String message) throws Exception {
         if (notificationEnabled) {
-            for (ObjectNode owner :owners) {
+            for (ObjectNode owner : owners) {
                 String ownerMobile = owner.get(MOBILE).asText("");
                 String ownerEmail = owner.get(EMAIL).asText("");
                 if (!StringUtils.isEmpty(ownerMobile)) {
@@ -81,9 +82,10 @@ public class NotificationHelper {
             }
         }
     }
+
     private List<NotificationTemplate> getNotificationTemplate(String entityType, String operationType) {
         OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
-        switch(operationType) {
+        switch (operationType) {
             case CREATE:
                 return osSchemaConfiguration.getNotificationTemplates().getCreate();
             case UPDATE:
