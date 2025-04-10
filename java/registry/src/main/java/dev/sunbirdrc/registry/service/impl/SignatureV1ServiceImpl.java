@@ -44,7 +44,7 @@ public class SignatureV1ServiceImpl implements SignatureService {
     }
 
     @Override
-    public ComponentHealthInfo getHealthInfo() throws RestClientException{
+    public ComponentHealthInfo getHealthInfo() throws RestClientException {
         ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckURL);
         if (!StringUtils.isEmpty(response.getBody()) && Arrays.asList("UP", "OK").contains(response.getBody().toUpperCase())) {
             logger.debug("Signature service running !");

@@ -1,21 +1,20 @@
 package dev.sunbirdrc.registry.service.mask;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class NoneEmitStrategyTest {
+class NoneEmitStrategyTest {
     private NoneEmitStrategy noneEmitStrategy;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         noneEmitStrategy = new NoneEmitStrategy();
     }
 
     @Test
-    public void shouldNotEmitAnyValue() {
+    void shouldNotEmitAnyValue() {
         final String value = "testValue";
         final String actualValue = noneEmitStrategy.updateValue(value);
         assertNull(actualValue);

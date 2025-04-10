@@ -7,7 +7,8 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import dev.sunbirdrc.registry.model.EventConfig;
-import dev.sunbirdrc.registry.service.mask.*;
+import dev.sunbirdrc.registry.service.mask.EmitStrategyFactory;
+import dev.sunbirdrc.registry.service.mask.IEmitStrategy;
 import dev.sunbirdrc.registry.util.OSSchemaConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,18 +21,19 @@ import static dev.sunbirdrc.registry.middleware.util.JSONUtil.convertObjectJsonS
 @Service
 public class EntityTransformer {
     private static Logger logger = LoggerFactory.getLogger(EntityTransformer.class);
+
     private JsonNode updateFields(JsonNode jsonNode, List<String> fields, EventConfig eventConfig) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         DocumentContext documentContext = JsonPath.parse(convertObjectJsonString(jsonNode));
-        for(String str : fields) {
+        for (String str : fields) {
             try {
                 String value = updateValue(documentContext.read(str), eventConfig);
-                if(value == null) {
+                if (value == null) {
                     documentContext.delete(str);
                     continue;
                 }
                 documentContext.set(str, value);
-            } catch(PathNotFoundException e) {
+            } catch (PathNotFoundException e) {
                 logger.error(e.toString());
             }
         }

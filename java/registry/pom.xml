@@ -2,71 +2,91 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>dev.sunbirdrc</groupId>
+    <parent>
+        <groupId>dev.sunbirdrc</groupId>
+        <artifactId>sunbird-rc</artifactId>
+        <version>2.0.4-SNAPSHOT</version>
+    </parent>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>akka-repository</id>
+            <name>Akka library repository</name>
+            <url>https://repo.akka.io/maven</url>
+        </repository>
+    </repositories>
     <artifactId>registry</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
-
     <name>registry</name>
     <description>registry</description>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.12.RELEASE</version>
-        <relativePath/>
-    </parent>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
-        <tinkerpop.version>3.3.3</tinkerpop.version>
-        <janusgraph.version>0.3.1</janusgraph.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <jacoco.version>0.8.11</jacoco.version>
-        <!-- this version is in sync with elastic-search.jar which here added as dependency-->
-        <elasticsearch.version>6.6.0</elasticsearch.version>
-        <revision>2.0.3</revision>
-        <runSuite>**/RegistryTestSuite.class</runSuite>
-        <basePath>../../</basePath>
-        <drools.version>7.49.0.Final</drools.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.sunbirdrc</groupId>
-                <artifactId>validators</artifactId>
-                <version>2.0.3</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.20</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.retry/spring-retry -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>${resteasy-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
+            <version>${resteasy-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${javax.ws.rs-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxrs</artifactId>
+            <version>${resteasy-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>${jersey-server.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxb-provider</artifactId>
+            <version>${resteasy-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>${keycloak-admin-client.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
-            <version>1.2.2.RELEASE</version>
+            <version>${spring.retry.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -75,112 +95,145 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-security-adapter</artifactId>
-            <version>14.0.0</version>
+            <version>${keycloak-spring-security-adapter.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.jknack</groupId>
             <artifactId>handlebars</artifactId>
-            <version>4.3.1</version>
+            <version>${handlebars.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>3.9.1.Final</version>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-core</artifactId>
+            <version>${swagger-core.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson2-provider</artifactId>
-            <version>3.9.1.Final</version>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1.1</version>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>registry-interceptor</artifactId>
-            <version>${revision}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
 
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>workflow</artifactId>
-            <version>2.0.3</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
-            <version>${revision}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
 
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
-            <artifactId>sunbirdrc-actors</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.sunbirdrc</groupId>
             <artifactId>divoc-external-plugin</artifactId>
-            <version>${revision}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
-            <version>2.8.6</version>
+            <version>${spring-kafka.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>mosip-external-plugin</artifactId>
-            <version>${revision}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin-2</artifactId>
-            <version>${revision}</version>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>view-templates</artifactId>
-            <version>1.0.0</version>
+            <version>2.0.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>jsonschemavalidator</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>identity-provider</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>keycloak</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>auth0</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>generic-iam</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sunbird.akka</groupId>
+            <artifactId>sunbird-actor</artifactId>
+            <version>${sunbird.revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-slf4j_${scala.binary.version}</artifactId>
+            <version>${akka-bom.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc.actors</groupId>
+            <artifactId>sunbirdrc-actors</artifactId>
+            <version>${sunbird.revision}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient-cache</artifactId>
-            <version>4.5.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>4.4.8</version>
+            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.6</version>
+            <version>${commons-io.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>23.0</version>
-            <scope>compile</scope>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.3.0</version>
-            <scope>compile</scope>
+            <version>${minio.version}</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.8.1</version>
+            <version>${okhttp.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
@@ -208,7 +261,7 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-gremlin</artifactId>
-            <version>3.0.0m2</version>
+            <version>${orientdb-gremlin.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -216,20 +269,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.orientechnologies</groupId>-->
-            <!--<artifactId>orientdb-jdbc</artifactId>-->
-            <!--<version>3.0.0m2</version>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>com.google.guava</groupId>-->
-                    <!--<artifactId>guava</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
-        <!-- End - Include this dependency for Orient DB support -->
-
-        <!-- Include this dependency for Janusgraph (CASSANDRA) support -->
         <dependency>
             <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-core</artifactId>
@@ -242,89 +281,21 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.intuit.karate</groupId>
-            <artifactId>karate-junit5</artifactId>
-            <version>1.0.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--<dependency>-->
-            <!--<groupId>org.apache.tinkerpop</groupId>-->
-            <!--<artifactId>gremlin-driver</artifactId>-->
-            <!--<version>${tinkerpop.version}</version>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.slf4j</groupId>-->
-                    <!--<artifactId>slf4j-log4j12</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
-
-        <!-- Refer to https://docs.janusgraph.org/0.3.0/config-ref.html#_storage_cassandra for list
-         of storage backend options -->
-        <!--Include this dependency if you need cql as storage.backend option-->
-        <!-- https://mvnrepository.com/artifact/org.janusgraph/janusgraph-cql -->
-        <!--<dependency>-->
-            <!--<groupId>org.janusgraph</groupId>-->
-            <!--<artifactId>janusgraph-cql</artifactId>-->
-            <!--<version>${janusgraph.version}</version>-->
-        <!--</dependency>-->
-
-        <!--Include this dependency if you need cassandra or cassandrathrift as storage.backend option-->
-        <!--<dependency>-->
-        <!--<groupId>org.janusgraph</groupId>-->
-        <!--<artifactId>janusgraph-cassandra</artifactId>-->
-        <!--<version>${janusgraph.version}</version>-->
-        <!--<exclusions>-->
-        <!--<exclusion>-->
-        <!--<groupId>ch.qos.logback</groupId>-->
-        <!--<artifactId>logback-classic</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.slf4j</groupId>-->
-        <!--<artifactId>slf4j-log4j12</artifactId>-->
-        <!--</exclusion>-->
-        <!--</exclusions>-->
-        <!--</dependency>-->
-
-        <!-- Include this dependency for ElasticSearch when using CASSANDRA -->
-        <!--<dependency>-->
-            <!--<groupId>org.janusgraph</groupId>-->
-            <!--<artifactId>janusgraph-es</artifactId>-->
-            <!--<version>${janusgraph.version}</version>-->
-            <!--<scope>runtime</scope>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>ch.qos.logback</groupId>-->
-                    <!--<artifactId>logback-classic</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.slf4j</groupId>-->
-                    <!--<artifactId>slf4j-log4j12</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
-
-        <!-- Include this dependency for Postgres support -->
-        <dependency>
             <groupId>org.umlg</groupId>
             <artifactId>sqlg-postgres</artifactId>
-            <version>2.0.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-nop</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>${sqlg-postgres.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.umlg</groupId>
+            <artifactId>sqlg-hikari</artifactId>
+            <version>${sqlg-postgres.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.9</version>
+            <version>${commons-text.version}</version>
         </dependency>
-        <!-- End dependency for Postgres support -->
 
-        <!-- Include this dependency for Neo4j support -->
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>neo4j-gremlin</artifactId>
@@ -333,7 +304,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-tinkerpop-api-impl</artifactId>
-            <version>0.7-3.2.3</version>
+            <version>${neo4j-tinkerpop.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.scala-lang</groupId>
@@ -353,16 +324,15 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-        <!-- Include this dependency for MSSQL Server support -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>12.6.1.jre8</version>
+            <version>${mssql-jdbc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.umlg</groupId>
             <artifactId>sqlg-mssqlserver</artifactId>
-            <version>2.0.2</version>
+            <version>${sqlg-mssqlserver.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -370,234 +340,73 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- End dependency for MSSQL Server support -->
         <dependency>
             <groupId>com.steelbridgelabs.oss</groupId>
             <artifactId>neo4j-gremlin-bolt</artifactId>
-            <version>0.2.27</version>
+            <version>${neo4j-gremlin-bolt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>${neo4j-java-driver.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>${jakarta.ws.rs-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>${httpclient5.version}</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.neo4j.driver</groupId>-->
-            <!--<artifactId>neo4j-java-driver</artifactId>-->
-            <!--<version>1.4.4</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>commons-validator</groupId>-->
-            <!--<artifactId>commons-validator</artifactId>-->
-            <!--<version>1.6</version>-->
-        <!--</dependency>-->
-        <!-- End dependency for Neo4j support -->
-
-
-        <!-- Test Dependencies -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httclient.version}</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
         </dependency>
         <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>jsonschemavalidator</artifactId>
-            <version>2.0.3</version>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${jakarta.validation-api.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-core</artifactId>
-            <version>1.6.2</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>${jakarta.el.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.junit-toolbox</groupId>
-            <artifactId>junit-toolbox</artifactId>
-            <version>1.5</version>
-            <scope>test</scope>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-mvel</artifactId>
+            <version>${drools.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>1.6-beta-2</version>
-            <scope>test</scope>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf-java.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-commons</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>identity-provider</artifactId>
-            <version>2.0.3</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
         </dependency>
-        <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>keycloak</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>auth0</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.sunbirdrc</groupId>
-            <artifactId>generic-iam</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-
     </dependencies>
-
-    <build>
-        <finalName>registry</finalName>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <delimiters>
-                                <delimiter>@</delimiter>
-                            </delimiters>
-                            <useDefaultDelimiters>false</useDefaultDelimiters>
-                            <outputDirectory>${basePath}target/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <includes>
-                                        <include>metadata.sh</include>
-                                    </includes>
-                                    <directory>${basePath}</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.springframework.boot</groupId>
-                            <artifactId>spring-boot-configuration-processor</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.version}</version>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>post-unit-test</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Sets the path to the file which contains the execution data. -->
-
-                            <dataFile>target/jacoco.exec</dataFile>
-                            <!-- Sets the output directory for the code coverage report. -->
-                            <outputDirectory>target/jacoco-ut</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>jacoco-check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <rule>
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <limit>
-                                            <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.15</minimum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <excludes>
-                        <exclude>dev/sunbirdrc/pojos/*</exclude>
-                        <exclude>**/I*.java</exclude>
-                        <exclude>org/drools/**/*</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <parallel>methods</parallel>
-                    <useUnlimitedThreads/>
-                    <includes>
-                        <include>${runSuite}</include>
-                    </includes>
-                    <forkCount>1</forkCount>
-                </configuration>
-            </plugin>
-        </plugins>
-
-        <testResources>
-            <testResource>
-                <directory>${project.basedir}/src/test/resources</directory>
-            </testResource>
-            <testResource>
-                <directory>${project.basedir}/src/main/resources</directory>
-            </testResource>
-        </testResources>
-    </build>
 
 
 </project>

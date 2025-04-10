@@ -1,20 +1,20 @@
 package dev.sunbirdrc.registry.service.mask;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FullEmitStrategyTest {
+class FullEmitStrategyTest {
     private FullEmitStrategy fullEmitStrategy;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+     void setUp() throws Exception {
         fullEmitStrategy = new FullEmitStrategy();
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+     void shouldEmitCompleteValueAsIs() {
         final String value = "testValue";
         final String expectedValue = "testValue";
         final String actualValue = fullEmitStrategy.updateValue(value);

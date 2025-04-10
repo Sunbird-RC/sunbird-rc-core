@@ -11,19 +11,12 @@ public class EntityPropertyURI {
     private String propertyURI;
     private JsonPointer jsonPointer;
 
-    private EntityPropertyURI() { }
+    private EntityPropertyURI() {
+    }
 
     public EntityPropertyURI(String propertyURI, String jsonPointer) {
         this.jsonPointer = JsonPointer.compile(jsonPointer);
         this.propertyURI = propertyURI;
-    }
-
-    public JsonPointer getJsonPointer() {
-        return jsonPointer;
-    }
-
-    public String getPropertyURI() {
-        return propertyURI;
     }
 
     public static EntityPropertyURI merge(EntityPropertyURI m1, String uuidPath, String jsonPath) {
@@ -51,7 +44,7 @@ public class EntityPropertyURI {
                 if (steps[i].equals(EntityPropertyURI.NO_UUID)) {
                     return Optional.empty();
                 }
-                ArrayNode arrNode = (ArrayNode)curr;
+                ArrayNode arrNode = (ArrayNode) curr;
                 for (int j = 0; j < arrNode.size(); j++) {
                     if (arrNode.get(j).get(uuidPropertyName).asText().equals(steps[i])) {
                         steps[i] = String.valueOf(j);
@@ -64,9 +57,17 @@ public class EntityPropertyURI {
             }
             curr = curr.get(index);
         }
-        return curr== null || curr.isMissingNode() ? Optional.empty() : Optional.of(new EntityPropertyURI(
+        return curr == null || curr.isMissingNode() ? Optional.empty() : Optional.of(new EntityPropertyURI(
                 propertyURI,
                 "/" + String.join("/", steps)
         ));
+    }
+
+    public JsonPointer getJsonPointer() {
+        return jsonPointer;
+    }
+
+    public String getPropertyURI() {
+        return propertyURI;
     }
 }

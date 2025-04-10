@@ -16,6 +16,7 @@ import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.workflow.StateContext;
+import jakarta.validation.constraints.NotEmpty;
 import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.util.*;
 
@@ -35,28 +35,21 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 public class EntityStateHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
-
-
+    private final IDefinitionsManager definitionsManager;
+    private final RuleEngineService ruleEngineService;
+    private final ConditionResolverService conditionResolverService;
+    private final ClaimRequestClient claimRequestClient;
+    private final boolean authenticationEnabled;
     @Value("${database.uuidPropertyName}")
     private String uuidPropertyName;
-
-    private final IDefinitionsManager definitionsManager;
-
-    private final RuleEngineService ruleEngineService;
-
-    private final ConditionResolverService conditionResolverService;
-
-    private final ClaimRequestClient claimRequestClient;
-
     @Value("${identity.set_default_password}")
     private Boolean setDefaultPassword;
     @Value("${identity.default_password}")
     private String defaultPassword;
-    private final boolean authenticationEnabled;
 
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
-                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient,
+                             ConditionResolverService conditionResolverService, @Nullable ClaimRequestClient claimRequestClient,
                              @Value("${authentication.enabled:true}") boolean authenticationEnabled) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;

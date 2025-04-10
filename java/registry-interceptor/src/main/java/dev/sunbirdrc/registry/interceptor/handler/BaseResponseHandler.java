@@ -11,7 +11,7 @@ import dev.sunbirdrc.pojos.ValidationResponseSerializer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;

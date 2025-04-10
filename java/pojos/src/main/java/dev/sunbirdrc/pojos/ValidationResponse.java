@@ -1,6 +1,8 @@
 package dev.sunbirdrc.pojos;
 
 import com.google.gson.annotations.Expose;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 
@@ -8,9 +10,13 @@ public class ValidationResponse extends BaseErrorResponse {
 
 	@Expose(serialize = false)
 	private boolean isValid;
-	@Expose(serialize = false)
+	@Setter
+    @Getter
+    @Expose(serialize = false)
 	private String error;
-	private HashMap<String, String> fields;
+	@Setter
+    @Getter
+    private HashMap<String, String> fields;
 
 	public ValidationResponse(String type) {
 		super(type);
@@ -24,19 +30,4 @@ public class ValidationResponse extends BaseErrorResponse {
 		this.isValid = isValid;
 	}
 
-	public String getError() {
-		return error;
-	}
-
-	public void setError(String error) {
-		this.error = error;
-	}
-
-	public HashMap<String, String> getFields() {
-		return fields;
-	}
-
-	public void setFields(HashMap<String, String> fields) {
-		this.fields = fields;
-	}
 }

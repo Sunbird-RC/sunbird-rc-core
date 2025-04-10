@@ -1,11 +1,11 @@
 package dev.sunbirdrc.registry.model;
 
 import dev.sunbirdrc.registry.config.validation.ValidDatabaseConfig;
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,95 +17,95 @@ import java.util.Map;
 @ValidDatabaseConfig
 public class DBConnectionInfoMgr {
 
-	/**
-	 * The value names the unique property to be used by this registry for
-	 * internal identification purposes.
-	 */
-	private String uuidPropertyName;
+    /**
+     * The value names the unique property to be used by this registry for
+     * internal identification purposes.
+     */
+    private String uuidPropertyName;
 
-	/**
-	 * only one type of database provider as the target as of today.
-	 */
-	private String provider;
+    /**
+     * only one type of database provider as the target as of today.
+     */
+    private String provider;
 
-	/**
-	 * Only one property is allowed.
-	 */
-	private String shardProperty;
+    /**
+     * Only one property is allowed.
+     */
+    private String shardProperty;
 
-	/**
-	 * Each DBConnectionInfo is a shard connection information.
-	 */
-	private List<DBConnectionInfo> connectionInfo = new ArrayList<>();
-	/**
-	 * Instructs which advisor to pick up across each connectionInfo Only one
-	 * advisor allowed
-	 */
-	private String shardAdvisorClassName;
-	private Map<String, String> shardLabelIdMap = new HashMap<>();
+    /**
+     * Each DBConnectionInfo is a shard connection information.
+     */
+    private List<DBConnectionInfo> connectionInfo = new ArrayList<>();
+    /**
+     * Instructs which advisor to pick up across each connectionInfo Only one
+     * advisor allowed
+     */
+    private String shardAdvisorClassName;
+    private Map<String, String> shardLabelIdMap = new HashMap<>();
 
-	@PostConstruct
-	public void init() {
-		for (DBConnectionInfo connInfo : connectionInfo) {
-			shardLabelIdMap.putIfAbsent(connInfo.getShardLabel(), connInfo.getShardId());
-		}
-	}
+    @PostConstruct
+    public void init() {
+        for (DBConnectionInfo connInfo : connectionInfo) {
+            shardLabelIdMap.putIfAbsent(connInfo.getShardLabel(), connInfo.getShardId());
+        }
+    }
 
-	public List<DBConnectionInfo> getConnectionInfo() {
-		return connectionInfo;
-	}
+    public List<DBConnectionInfo> getConnectionInfo() {
+        return connectionInfo;
+    }
 
-	/**
-	 * To provide a connection info on based of a shard identifier(name)
-	 *
-	 * @param shardId
-	 * @return
-	 */
-	public DBConnectionInfo getDBConnectionInfo(String shardId) {
-		for (DBConnectionInfo con : connectionInfo) {
-			if (con.getShardId().equalsIgnoreCase(shardId))
-				return con;
-		}
-		return null;
-	}
+    public void setConnectionInfo(List<DBConnectionInfo> connectionInfo) {
+        this.connectionInfo = connectionInfo;
+    }
 
-	public String getUuidPropertyName() {
-		return uuidPropertyName;
-	}
+    /**
+     * To provide a connection info on based of a shard identifier(name)
+     *
+     * @param shardId
+     * @return
+     */
+    public DBConnectionInfo getDBConnectionInfo(String shardId) {
+        for (DBConnectionInfo con : connectionInfo) {
+            if (con.getShardId().equalsIgnoreCase(shardId))
+                return con;
+        }
+        return null;
+    }
 
-	public void setUuidPropertyName(String uuidPropertyName) {
-		this.uuidPropertyName = uuidPropertyName;
-	}
+    public String getUuidPropertyName() {
+        return uuidPropertyName;
+    }
 
-	public String getProvider() {
-		return provider;
-	}
+    public void setUuidPropertyName(String uuidPropertyName) {
+        this.uuidPropertyName = uuidPropertyName;
+    }
 
-	public void setProvider(String provider) {
-		this.provider = provider;
-	}
+    public String getProvider() {
+        return provider;
+    }
 
-	public void setShardProperty(String shardProperty) {
-		this.shardProperty = shardProperty;
-	}
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
 
-	public String getShardProperty() {
-		return this.shardProperty;
-	}
+    public String getShardProperty() {
+        return this.shardProperty;
+    }
 
-	public void setConnectionInfo(List<DBConnectionInfo> connectionInfo) {
-		this.connectionInfo = connectionInfo;
-	}
+    public void setShardProperty(String shardProperty) {
+        this.shardProperty = shardProperty;
+    }
 
-	public String getShardAdvisorClassName() {
-		return shardAdvisorClassName;
-	}
+    public String getShardAdvisorClassName() {
+        return shardAdvisorClassName;
+    }
 
-	public void setShardAdvisorClassName(String shardAdvisorClassName) {
-		this.shardAdvisorClassName = shardAdvisorClassName;
-	}
+    public void setShardAdvisorClassName(String shardAdvisorClassName) {
+        this.shardAdvisorClassName = shardAdvisorClassName;
+    }
 
-	public String getShardId(String shardLabel) {
-		return shardLabelIdMap.getOrDefault(shardLabel, null);
-	}
+    public String getShardId(String shardLabel) {
+        return shardLabelIdMap.getOrDefault(shardLabel, null);
+    }
 }

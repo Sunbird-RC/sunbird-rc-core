@@ -6,21 +6,18 @@ import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JVertex;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.neo4j.driver.v1.AuthTokens;
-import org.neo4j.driver.v1.Driver;
-import org.neo4j.driver.v1.GraphDatabase;
-import org.neo4j.driver.v1.Statement;
+import org.neo4j.driver.*;
+import org.neo4j.driver.exceptions.Neo4jException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.List;
-import java.util.Objects;
 
 public class Neo4jGraphProvider extends DatabaseProvider {
 
@@ -36,8 +33,8 @@ public class Neo4jGraphProvider extends DatabaseProvider {
         setProvider(Constants.GraphDatabaseProvider.NEO4J);
         setUuidPropertyName(uuidPropName);
 
-        // TODO: Check with auth
-        driver = GraphDatabase.driver(connection.getUri(), AuthTokens.none());
+        // Use appropriate authentication tokens
+        driver = GraphDatabase.driver(connection.getUri(), AuthTokens.basic(connection.getUsername(), connection.getPassword()));
         neo4jIdProvider.setUuidPropertyName(getUuidPropertyName());
         logger.info("Initialized db driver at {}", connectionInfo.getUri());
     }
@@ -63,6 +60,7 @@ public class Neo4jGraphProvider extends DatabaseProvider {
         logger.info("**************************************************************************");
         logger.info("Gracefully shutting down Neo4J GraphDB instance ...");
         logger.info("**************************************************************************");
+        driver.close();
     }
 
     @Override
@@ -76,13 +74,6 @@ public class Neo4jGraphProvider extends DatabaseProvider {
         commitTransaction(graph, tx, true);
     }
 
-    /**
-     * For neo4j, we would like to use the Neo4JIdProvider
-     * 
-     * @param o
-     *            - any record object
-     * @return
-     */
     @Override
     public String generateId(Object o) {
         if (o instanceof Neo4JVertex) {
@@ -105,49 +96,58 @@ public class Neo4jGraphProvider extends DatabaseProvider {
     }
 
     @Override
-    public void createIndex(Graph graph,String label, List<String> propertyNames) {
-        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;  
-		if (propertyNames.size() > 0) {
-			for (String propertyName : propertyNames) {
-				neo4jGraph.createIndex(label, propertyName);
-				logger.info("Neo4jGraph index created for " + label);
-			}
-		} else {
-			logger.info("Could not create single index for empty properties");
-		}
-      
+    public void createIndex(Graph graph, String label, List<String> propertyNames) {
+        if (propertyNames.size() > 0) {
+            try (Session session = driver.session()) {
+                for (String propertyName : propertyNames) {
+                    session.writeTransaction((TransactionWork<Void>) tx -> {
+                        tx.run("CREATE INDEX ON :`" + label + "`(" + propertyName + ")");
+                        return null;
+                    });
+                    logger.info("Neo4jGraph index created for " + label);
+                }
+            } catch (Neo4jException e) {
+                logger.error("Failed to create index: ", e);
+            }
+        } else {
+            logger.info("Could not create single index for empty properties");
+        }
     }
-    
-    @Override
-    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
-        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-		if (propertyNames.size() > 0) {
-			StringBuilder properties = new StringBuilder(String.join(",", propertyNames));
-			logger.info("composite key properties values " + properties);
 
-			Objects.requireNonNull(label, "label cannot be null");
-			Objects.requireNonNull(properties, "properties cannot be null");
-			neo4jGraph.execute(new Statement("CREATE INDEX ON :`" + label + "`(" + properties + ")"));
-		} else {
-			logger.info("Could not create composite index for empty properties");
-		}
+    @Override
+    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) {
+        if (propertyNames.size() > 0) {
+            String properties = String.join(",", propertyNames);
+            try (Session session = driver.session()) {
+                session.writeTransaction((TransactionWork<Void>) tx -> {
+                    tx.run("CREATE INDEX ON :`" + label + "`(" + properties + ")");
+                    return null;
+                });
+                logger.info("Neo4jGraph composite index created for " + label);
+            } catch (Neo4jException e) {
+                logger.error("Failed to create composite index: ", e);
+            }
+        } else {
+            logger.info("Could not create composite index for empty properties");
+        }
     }
-    
+
     @Override
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) {
-        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-		if (propertyNames.size() > 0) {
-
-			for (String propertyName : propertyNames) {
-				Objects.requireNonNull(label, "label cannot be null");
-				Objects.requireNonNull(propertyName, "propertyName cannot be null");
-				neo4jGraph.execute(new Statement(
-						"CREATE CONSTRAINT ON (n:" + label + ") ASSERT n." + propertyName + " IS UNIQUE"));
-				logger.info("Neo4jGraph unique index created for " + label);
-
-			}
-		} else {
-			logger.info("Could not create unique index for empty properties");
-		}
+        if (propertyNames.size() > 0) {
+            try (Session session = driver.session()) {
+                for (String propertyName : propertyNames) {
+                    session.writeTransaction((TransactionWork<Void>) tx -> {
+                        tx.run("CREATE CONSTRAINT ON (n:" + label + ") ASSERT n." + propertyName + " IS UNIQUE");
+                        return null;
+                    });
+                    logger.info("Neo4jGraph unique index created for " + label);
+                }
+            } catch (Neo4jException e) {
+                logger.error("Failed to create unique index: ", e);
+            }
+        } else {
+            logger.info("Could not create unique index for empty properties");
+        }
     }
 }

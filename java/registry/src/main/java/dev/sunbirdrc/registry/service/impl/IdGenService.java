@@ -1,17 +1,17 @@
 package dev.sunbirdrc.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.gson.Gson;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.exception.CustomException;
-import dev.sunbirdrc.registry.exception.UniqueIdentifierException.*;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException.GenerateException;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException.IdFormatException;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException.UnreachableException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.IIdGenService;
-import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,10 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
@@ -59,7 +62,7 @@ public class IdGenService implements IIdGenService {
 
     @Override
     public Map<String, String> generateId(List<UniqueIdentifierField> uniqueIdentifierFields) throws CustomException {
-        if(!enabled) throw new UnreachableException("IDGEN service not enabled");
+        if (!enabled) throw new UnreachableException("IDGEN service not enabled");
         HttpEntity<String> entity = getIdgenRequest(uniqueIdentifierFields);
 
         try {
@@ -67,12 +70,12 @@ public class IdGenService implements IIdGenService {
             ResponseEntity<String> response = retryRestTemplate.postForEntity(generateUrl, entity);
             watch.stop("IdGenServiceImpl.generateId");
             JsonNode results = JSONUtil.convertStringJsonNode(response.getBody());
-            if("SUCCESSFUL".equals(results.at("/responseInfo/status").asText())) {
+            if ("SUCCESSFUL".equals(results.at("/responseInfo/status").asText())) {
                 logger.info("Generated value successfully");
                 Map<String, String> resultMap = new HashMap<>();
                 Iterator<JsonNode> iterator = ((ArrayNode) results.at("/idResponses")).elements();
                 int i = 0;
-                while(iterator.hasNext()) {
+                while (iterator.hasNext()) {
                     resultMap.put(uniqueIdentifierFields.get(i).getField(), iterator.next().at("/id").asText());
                     i++;
                 }
@@ -90,7 +93,7 @@ public class IdGenService implements IIdGenService {
 
     @Override
     public void saveIdFormat(List<UniqueIdentifierField> uniqueIdentifierFields) throws CustomException {
-        if(!enabled) throw new UnreachableException("IDGEN service not enabled");
+        if (!enabled) throw new UnreachableException("IDGEN service not enabled");
         HttpEntity<String> entity = getIdgenRequest(uniqueIdentifierFields);
 
         try {
@@ -98,9 +101,9 @@ public class IdGenService implements IIdGenService {
             ResponseEntity<String> response = retryRestTemplate.postForEntity(idFormatUrl, entity);
             watch.stop("IdGenServiceImpl.saveFormat");
             JsonNode results = JSONUtil.convertStringJsonNode(response.getBody());
-            if(!"SUCCESSFUL".equals(results.at("/responseInfo/status").asText())) {
+            if (!"SUCCESSFUL".equals(results.at("/responseInfo/status").asText())) {
                 Iterator<JsonNode> iterator = ((ArrayNode) results.at("/errorMsgs")).elements();
-                while(iterator.hasNext()) {
+                while (iterator.hasNext()) {
                     JsonNode node = iterator.next();
                     if (node.isNull()) continue;
                     if (!node.asText().contains("already exists")) {

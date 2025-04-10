@@ -16,15 +16,13 @@ import static dev.sunbirdrc.registry.Constants.TITLE;
  * Creates Definition for a given JsonNode This accepts a schema
  */
 public class Definition {
-    private static Logger logger = LoggerFactory.getLogger(Definition.class);
-
     private final static String OSCONFIG = "_osConfig";
     private final static String DEFINITIONS = "definitions";
     private final static String PROPERTIES = "properties";
     private final static String REF = "$ref";
     private final static String TYPE = "type";
     private final static String OBJECT = "object";
-
+    private static Logger logger = LoggerFactory.getLogger(Definition.class);
     private String content;
     private String title;
 
@@ -79,6 +77,11 @@ public class Definition {
         }
     }
 
+    public static Definition toDefinition(JsonNode jsonNode) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode schemaJsonNode = objectMapper.readTree(jsonNode.asText());
+        return new Definition(schemaJsonNode);
+    }
 
     private boolean isRefNode(JsonNode refTextNode) {
         return (refTextNode != null && !refTextNode.isMissingNode() && !refTextNode.isNull());
@@ -121,11 +124,5 @@ public class Definition {
 
     public Map<String, String> getSubSchemaNames() {
         return subSchemaNames;
-    }
-
-    public static Definition toDefinition(JsonNode jsonNode) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode schemaJsonNode = objectMapper.readTree(jsonNode.asText());
-        return new Definition(schemaJsonNode);
     }
 }

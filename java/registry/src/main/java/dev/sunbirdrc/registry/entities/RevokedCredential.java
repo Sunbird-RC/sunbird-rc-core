@@ -8,11 +8,11 @@ import lombok.EqualsAndHashCode;
 @Builder
 @EqualsAndHashCode
 public class RevokedCredential {
-	private String entity;
-	private String entityId;
-	private String attestationProperty;
-	private String attestationPropertyId;
-	private String signedData;
-	private String signedHash;
-	private String userId;
+    private String entity;
+    private String entityId;
+    private String attestationProperty;
+    private String attestationPropertyId;
+    private String signedData;
+    private String signedHash;
+    private String userId;
 }

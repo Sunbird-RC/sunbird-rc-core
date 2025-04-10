@@ -25,3 +25,4 @@ target
 mvn*
 .mvn*
 deps/keycloak/providers/keycloak-mobile-number-login-spi-1.0-SNAPSHOT.jar
+.lh

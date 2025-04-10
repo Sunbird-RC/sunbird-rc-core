@@ -9,15 +9,11 @@ import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.authorization.pojos.UserToken;
-import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
-import dev.sunbirdrc.registry.exception.ErrorMessages;
-import dev.sunbirdrc.registry.exception.RecordNotFoundException;
-import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.exception.*;
 import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
-import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -30,9 +26,11 @@ import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.BadRequestException;
 import org.agrona.Strings;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +45,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.BadRequestException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -61,29 +57,24 @@ public class RegistryEntityController extends AbstractController {
 
     private static final String TRANSACTION_ID = "transactionId";
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
-
+    @Value("${authentication.enabled:true}")
+    boolean securityEnabled;
+    @Value("${certificate.enableExternalTemplates:false}")
+    boolean externalTemplatesEnabled;
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
     @Value("${certificate.enabled}")
     private boolean certificateEnabled;
     @Autowired(required = false)
     private ICertificateService certificateService;
-
     @Value("${filestorage.enabled}")
     private boolean fileStorageEnabled;
     @Autowired(required = false)
     private FileStorageService fileStorageService;
-
     @Autowired
     private AsyncRequest asyncRequest;
-
     @Autowired
     private ViewTemplateManager viewTemplateManager;
-
-    @Value("${authentication.enabled:true}")
-    boolean securityEnabled;
-    @Value("${certificate.enableExternalTemplates:false}")
-    boolean externalTemplatesEnabled;
     @Value("${search.offset:0}")
     private int searchOffset;
     @Value("${search.limit:2000}")
@@ -209,10 +200,10 @@ public class RegistryEntityController extends AbstractController {
             watch.start("RegistryController.searchEntity");
             ArrayNode entity = JsonNodeFactory.instance.arrayNode();
             entity.add(entityName);
-            if(searchNode == null && (searchQueryString == null || searchQueryString.isEmpty())) {
+            if (searchNode == null && (searchQueryString == null || searchQueryString.isEmpty())) {
                 throw new BadRequestException("Search Request body not found");
             }
-            if(searchNode == null) {
+            if (searchNode == null) {
                 searchNode = JsonNodeFactory.instance.objectNode();
                 registryHelper.addSearchTokenToQuery(searchQueryString, searchNode);
             }
@@ -288,7 +279,7 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.PUT, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -338,7 +329,7 @@ public class RegistryEntityController extends AbstractController {
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.POST, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (MiddlewareHaltException e) {
@@ -390,7 +381,7 @@ public class RegistryEntityController extends AbstractController {
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.PUT, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -414,8 +405,8 @@ public class RegistryEntityController extends AbstractController {
             checkEntityNameInDefinitionManager(entityName);
             registryHelper.authorize(entityName, entityId, request);
         } catch (RecordNotFoundException e) {
-           createSchemaNotFoundResponse(e.getMessage(), responseParams);
-           response = new Response(Response.API_ID.POST, "ERROR", responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            response = new Response(Response.API_ID.POST, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return createUnauthorizedExceptionResponse(e);
@@ -453,7 +444,7 @@ public class RegistryEntityController extends AbstractController {
         if (!OSSystemFields.attestation.hasCredential(GenericConfiguration.getSignatureProvider(), attestationNode))
             throw new AttestationNotFoundException();
         JsonNode signed = OSSystemFields.attestation.getCredential(GenericConfiguration.getSignatureProvider(), attestationNode);
-        if(GenericConfiguration.getSignatureProvider().equals(SignatureV2ServiceImpl.class.getName())) {
+        if (GenericConfiguration.getSignatureProvider().equals(SignatureV2ServiceImpl.class.getName())) {
             return signed;
         }
         return objectMapper.readTree(signed.asText());
@@ -495,8 +486,8 @@ public class RegistryEntityController extends AbstractController {
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(), responseParams);
-           Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error in partner api access: {}", ExceptionUtils.getStackTrace(e));
@@ -534,9 +525,9 @@ public class RegistryEntityController extends AbstractController {
                                                 HttpServletRequest request,
                                                 @RequestHeader(required = false) String viewTemplateId) {
         ResponseParams responseParams = new ResponseParams();
-        Response response ;
+        Response response;
         if (!certificateEnabled) {
-            return ServiceNotEnabledResponse("Certificate service",null, responseParams);
+            return ServiceNotEnabledResponse("Certificate service", null, responseParams);
         }
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
@@ -547,9 +538,9 @@ public class RegistryEntityController extends AbstractController {
                     checkEntityNameInDefinitionManager(entityName);
                     registryHelper.authorizeAttestor(entityName, request);
                 } catch (RecordNotFoundException re) {
-                         createSchemaNotFoundResponse(re.getMessage(), responseParams);
-                        response = new Response(Response.API_ID.GET, "ERROR", responseParams);
-                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    createSchemaNotFoundResponse(re.getMessage(), responseParams);
+                    response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
                 } catch (Exception exceptionFromAuthorizeAttestor) {
                     return new ResponseEntity<>(HttpStatus.FORBIDDEN);
                 }
@@ -648,7 +639,7 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(node, HttpStatus.OK);
 
         } catch (RecordNotFoundException re) {
-             createSchemaNotFoundResponse(re.getMessage(), responseParams);
+            createSchemaNotFoundResponse(re.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -712,7 +703,7 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(),responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -730,7 +721,7 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entity,
             @PathVariable String entityId
     ) {
-         ResponseParams responseParams = new ResponseParams();
+        ResponseParams responseParams = new ResponseParams();
         try {
             JsonNode resultNode = registryHelper.readEntity("", entity, entityId, false, null, false);
             ObjectNode objectNode = objectMapper.createObjectNode();
@@ -743,11 +734,10 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
 
         } catch (RecordNotFoundException re) {
-             createSchemaNotFoundResponse(re.getMessage(), responseParams);
+            createSchemaNotFoundResponse(re.getMessage(), responseParams);
             Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Fetching attestation properties for entity failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -766,7 +756,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
         } catch (RecordNotFoundException re) {
-             createSchemaNotFoundResponse(re.getMessage(),responseParams);
+            createSchemaNotFoundResponse(re.getMessage(), responseParams);
             Response response = new Response(Response.API_ID.PATCH, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
@@ -865,7 +855,7 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (RecordNotFoundException re) {
-             createSchemaNotFoundResponse(re.getMessage(), responseParams);
+            createSchemaNotFoundResponse(re.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -916,15 +906,16 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/revoke", method = RequestMethod.POST)
-    public ResponseEntity<Object> revokeACredential (
+    public ResponseEntity<Object> revokeACredential(
             HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders headers
-    ){
+    ) {
         String userId = USER_ANONYMOUS;
-        logger.info("Revoking the entityType {} with {} Id",entityName, entityId);
+        logger.info("Revoking the entityType {} with {} Id", entityName, entityId);
         // Check fot Authorisation
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
@@ -938,12 +929,12 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.revokeAnExistingCredential " + entityName;
             watch.start(tag);
-            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId, null);
+            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId, false, userId, null);
             String signedData = OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), existingEntityNode).asText();
             if (signedData.equals(new String()) || signedData.equals(null)) {
                 throw new RecordNotFoundException("Credential is already revoked");
             }
-            JsonNode revokedEntity = registryHelper.revokeAnEntity( entityName ,entityId, userId, existingEntityNode);
+            JsonNode revokedEntity = registryHelper.revokeAnEntity(entityName, entityId, userId, existingEntityNode);
             if (revokedEntity != null) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData, true);
             }
@@ -955,7 +946,7 @@ public class RegistryEntityController extends AbstractController {
             logger.error("Registry Controller: Exception while revoking an entity: {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
-            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

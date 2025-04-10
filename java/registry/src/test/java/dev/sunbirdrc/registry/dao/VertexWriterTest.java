@@ -1,6 +1,5 @@
 package dev.sunbirdrc.registry.dao;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -18,30 +17,28 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
-
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {Environment.class, DBProviderFactory.class, DBConnectionInfoMgr.class, DBConnectionInfo.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class VertexWriterTest {
+class VertexWriterTest {
     @Autowired
     private DBProviderFactory dbProviderFactory;
 
@@ -57,8 +54,8 @@ public class VertexWriterTest {
     private VertexWriter vertexWriter;
     Vertex vertex;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         dbConnectionInfoMgr.setUuidPropertyName(testUuidPropertyName);
         mockDatabaseProvider = Mockito.mock(DatabaseProvider.class);
         graph = Mockito.mock(Graph.class);
@@ -71,7 +68,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void ensureParentVertexWhenParentIndexAlreadyExists() {
+    void ensureParentVertexWhenParentIndexAlreadyExists() {
         String parentLabel = "Test_Group";
         GraphTraversalSource graphTraversalSource = Mockito.mock(GraphTraversalSource.class);
         GraphTraversal graphTraversal = Mockito.mock(GraphTraversal.class);
@@ -86,7 +83,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void ensureParentVertexWhenParentIndexDoesNotExist() {
+    void ensureParentVertexWhenParentIndexDoesNotExist() {
         String parentLabel = "Test_Group";
         GraphTraversalSource graphTraversalSource = Mockito.mock(GraphTraversalSource.class);
         GraphTraversal graphTraversal = Mockito.mock(GraphTraversal.class);
@@ -107,7 +104,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void createVertex() {
+    void createVertex() {
         String lblStr = "LabelStr1";
         Mockito.when(mockDatabaseProvider.generateId(vertex)).thenReturn("123");
         Vertex vertexCreated = createVertexImpl(lblStr);
@@ -116,7 +113,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void writeSingleNode() {
+    void writeSingleNode() {
         Vertex parentVertex = Mockito.mock(Vertex.class);
         String label = "dummy_lbl";
         ObjectNode entryValue = JsonNodeFactory.instance.objectNode();
@@ -134,7 +131,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void addEdge() {
+    void addEdge() {
         String eLabel = "testEdgeLabel";
         Vertex v1 = createVertexImpl("v1");
         Vertex v2 = createVertexImpl("v2");
@@ -145,7 +142,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void test_shouldUpdateParentIndexProperty() {
+    void test_shouldUpdateParentIndexProperty() {
         List<String> indexFields = new ArrayList<>();
         indexFields.add("name");
         indexFields.add("rollNo");
@@ -156,7 +153,7 @@ public class VertexWriterTest {
     }
 
     @Test
-    public void writeNodeEntity() {
+    void writeNodeEntity() {
         String recordStr = "{\"entityName\": {\"ref\": \"did:anotherEntity:1234\", \"a\":\"b\", \"cObj\": {\"d\":\"e\"}, \"fArr\": [\"i1\", \"i2\"], \"gObjArr\": [{\"i1\": \"v1\"}, {\"i2\":\"v2\"}]}}";
         JsonNode recordNode = null;
         try {
@@ -179,7 +176,6 @@ public class VertexWriterTest {
         Mockito.when(vertexProperty.isPresent()).thenReturn(false);
         Mockito.when(vertex.property(anyString())).thenReturn(vertexProperty);
         String id = vertexWriter.writeNodeEntity(recordNode);
-        Assert.assertTrue(id != null);
         assertEquals("123", id);
     }
 }

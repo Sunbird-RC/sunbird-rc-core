@@ -12,7 +12,7 @@ public class PluginFactory {
             case LICENSE:
                 return new LicensePluginAdapter();
             default:
-                throw new PolicyNotFoundException("Type" + type +  "is not found");
+                throw new PolicyNotFoundException("Type" + type + "is not found");
         }
     }
 }

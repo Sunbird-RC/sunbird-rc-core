@@ -3,6 +3,7 @@ package dev.sunbirdrc.actors.factory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.protobuf.Value;
 import dev.sunbirdrc.elastic.ESMessage;
 import dev.sunbirdrc.pojos.*;
@@ -127,6 +128,7 @@ public class MessageFactory {
                 new Exception("Invalid plugin name " + requestMessage.getAttestorPlugin())));
         Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new Jdk8Module());
         payloadBuilder.setStringValue(objectMapper.writeValueAsString(requestMessage));
         return msgBuilder.build();
     }

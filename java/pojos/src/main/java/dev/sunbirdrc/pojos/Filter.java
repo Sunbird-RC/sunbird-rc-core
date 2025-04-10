@@ -1,5 +1,12 @@
 package dev.sunbirdrc.pojos;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
+@AllArgsConstructor
 public class Filter {
 	// Denotes the absolute path of the subject
 	private String path;
@@ -23,27 +30,4 @@ public class Filter {
 		this.value = value;
 	}
 
-	public void setProperty(String property) { this.property = property; }
-
-	public String getProperty() {
-		return property;
-	}
-
-	public Object getValue() {
-		return value;
-	}
-
-	public void setValue(Object object) { this.value = object; }
-
-	public String getPath() {
-		return path;
-	}
-
-	public void setPath(String path) {
-		this.path = path;
-	}
-
-	public FilterOperators getOperator() { return this.operator;}
-
-	public void setOperator(FilterOperators operator) { this.operator = operator; }
 }

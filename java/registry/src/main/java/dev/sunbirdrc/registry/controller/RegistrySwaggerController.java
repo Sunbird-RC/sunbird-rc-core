@@ -15,6 +15,7 @@ import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.*;
 import io.swagger.util.Json;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
 
@@ -228,6 +228,7 @@ public class RegistrySwaggerController {
         return new BodyParameter()
                 .schema(bodyParam);
     }
+
     private BodyParameter getPropertyCreateRequestBody() {
         ModelImpl bodyParam = new ModelImpl();
         bodyParam.type("object");
@@ -280,9 +281,9 @@ public class RegistrySwaggerController {
 
     private JsonNode getApiInfo() throws IOException {
         Info info = new Info()
-        .title(swaggerTitle)
-        .version(swaggerVersion)
-        .description(swaggerDescription);
+                .title(swaggerTitle)
+                .version(swaggerVersion)
+                .description(swaggerDescription);
         return JSONUtil.convertObjectJsonNode(info);
     }
 }

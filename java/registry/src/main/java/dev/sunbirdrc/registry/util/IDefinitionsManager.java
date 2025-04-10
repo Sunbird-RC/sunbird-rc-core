@@ -12,7 +12,9 @@ public interface IDefinitionsManager {
     void loadDefinition() throws Exception;
 
     Set<String> getAllKnownDefinitions();
+
     List<Definition> getAllDefinitions();
+
     Definition getDefinition(String title);
 
     Map<String, Definition> getDefinitionMap();
@@ -78,17 +80,25 @@ public interface IDefinitionsManager {
         excludeFields.addAll(privateFields);
         return excludeFields;
     }
+
     List<OwnershipsAttributes> getOwnershipAttributes(String entity);
+
     default Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }
+
     default Map<String, String> getCertificateTemplates(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
     }
+
     boolean isValidEntityName(String entityName);
+
     Definition appendNewDefinition(JsonNode jsonNode);
+
     void appendNewDefinition(Definition definition);
+
     void removeDefinition(JsonNode jsonNode);
+
     void removeDefinition(String schema);
 
     default List<String> getEntitiesWithAnonymousInviteRoles() {

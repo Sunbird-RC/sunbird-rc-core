@@ -1,5 +1,12 @@
 package dev.sunbirdrc.pojos;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
+@AllArgsConstructor
 public class Response {
 	public static final String API_NAME = "sunbird-rc";
 
@@ -29,55 +36,7 @@ public class Response {
 		this.params = responseParams;
 	}
 
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getVer() {
-		return ver;
-	}
-
-	public void setVer(String ver) {
-		this.ver = ver;
-	}
-
-	public Long getEts() {
-		return ets;
-	}
-
-	public void setEts(Long ets) {
-		this.ets = ets;
-	}
-
-	public ResponseParams getParams() {
-		return params;
-	}
-
-	public void setParams(ResponseParams params) {
-		this.params = params;
-	}
-
-	public Object getResult() {
-		return result;
-	}
-
-	public void setResult(Object result) {
-		this.result = result;
-	}
-
-	public String getResponseCode() {
-		return responseCode;
-	}
-
-	public void setResponseCode(String responseCode) {
-		this.responseCode = responseCode;
-	}
-
-	public enum API_ID {
+    public enum API_ID {
 		CREATE(getApiPrefix() + ".create"),
 		INVITE(getApiPrefix() + ".invite"),
 		READ(getApiPrefix() + ".read"),

@@ -20,12 +20,12 @@ public class ConditionResolverService {
 
     /**
      * @param entityNode subject node where we will apply the extract out the values for given json path
-     * @param matcher it accepts either ATTESTOR or REQUESTER
-     * @param condition this is the condition the system has to resolve which will be used for evaluation
+     * @param matcher    it accepts either ATTESTOR or REQUESTER
+     * @param condition  this is the condition the system has to resolve which will be used for evaluation
      * @param attributes contains pair[key, val] where key will be replaced with its value in the condition
-     * */
+     */
     public String resolve(JsonNode entityNode, String matcher, String condition, List<String[]> attributes) {
-        if(condition == null || condition.isEmpty()) {
+        if (condition == null || condition.isEmpty()) {
             return "";
         }
         String entity = entityNode.toString();
@@ -38,16 +38,17 @@ public class ConditionResolverService {
             expressions[1] = replaceOriginalValueForGivenJsonPath(entity, expressions[1]);
             matchersValuesPair.add(expressions);
         }
-        for(String[] pair: matchersValuesPair) {
+        for (String[] pair : matchersValuesPair) {
             condition = replace(condition, pair);
         }
         return condition;
     }
+
     private String replaceOriginalValueForGivenJsonPath(String entity, String path) {
         Configuration alwaysReturnListConfig = Configuration.builder().options(Option.ALWAYS_RETURN_LIST).build();
         List<String> read = JsonPath.using(alwaysReturnListConfig).parse(entity).read(path);
         String s;
-        if(read.size() == 1) {
+        if (read.size() == 1) {
             s = "'" + read.get(0) + "'";
         } else {
             s = read.toString();
@@ -68,7 +69,7 @@ public class ConditionResolverService {
             }
             if (hashCount == 1 && indexAfterFirstHash == -1) {
                 indexAfterFirstHash = i;
-            } else if(hashCount == 2){
+            } else if (hashCount == 2) {
                 ans[0] = sb.toString();
                 ans[1] = condition.substring(indexAfterFirstHash + 1, i);
                 break;
@@ -93,9 +94,9 @@ public class ConditionResolverService {
     private List<Integer> findWordIndices(String matcher, String condition) {
         int index = 0;
         List<Integer> indices = new ArrayList<>();
-        while(index != -1) {
+        while (index != -1) {
             index = condition.indexOf(matcher, index);
-            if(index != -1) {
+            if (index != -1) {
                 indices.add(index);
                 index++;
             }
@@ -107,6 +108,6 @@ public class ConditionResolverService {
         logger.info("Resolved conditions {}", condition);
         ExpressionParser expressionParser = new SpelExpressionParser();
         Expression expression = expressionParser.parseExpression(condition);
-        return expression.getValue(Boolean.class);
+        return Boolean.TRUE.equals(expression.getValue(Boolean.class));
     }
 }

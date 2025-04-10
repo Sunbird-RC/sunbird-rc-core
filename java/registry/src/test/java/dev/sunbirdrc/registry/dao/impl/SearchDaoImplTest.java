@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
-import dev.sunbirdrc.registry.dao.IRegistryDao;
-import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
-import dev.sunbirdrc.registry.dao.SearchDao;
-import dev.sunbirdrc.registry.dao.SearchDaoImpl;
-import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.AuditFailedException;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
@@ -19,33 +15,32 @@ import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.registry.util.OSResourceLoader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.hamcrest.core.Every;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_LIST;
-import static dev.sunbirdrc.registry.middleware.util.Constants.TOTAL_COUNT;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = { DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class })
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class})
+@TestMethodOrder(MethodOrderer.MethodName.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SearchDaoImplTest {
+class SearchDaoImplTest {
 
     private static Graph graph;
     private SearchDao searchDao;
@@ -56,7 +51,7 @@ public class SearchDaoImplTest {
     private DBProviderFactory dbProviderFactory;
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
-    
+
     private final static String VALUE_NOT_PRESENT = "valueNotPresent";
     private final static int offset = 0;
     private final static int limit = 1;
@@ -65,9 +60,8 @@ public class SearchDaoImplTest {
     @Value("${registry.expandReference}")
     private boolean expandReferenceObj;
 
-
-    @Before
-    public void initializeGraph() throws IOException {
+    @BeforeEach
+    void initializeGraph() throws IOException {
         dbConnectionInfoMgr.setUuidPropertyName("tid");
 
         databaseProvider = dbProviderFactory.getInstance(null);
@@ -76,20 +70,19 @@ public class SearchDaoImplTest {
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, "tid", expandReferenceObj);
         searchDao = new SearchDaoImpl(registryDao);
         populateGraph();
-        
-        entities.add("Teacher");
 
+        entities.add("Teacher");
     }
 
     @Test
-    public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
-        SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);//new SearchQuery("", 0, 0);
+    void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
+        SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").get(ENTITY_LIST).isEmpty());
     }
 
     @Test
-    public void testEqOperator() {
+    void testEqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -98,7 +91,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testNeqOperator() {
+    void testNeqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.neq);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -107,7 +100,7 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testRangeOperator() {
+    void testRangeOperator() {
         List<Object> range = new ArrayList<>();
         range.add(1);
         range.add(3);
@@ -118,13 +111,13 @@ public class SearchDaoImplTest {
             assertTrue(d.get("serialNum").asLong() <= 3);
         });
     }
-    
+
     @Test
-    public void testOrOperator() {
+    void testOrOperator() {
         List<Object> values = new ArrayList<>();
         values.add("marko");
         values.add("vedas");
-        values.add(VALUE_NOT_PRESENT); 
+        values.add(VALUE_NOT_PRESENT);
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", values, FilterOperators.or);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -133,15 +126,16 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testStartsWithOperator() {
+    void testStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.startsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().startsWith("ma"));
         });
     }
+
     @Test
-    public void testNotStartsWithOperator() {
+    void testNotStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -150,15 +144,16 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testEndsWithOperator() {
+    void testEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.endsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().endsWith("as"));
         });
     }
+
     @Test
-    public void testNotEndsWithOperator() {
+    void testNotEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
@@ -167,25 +162,26 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testContainsOperator() {
+    void testContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.contains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertTrue(d.get("teacherName").asText().contains("as"));
         });
     }
+
     @Test
-    public void testNotContainsOperator() {
+    void testNotContainsOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notContains);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         result.get("Teacher").get(ENTITY_LIST).forEach(d -> {
             assertFalse(d.get("teacherName").asText().contains("as"));
         });
     }
+
     @Test
-    public void testMultiOperators() {
+    void testMultiOperators() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "a", FilterOperators.contains);
-        //addes other filter
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lte, 1));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lt, 3));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gte, 3));
@@ -196,14 +192,14 @@ public class SearchDaoImplTest {
     }
 
     @Test
-    public void testResponseLimit() {
+    void testResponseLimit() {
         SearchQuery searchQuery = new SearchQuery(entities, offset, limit);
         JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertEquals(1, result.get("Teacher").get(ENTITY_LIST).size());
     }
 
     @PreDestroy
-    public void shutdown() throws Exception {
+    void shutdown() throws Exception {
         graph.close();
     }
 
@@ -236,9 +232,9 @@ public class SearchDaoImplTest {
     }
 
     private SearchQuery getSearchQuery(SearchQuery searchQuery, Filter filter, String type) {
-        List<Filter> filterList = new ArrayList<Filter>();
+        List<Filter> filterList = new ArrayList<>();
         if (searchQuery.getFilters() != null) {
-            filterList = searchQuery.getFilters();
+            filterList.addAll(searchQuery.getFilters());
         }
         filterList.add(filter);
         searchQuery.setFilters(filterList);

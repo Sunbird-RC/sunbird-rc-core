@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class FileEventService implements IEventService {
 
     private static Logger logger = LoggerFactory.getLogger(FileEventService.class);
+
     @Override
     public void pushEvents(Event event) throws JsonProcessingException {
         ObjectWriter objectWriter = new ObjectMapper().writer();

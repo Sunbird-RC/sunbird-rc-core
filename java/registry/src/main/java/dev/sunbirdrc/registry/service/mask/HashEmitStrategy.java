@@ -19,7 +19,8 @@ public class HashEmitStrategy implements IEmitStrategy {
             for (byte b : hashedValue)
                 sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
         return "";
     }
 }

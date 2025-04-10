@@ -2,19 +2,19 @@ package dev.sunbirdrc.registry.middleware.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-public class EntityUtilTest {
+class EntityUtilTest {
 
     @Test
-    public void shouldAbleToGetTheName() throws IOException {
+    void shouldAbleToGetTheName() throws IOException {
         String name = "\"Rogers\"";
-        JsonNode studentEntity =  new ObjectMapper().readTree("{\n" +
+        JsonNode studentEntity = new ObjectMapper().readTree("{\n" +
                 "        \"educationDetails\": [\n" +
                 "            {\n" +
                 "                \"graduationYear\": \"2022\",\n" +
@@ -52,9 +52,10 @@ public class EntityUtilTest {
         String actualName = "Rogers";
         assertEquals(actualName, EntityUtil.getFullNameOfTheEntity(studentEntity));
     }
+
     @Test
-    public void shouldReturnEmptyIfTheFullNodeIsNotPresent() throws IOException {
-        JsonNode studentEntity =  new ObjectMapper().readTree("{\n" +
+    void shouldReturnEmptyIfTheFullNodeIsNotPresent() throws IOException {
+        JsonNode studentEntity = new ObjectMapper().readTree("{\n" +
                 "        \"educationDetails\": [\n" +
                 "            {\n" +
                 "                \"graduationYear\": \"2022\",\n" +

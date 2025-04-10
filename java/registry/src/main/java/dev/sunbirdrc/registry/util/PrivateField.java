@@ -31,13 +31,14 @@ public class PrivateField {
 
     /**
      * Identifies the keys in the rootNode that needs to be encrypted/decrypted
+     *
      * @param rootNode
      * @param privatePropertyLst
      * @return the keys and values that need to be encrypted/decrypted based on base call
      */
     public Map<String, Object> getPrivateFields(JsonNode rootNode, List<String> privatePropertyLst) {
         Map<String, Object> plainKeyValues = new HashMap<>();
-        if(privatePropertyLst != null) {
+        if (privatePropertyLst != null) {
             DocumentContext documentContext = JsonPath.parse(rootNode.toString());
             privatePropertyLst.forEach(path -> {
                 try {
@@ -57,7 +58,7 @@ public class PrivateField {
      *
      * @param rootNode
      * @param privatePropertyLst
-     * @param privateFieldMap Contains the values encrypted/decrypted based on base call
+     * @param privateFieldMap    Contains the values encrypted/decrypted based on base call
      */
     public JsonNode replacePrivateFields(JsonNode rootNode, List<String> privatePropertyLst, Map<String, Object> privateFieldMap) throws IOException {
         if (privatePropertyLst != null) {
@@ -74,7 +75,8 @@ public class PrivateField {
 
     protected JsonNode processPrivateFields(JsonNode element, String rootDefinitionName, String childFieldName) throws EncryptionException {
         JsonNode tempElement = element;
-        Definition definition = definitionsManager.getDefinition(rootDefinitionName);;
+        Definition definition = definitionsManager.getDefinition(rootDefinitionName);
+        ;
         if (null != childFieldName && definition != null) {
             String defnName = definition.getDefinitionNameForField(childFieldName);
             Definition childDefinition = definitionsManager.getDefinition(defnName);

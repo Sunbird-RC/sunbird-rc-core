@@ -1,20 +1,21 @@
 package dev.sunbirdrc.registry.service.mask;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class HashMaskEmitStrategyTest {
+class HashMaskEmitStrategyTest {
     private HashMaskEmitStrategy hashMaskEmitStrategy;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         hashMaskEmitStrategy = new HashMaskEmitStrategy();
     }
 
     @Test
-    public void shouldEmitHashedMaskedValue() {
+    void shouldEmitHashedMaskedValue() {
         final String value = "testValue";
         final String actualValue = hashMaskEmitStrategy.updateValue(value);
         boolean isEndCorrect = actualValue.endsWith("XXXXValue");

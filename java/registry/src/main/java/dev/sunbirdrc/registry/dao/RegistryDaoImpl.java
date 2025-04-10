@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
-    public String uuidPropertyName;
     private final boolean expandReferenceObj;
+    public String uuidPropertyName;
     private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
@@ -27,19 +27,19 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     private SunbirdRCInstrumentation watch = new SunbirdRCInstrumentation(true);
 
+    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName, boolean expandReferenceObj) {
+        databaseProvider = dbProvider;
+        definitionsManager = defnManager;
+        uuidPropertyName = uuidPropName;
+        this.expandReferenceObj = expandReferenceObj;
+    }
+
     public List<String> getPrivatePropertyList() {
         return privatePropertyList;
     }
 
     public void setPrivatePropertyList(List<String> privatePropertyList) {
         this.privatePropertyList = privatePropertyList;
-    }
-
-    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName, boolean expandReferenceObj) {
-        databaseProvider = dbProvider;
-        definitionsManager = defnManager;
-        uuidPropertyName = uuidPropName;
-        this.expandReferenceObj = expandReferenceObj;
     }
 
     public DatabaseProvider getDatabaseProvider() {
@@ -91,7 +91,8 @@ public class RegistryDaoImpl implements IRegistryDao {
      * This method update the inputJsonNode related vertices in the database
      * Notes:
      * This graph object is the same one used for reading the entire record
-     *  @param vertex
+     *
+     * @param vertex
      * @param inputJsonNode
      * @param parentName
      */
@@ -108,7 +109,7 @@ public class RegistryDaoImpl implements IRegistryDao {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
                 VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
-                if(inputJsonNode.get(uuidPropertyName) != null) {
+                if (inputJsonNode.get(uuidPropertyName) != null) {
                     vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
                 } else {
                     // Set parent name as label for new node.
@@ -119,7 +120,6 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.error("Unexpected input passed here.");
         }
     }
-
 
 
     private void updateObject(Graph graph, Vertex vertex, ObjectNode inputJsonNode) {
@@ -146,6 +146,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.error("Can't mark delete - Null vertex passed");
         }
     }
+
     @Override
     public void hardDeleteEntity(Vertex vertex) {
         if (vertex != null) {

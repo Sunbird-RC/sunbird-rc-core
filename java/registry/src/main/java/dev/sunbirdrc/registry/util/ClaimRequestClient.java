@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -21,11 +21,11 @@ import java.util.HashMap;
 @Component
 @ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
 public class ClaimRequestClient {
+    private static final String CLAIMS_PATH = "/api/v1/claims";
+    private static final String FETCH_CLAIMS_PATH = "/api/v1/getClaims";
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
     private final String claimRequestUrl;
     private final RestTemplate restTemplate;
-    private static final String CLAIMS_PATH = "/api/v1/claims";
-    private static final String FETCH_CLAIMS_PATH = "/api/v1/getClaims";
 
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
@@ -39,7 +39,7 @@ public class ClaimRequestClient {
     }
 
     public JsonNode getClaims(JsonNode jsonNode, Pageable pageable, String entityName) {
-        final String QUERY_PARAMS = "?size=" + pageable.getPageSize() + "&page="+pageable.getPageNumber();
+        final String QUERY_PARAMS = "?size=" + pageable.getPageSize() + "&page=" + pageable.getPageNumber();
         ObjectNode requestBody = JsonNodeFactory.instance.objectNode();
         requestBody.set("attestorInfo", jsonNode);
         requestBody.put("entity", entityName);

@@ -11,10 +11,8 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
-import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
-import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
@@ -47,9 +45,9 @@ import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.SchemaName;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
@@ -58,14 +56,14 @@ public class RegistryServiceImpl implements RegistryService {
 
     private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
     private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
-
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
     @Autowired
     private EntityTypeHandler entityTypeHandler;
     @Autowired(required = false)
     private SignatureHelper signatureHelper;
     @Autowired
     private IDefinitionsManager definitionsManager;
-
     @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
     @Autowired
@@ -74,16 +72,10 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
-
     @Value("${registry.hard_delete_enabled}")
     private boolean isHardDeleteEnabled;
-
     @Value("${event.enabled}")
     private boolean isEventsEnabled;
-
-    @Value("${database.uuidPropertyName}")
-    public String uuidPropertyName;
-
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
 
@@ -187,6 +179,7 @@ public class RegistryServiceImpl implements RegistryService {
             }
         }
     }
+
     public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
         JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
                 deletedNode,
@@ -199,7 +192,7 @@ public class RegistryServiceImpl implements RegistryService {
     /**
      * This method adds the entity into db, calls elastic and audit asynchronously
      *
-     * @param rootNode - input value as string
+     * @param rootNode      - input value as string
      * @param skipSignature
      * @return
      * @throws Exception
@@ -211,11 +204,11 @@ public class RegistryServiceImpl implements RegistryService {
         Definition definition = null;
         List<UniqueIdentifierField> uniqueIdentifierFields = definitionsManager.getUniqueIdentifierFields(vertexLabel);
 
-        if(idGenEnabled && uniqueIdentifierFields != null && !uniqueIdentifierFields.isEmpty()) {
+        if (idGenEnabled && uniqueIdentifierFields != null && !uniqueIdentifierFields.isEmpty()) {
             try {
                 Map<String, String> uid = idGenService.generateId(uniqueIdentifierFields);
                 DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(rootNode.get(vertexLabel)));
-                for(Map.Entry<String, String> entry: uid.entrySet()) {
+                for (Map.Entry<String, String> entry : uid.entrySet()) {
                     String path = String.format("$%s", entry.getKey().replaceAll("/", "."));
                     int fieldStartIndex = path.lastIndexOf(".");
                     doc.put(path.substring(0, fieldStartIndex), path.substring(fieldStartIndex + 1), entry.getValue());
@@ -278,7 +271,7 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-            if(isEventsEnabled) {
+            if (isEventsEnabled) {
                 maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
             }
         }
@@ -296,12 +289,13 @@ public class RegistryServiceImpl implements RegistryService {
             requestBodyMap.put("title", vertexLabel);
             requestBodyMap.put("data", rootNode.get(vertexLabel));
             requestBodyMap.put("credentialTemplate", credentialTemplate);
-            if(OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel))) {
+            if (OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel))) {
                 signatureHelper.revoke(vertexLabel, null, OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel)).asText());
             }
             Object signedCredentials = signatureHelper.sign(requestBodyMap);
             OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel), signedCredentials);
-            if(inputNode != null) OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);
+            if (inputNode != null)
+                OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);
         }
     }
 
@@ -316,10 +310,13 @@ public class RegistryServiceImpl implements RegistryService {
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
-        try (OSGraph osGraph = databaseProvider.getOSGraph()) {
+        OSGraph osGraph = null;
+        try {
+            osGraph = databaseProvider.getOSGraph();
             Graph graph = osGraph.getGraphStore();
-            try (Transaction tx = databaseProvider.startTransaction(graph)) {
-
+            Transaction tx = null;
+            try {
+                tx = databaseProvider.startTransaction(graph);
                 // Read the node and
                 // TODO - decrypt properties to pass validation
                 ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
@@ -395,9 +392,32 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-                if(isEventsEnabled) {
+                if (isEventsEnabled) {
                     maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
                 }
+            } catch (Exception e) {
+                if (tx != null) {
+                    tx.close();
+                }
+                if (tx != null) {
+                    tx.close();
+                }
+                logger.error("Error while updating entity inner", e);
+                throw e;
+            } finally {
+                if (osGraph != null) {
+                    osGraph.close();
+                }
+                if (tx != null) {
+                    tx.close();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error while creating osGraph before updating entity", e);
+            throw e;
+        } finally {
+            if (osGraph != null) {
+                osGraph.close();
             }
         }
     }
@@ -425,7 +445,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
-        if(asyncEnabled) {
+        if (asyncEnabled) {
             String payload = "{\"message\":\"" + message + "\", \"subject\": \"" + subject + "\", \"recipient\": \"" + to + "\"}";
             kafkaTemplate.send(notifyTopic, null, payload);
             return;
@@ -484,7 +504,7 @@ public class RegistryServiceImpl implements RegistryService {
             itemUuid = ArrayHelper.unquoteString(itemUuid);
             if (!updatedUuids.contains(itemUuid)) {
                 // delete this item
-                if(isHardDeleteEnabled) {
+                if (isHardDeleteEnabled) {
                     registryDao.hardDeleteEntity(uuidVertexMap.get(itemUuid));
                 } else {
                     registryDao.deleteEntity(uuidVertexMap.get(itemUuid));
@@ -541,8 +561,14 @@ public class RegistryServiceImpl implements RegistryService {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
                             vertexWriter.createArrayNode(existingVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
-                    } else {
+                    }
+                    else if(oneElement.getValue().isArray()){
+                        existingVertex.property(oneElement.getKey(), ValueType.getArrayValue(oneElement.getValue()));
+                        logger.debug("After Value node, going to update {}", oneElement.getKey());
+                    }
+                    else {
                         existingVertex.property(oneElement.getKey(), ValueType.getValue(oneElement.getValue()));
+                        logger.debug("After Value node, going to update {}", oneElement.getKey());
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());

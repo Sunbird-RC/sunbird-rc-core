@@ -1,38 +1,40 @@
 package dev.sunbirdrc.pojos;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-public class PluginRequestMessageTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class PluginRequestMessageTest {
 
     PluginRequestMessage pluginRequestMessage;
     final String pluginName = "ClaimPluginActor";
-    @Before
-    public void setUp() throws Exception {
+
+    @BeforeEach
+    void setUp() {
         pluginRequestMessage = new PluginRequestMessage();
     }
 
     @Test
-    public void shouldAbleToGetActorNameIfParamsIsNotPresent() {
+    void shouldAbleToGetActorNameIfParamsIsNotPresent() {
         String attestationPlugin = "did:internal:ClaimPluginActor?entity=Teacher";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
-        Assert.assertEquals(pluginName, pluginRequestMessage.getActorName().get());
+        assertEquals(pluginName, pluginRequestMessage.getActorName().get());
     }
 
     @Test
-    public void shouldAbleToGetActorNameIfParamsIsPresent() {
+    void shouldAbleToGetActorNameIfParamsIsPresent() {
         String attestationPlugin = "did:internal:ClaimPluginActor";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
-        Assert.assertEquals(pluginName, pluginRequestMessage.getActorName().get());
+        assertEquals(pluginName, pluginRequestMessage.getActorName().get());
     }
 
     @Test
-    public void shouldReturnOptionalEmptyForInvalidPluginURI() {
+    void shouldReturnOptionalEmptyForInvalidPluginURI() {
         String attestationPlugin = "did:internal";
         pluginRequestMessage.setAttestorPlugin(attestationPlugin);
-        Assert.assertEquals(Optional.empty(), pluginRequestMessage.getActorName());
+        assertEquals(Optional.empty(), pluginRequestMessage.getActorName());
     }
 }

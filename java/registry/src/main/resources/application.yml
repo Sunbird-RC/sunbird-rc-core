@@ -1,10 +1,14 @@
 spring:
-  profiles.active: default
+  config:
+    activate:
+      on-profile: default
 ---
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: default
+  config:
+    activate:
+      on-profile: default
   servlet:
     multipart:
       enabled: true
@@ -395,12 +399,14 @@ signature:
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: test
+  config:
+    activate:
+      on-profile: test
   output:
     ansi:
       enabled: ALWAYS
 name: test-yaml
-enviroment: test
+environment: test
 workflow:
   enabled: ${workflow.enable:true}
 view_template:
@@ -552,3 +558,7 @@ idgen:
   healthCheckURL: http://localhost:8088/egov-idgen/health
   generateURL: http://localhost:8088/egov-idgen/id/_generate
   idFormatURL: http://localhost:8088/egov-idgen/id/_format/add
+certificate:
+  enabled: true
+filestorage:
+  enabled: false

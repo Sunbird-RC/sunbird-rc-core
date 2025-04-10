@@ -12,8 +12,8 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WebhookEvent {
-	private String event;
-	private Timestamp timestamp;
-	private Object data;
-	private String webhookUrl;
+    private String event;
+    private Timestamp timestamp;
+    private Object data;
+    private String webhookUrl;
 }

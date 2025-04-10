@@ -26,11 +26,11 @@ import java.util.Map;
  * Helps in writing a vertex, edge into the database
  */
 public class VertexWriter {
+    private static final String EMPTY_STR = "";
     private String uuidPropertyName;
     private Graph graph;
     private DatabaseProvider databaseProvider;
     private String parentUUIDPropertyValue;
-    private static final String EMPTY_STR = "";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
     public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
@@ -69,6 +69,7 @@ public class VertexWriter {
 
     /**
      * Creates a vertex - each vertex would have a @type and uuidPropertyName attribute
+     *
      * @param label - the string you want the vertex to be labelled
      * @return
      */
@@ -80,37 +81,37 @@ public class VertexWriter {
 
         return vertex;
     }
-    
+
     /**
      * Updates index fields property of parent vertex for a given propertyName
-     * 
+     *
      * @param parentVertex
      * @param propertyName
      * @param indexFields
      */
-    public void updateParentIndexProperty(Vertex parentVertex, String propertyName, List<String> indexFields){
+    public void updateParentIndexProperty(Vertex parentVertex, String propertyName, List<String> indexFields) {
         if (indexFields.size() > 0) {
-            StringBuilder properties = new StringBuilder(String.join(",", indexFields));        
+            StringBuilder properties = new StringBuilder(String.join(",", indexFields));
             parentVertex.property(propertyName, properties.toString());
             logger.info("parent vertex property {}:{}", propertyName, properties);
 
-        }            
+        }
     }
-    
+
     /**
      * Update array node
-     * 
+     *
      * @param vertex
      * @param label
      * @param updatedUuids
      */
-    
-    public void updateArrayNode(Vertex vertex,String label, List<Object> updatedUuids) {
-    	String propertyName = RefLabelHelper.getLabel(label, uuidPropertyName);
-    	vertex.property(propertyName,ArrayHelper.formatToString(updatedUuids));
+
+    public void updateArrayNode(Vertex vertex, String label, List<Object> updatedUuids) {
+        String propertyName = RefLabelHelper.getLabel(label, uuidPropertyName);
+        vertex.property(propertyName, ArrayHelper.formatToString(updatedUuids));
     }
 
-    private void removeExistingDefaultProperty(Vertex vertex, String entryKey){
+    private void removeExistingDefaultProperty(Vertex vertex, String entryKey) {
         VertexProperty<Object> existingProperty = vertex.property(entryKey);
         if (existingProperty.isPresent()) {
             logger.info("Removing existing emtpy property: {}", entryKey);
@@ -128,7 +129,7 @@ public class VertexWriter {
      */
     private void writeArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode, boolean isUpdate) {
         List<Object> uidList = new ArrayList<>();
-        boolean isArrayItemObject = (arrayNode !=null && arrayNode.size() > 0 && arrayNode.get(0).isObject());
+        boolean isArrayItemObject = (arrayNode != null && arrayNode.size() > 0 && arrayNode.get(0).isObject());
         boolean isSignature = entryKey.equals(Constants.SIGNATURES_STR);
         Vertex blankNode = vertex;
         String label;
@@ -156,11 +157,11 @@ public class VertexWriter {
             if (jsonNode.isObject()) {
                 Vertex createdV = processNode(entryKey, jsonNode);
                 ObjectNode objectNode = (ObjectNode) jsonNode;
-                objectNode.put(uuidPropertyName,databaseProvider.getId(createdV));
+                objectNode.put(uuidPropertyName, databaseProvider.getId(createdV));
                 createdV.property(Constants.ROOT_KEYWORD, parentUUIDPropertyValue);
                 uidList.add(databaseProvider.getId(createdV));
                 if (isSignature) {
-                    Edge e = addEdge(Constants.SIGNATURE_FOR+Constants.ARRAY_ITEM, blankNode, createdV);
+                    Edge e = addEdge(Constants.SIGNATURE_FOR + Constants.ARRAY_ITEM, blankNode, createdV);
                     e.property(Constants.SIGNATURE_FOR, jsonNode.get(Constants.SIGNATURE_FOR).textValue());
                 } else {
                     addEdge(entryKey + Constants.ARRAY_ITEM, blankNode, createdV);
@@ -184,12 +185,12 @@ public class VertexWriter {
     }
 
     public Vertex writeSingleNode(Vertex parentVertex, String label, JsonNode entryValue) {
-    	Vertex v = processNode(label, entryValue);
+        Vertex v = processNode(label, entryValue);
         ObjectNode object = (ObjectNode) entryValue;
         addEdge(label, parentVertex, v);
 
         String idToSet = databaseProvider.getId(v);
-        object.put(uuidPropertyName,idToSet);
+        object.put(uuidPropertyName, idToSet);
         parentVertex.property(RefLabelHelper.getLabel(label, uuidPropertyName), idToSet);
 
         identifyParentUuid(parentVertex);
@@ -198,8 +199,8 @@ public class VertexWriter {
         logger.debug("Added edge between {} and {}", parentVertex.label(), v.label());
         return v;
     }
-    
-   
+
+
     private void identifyParentUuid(Vertex vertex) {
         // This attribute will help identify the root from any child
         if (parentUUIDPropertyValue == null || parentUUIDPropertyValue.isEmpty()) {
@@ -231,10 +232,8 @@ public class VertexWriter {
      * Adds an edge between two vertices
      *
      * @param label
-     * @param v1
-     *            the source
-     * @param v2
-     *            the target
+     * @param v1    the source
+     * @param v2    the target
      * @return
      */
     public Edge addEdge(String label, Vertex v1, Vertex v2) {
@@ -259,10 +258,10 @@ public class VertexWriter {
             if (entry.getValue().isObject()) {
                 resultVertex = processNode(entry.getKey(), entry.getValue());
                 rootUuidPropertyValue = databaseProvider.getId(resultVertex);
-                entryObject.put(uuidPropertyName,rootUuidPropertyValue);
+                entryObject.put(uuidPropertyName, rootUuidPropertyValue);
             }
         }
         return rootUuidPropertyValue;
     }
-    
+
 }

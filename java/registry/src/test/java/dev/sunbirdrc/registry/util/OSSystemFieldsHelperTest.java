@@ -1,26 +1,26 @@
 package dev.sunbirdrc.registry.util;
 
-import static org.junit.Assert.assertEquals;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import java.io.IOException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = { OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class })
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class OSSystemFieldsHelperTest {
+class OSSystemFieldsHelperTest {
 
     @Autowired
     private OSSystemFieldsHelper systemFieldsHelper;
@@ -29,11 +29,10 @@ public class OSSystemFieldsHelperTest {
 
     private String entityType;
 
-    @Before
-    public void init() {
+    @BeforeEach
+    void init() {
         JsonNode testNode = getTestNode();
         entityType = testNode.fieldNames().next();
-
     }
 
     private JsonNode getTestNode() {
@@ -45,24 +44,22 @@ public class OSSystemFieldsHelperTest {
             // let the test fail with null
         }
         return testNode;
-
     }
 
     @Test
-    public void testAddSystemPropertyNotValid() {
+    void testAddSystemPropertyNotValid() {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
         try {
             systemFieldsHelper.addSystemProperty("notValid", node, "userId", "timeStamp", true);
         } catch (Exception e) {
-            Assert.fail("Exception " + e);
+            org.junit.jupiter.api.Assertions.fail("Exception " + e);
         }
-
     }
 
     @Test
-    public void testAddSystemPropertyCreatedAt() throws IOException {
+    void testAddSystemPropertyCreatedAt() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -72,11 +69,10 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
-    public void testAddSystemPropertyCreatedBy() throws IOException {
+    void testAddSystemPropertyCreatedBy() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -86,11 +82,10 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
-    public void testAddSystemPropertyUpdatedAt() throws IOException {
+    void testAddSystemPropertyUpdatedAt() throws IOException {
         JsonNode testNode = getTestNode();
         JsonNode node = testNode.get(entityType);
 
@@ -100,11 +95,10 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
 
     @Test
-    public void testAddSystemPropertyUpdatedBy() throws IOException {
+    void testAddSystemPropertyUpdatedBy() throws IOException {
         JsonNode testNode = getTestNode();
         String key = testNode.fieldNames().next();
         JsonNode node = testNode.get(key);
@@ -115,7 +109,5 @@ public class OSSystemFieldsHelperTest {
         ObjectNode expectedNode = (ObjectNode) mapper.readTree(expected);
 
         assertEquals(expectedNode, node);
-
     }
-
 }

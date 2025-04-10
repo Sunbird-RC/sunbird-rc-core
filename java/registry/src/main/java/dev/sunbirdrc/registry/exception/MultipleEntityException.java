@@ -2,10 +2,10 @@ package dev.sunbirdrc.registry.exception;
 
 public class MultipleEntityException extends Exception {
 
-	private static final long serialVersionUID = 8531501706088259947L;
+    private static final long serialVersionUID = 8531501706088259947L;
 
-	public MultipleEntityException(String message) {
-		super(message);
-	}
+    public MultipleEntityException(String message) {
+        super(message);
+    }
 
 }

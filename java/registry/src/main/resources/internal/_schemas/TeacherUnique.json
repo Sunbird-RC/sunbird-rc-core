@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "TeacherUnique": {
+      "$ref": "#/definitions/TeacherUnique"
+    }
+  },
+  "required": [
+    "TeacherUnique"
+  ],
+  "title":"TeacherUnique",
+  "definitions": {
+    "TeacherUnique": {
+      "$id": "#/properties/TeacherUnique",
+      "type": "object",
+      "title": "The TeacherUnique Schema",
+      "required": [
+
+      ],
+      "properties": {
+        "personal_details": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          }
+        },
+        "identity_details": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "roles":[
+
+    ],
+    "inviteRoles":[
+      "anonymous"
+    ],
+    "ownershipAttributes": [
+    ],
+    "uniqueIndexFields": ["personal_details.email", "(identity_details.id,identity_details.value)"]
+  }
+}

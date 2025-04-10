@@ -1,4 +1,5 @@
 package dev.sunbirdrc.registry.service.impl;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
@@ -6,32 +7,35 @@ import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.UniqueIdentifierException.GenerateException;
-import dev.sunbirdrc.registry.exception.UniqueIdentifierException.IdFormatException;
 import dev.sunbirdrc.registry.exception.UniqueIdentifierException.UnreachableException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.*;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-@RunWith(SpringRunner.class)
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest(classes = {ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class IdGenServiceTest {
@@ -66,9 +70,9 @@ public class IdGenServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         // Manually set the injected values in the mock object
         setField(idGenService, "generateUrl", generateUrl);
@@ -102,7 +106,7 @@ public class IdGenServiceTest {
         assertEquals("1234", result.get("field1"));
     }
 
-    @Test(expected = GenerateException.class)
+    @Test
     public void testGenerateIdFailure() throws CustomException, IOException {
         List<UniqueIdentifierField> fields = new ArrayList<>();
 
@@ -111,16 +115,16 @@ public class IdGenServiceTest {
         when(gson.toJson(anyMap())).thenReturn("request");
         when(retryRestTemplate.postForEntity(any(), eq(entity))).thenReturn(new ResponseEntity<>("{\"responseInfo\":{\"status\":\"FAILED\"}}", HttpStatus.OK));
 
-        idGenService.generateId(fields);
+        assertThrows(GenerateException.class, () -> idGenService.generateId(fields));
     }
 
-    @Test(expected = UnreachableException.class)
+    @Test
     public void testGenerateIdResourceAccessException() throws CustomException {
         List<UniqueIdentifierField> fields = new ArrayList<>();
         when(gson.toJson(anyMap())).thenReturn("request");
         when(retryRestTemplate.postForEntity(eq(generateUrl), any(HttpEntity.class))).thenThrow(new ResourceAccessException("Exception"));
 
-        idGenService.generateId(fields);
+        assertThrows(UnreachableException.class, () -> idGenService.generateId(fields));
     }
 
     @Test
@@ -134,20 +138,22 @@ public class IdGenServiceTest {
         idGenService.saveIdFormat(fields);
     }
 
-    @Test(expected = GenerateException.class)
+    @Test
     public void testSaveIdFormatFailure() throws CustomException, IOException {
         List<UniqueIdentifierField> fields = new ArrayList<>();
         when(gson.toJson(anyMap())).thenReturn("request");
         when(retryRestTemplate.postForEntity(eq(idFormatUrl), any(HttpEntity.class))).thenReturn(new ResponseEntity<>("{\"responseInfo\":{\"status\":\"FAILED\"},\"errorMsgs\":[\"Some error\"]}", HttpStatus.OK));
-        idGenService.saveIdFormat(fields);
+
+        assertThrows(GenerateException.class, () -> idGenService.saveIdFormat(fields));
     }
 
-    @Test(expected = UnreachableException.class)
+    @Test
     public void testSaveIdFormatResourceAccessException() throws CustomException {
         List<UniqueIdentifierField> fields = new ArrayList<>();
         when(gson.toJson(anyMap())).thenReturn("request");
         when(retryRestTemplate.postForEntity(eq(idFormatUrl), any(HttpEntity.class))).thenThrow(new ResourceAccessException("Exception"));
-        idGenService.saveIdFormat(fields);
+
+        assertThrows(UnreachableException.class, () -> idGenService.saveIdFormat(fields));
     }
 
     @Test
