@@ -1,7 +1,8 @@
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
 COPY ./registry.jar ./registry.jar
-RUN mkdir -p /home/sunbirdrc/config/public/_schemas
+RUN mkdir -p /app/home/sunbirdrc/config/public/_schemas
+RUN mkdir -p /app/home/sunbirdrc/config/views/
 EXPOSE 8081
-ENTRYPOINT ["java","-Xms1g", "-Xmx2g", "-jar", "registry.jar", "--server.port=8081"]
+ENTRYPOINT ["java", "-Xms1g", "-Xmx2g", "-cp", "registry.jar:/home/sunbirdrc/config", "org.springframework.boot.loader.launch.JarLauncher", "--server.port=8081"]
 

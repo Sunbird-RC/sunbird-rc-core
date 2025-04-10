@@ -30,7 +30,7 @@ export default class VcService {
   }
   documents: object
   constructor(
-    private readonly primsa: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly didService: DidService,
     private readonly vault: VaultService,
   ) {
@@ -54,7 +54,7 @@ export default class VcService {
   async sign(signerDID: string, toSign: object) {
     let did: Identity;
     try {
-      did = await this.primsa.identity.findUnique({
+      did = await this.prisma.identity.findUnique({
         where: { id: signerDID },
       });
     } catch (err) {
