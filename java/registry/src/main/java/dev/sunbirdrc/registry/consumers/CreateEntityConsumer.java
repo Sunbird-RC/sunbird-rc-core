@@ -45,7 +45,7 @@ public class CreateEntityConsumer {
     private final RegistryHelper registryHelper;
 
     private final WebhookService webhookService;
-    @Value("${kafka.postCreateEntityTopic:post_create_entity}")
+    @Value("${kafka.post-create-entity-topic:post_create_entity}")
     String postCreateEntityTopic;
 
     @Value("${webhook.url}")
@@ -62,7 +62,7 @@ public class CreateEntityConsumer {
         this.webhookService = webhookService;
     }
 
-    @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
+    @KafkaListener(topics = "#{'${kafka.create-entity-topic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
     public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, Acknowledgment acknowledgment) {
         PostCreateEntityMessage postCreateEntityMessage = PostCreateEntityMessage.builder().build();
         try {

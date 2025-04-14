@@ -8,4 +8,4 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.hibernate.ddl-auto=update
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
-sunbirdrc.url=${sunbirdrc_url:http://localhost:8081}
+registry.url=${sunbirdrc_url:http://localhost:8081}

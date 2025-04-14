@@ -23,7 +23,7 @@ public class AppStartupRunner implements ApplicationRunner {
 
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
-	@Value("${signature.provider}")
+	@Value("${signature.provider-name}")
 	private String signatureProvider;
 	@Autowired(required = false)
 	CredentialSchemaService credentialSchemaService;

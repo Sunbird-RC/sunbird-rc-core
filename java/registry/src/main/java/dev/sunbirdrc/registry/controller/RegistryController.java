@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@ConditionalOnProperty("registry.baseAPIS.enable")
+@ConditionalOnProperty("registry.base-apis.enable")
 public class RegistryController extends AbstractController {
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 

@@ -44,7 +44,7 @@ public abstract class AbstractController {
     @Autowired
     IDefinitionsManager definitionsManager;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
     ResponseEntity<Object> badRequestException(ResponseParams responseParams, Response response, String errorMessage) {

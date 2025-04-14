@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.mockito.ArgumentMatchers;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,6 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({RegistryEntityController.class})
 @ContextConfiguration(classes = {RegistryEntityController.class})
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles({Constants.DEFAULT_ENVIRONMENT, Constants.TEST_ENVIRONMENT})
 public class RegistryEntityControllerTest {
 
     @MockBean

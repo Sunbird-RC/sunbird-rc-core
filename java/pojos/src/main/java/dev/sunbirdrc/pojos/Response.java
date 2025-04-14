@@ -4,7 +4,7 @@ public class Response {
 	public static final String API_NAME = "sunbird-rc";
 
 	private static String getApiName() {
-		if ("true".equals(System.getenv("registry_base_apis_enable")))
+		if ("true".equals(System.getenv("REGISTRY_BASE_APIS_ENABLED")))
 			return "open" + "-sa" + "ber"; //legacy compatibility
 		return API_NAME;
 	}

@@ -19,19 +19,19 @@ public class RetryRestTemplate {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> postForEntity(String url, Object propertyValue){
         return restTemplate.postForEntity(url, propertyValue, String.class);
     }
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> putForEntity(String url, HttpEntity<?> propertyValue, Object... uriVariables){
         return restTemplate.exchange(url, HttpMethod.PUT, propertyValue, String.class, uriVariables);
     }
     
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> getForEntity(String url){
         HttpHeaders headers = new HttpHeaders();
@@ -39,7 +39,7 @@ public class RetryRestTemplate {
         return restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, headers), String.class);
     }
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> getForEntity(String url, Object... uriVariables){
         HttpHeaders headers = new HttpHeaders();
@@ -48,13 +48,13 @@ public class RetryRestTemplate {
         return restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, headers), String.class, uriVariables);
     }
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public void deleteForEntity(String url, Object... uriVariables){
         restTemplate.delete(url, uriVariables);
     }
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.max-attempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public <T> ResponseEntity<T> getForObject(String url, HttpHeaders headers, Class<T> tClass, Object... uriVariables){
         return restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, headers), tClass, uriVariables);

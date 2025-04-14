@@ -26,9 +26,7 @@ import java.util.Date;
 import java.util.Map;
 
 public class DivocPDFActor extends BaseActor {
-	private static final String VERIFY_URL = System.getenv("verify_url");
-	private static final String PUBLIC_KEY = System.getenv("divoc_public_key");
-	private static final String SIGNED_KEY_TYPE = System.getenv("divoc_key_type");
+	private static final String VERIFY_URL = System.getenv().getOrDefault("verify_url", System.getenv("SIGNATURE_V1_VERIFY_URL"));
 	private ObjectMapper objectMapper;
 
 

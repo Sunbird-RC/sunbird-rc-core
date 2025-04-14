@@ -23,7 +23,7 @@ import dev.sunbirdrc.registry.sink.shard.ShardManager;
  * Audit service implementation for audit layer in the application
  */
 @Component
-@ConditionalOnExpression("${audit.enabled} and 'database'.equalsIgnoreCase('${audit.frame.store}')")
+@ConditionalOnExpression("${audit.enabled} and 'database'.equalsIgnoreCase('${audit.frame-store}')")
 public class AuditDBImpl extends AuditServiceImpl {
 
     private static Logger logger = LoggerFactory.getLogger(AuditDBImpl.class);
@@ -32,10 +32,10 @@ public class AuditDBImpl extends AuditServiceImpl {
     private AuditDBWriter auditWriter;
 
 
-    @Value("${audit.frame.suffix}")
+    @Value("${audit.suffix}")
     private String auditSuffix;
 
-    @Value("${audit.frame.suffixSeparator}")
+    @Value("${audit.suffix-separator}")
     private String auditSuffixSeparator;
     
     @Autowired

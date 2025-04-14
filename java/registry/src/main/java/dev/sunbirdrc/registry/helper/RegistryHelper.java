@@ -95,9 +95,9 @@ public class RegistryHelper {
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
-    @Value("${notification.service.enabled}") boolean notificationEnabled;
-    @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
-    @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
+    @Value("${notification.enabled}") boolean notificationEnabled;
+    @Value("${invite.skip-required-validation}") boolean skipRequiredValidationForInvite = true;
+    @Value("${invite.skip-signature}") boolean skipSignatureForInvite = true;
     @Autowired(required = false)
     private NotificationHelper notificationHelper;
     @Autowired
@@ -145,25 +145,25 @@ public class RegistryHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${filestorage.enabled}")
+    @Value("${file-storage.enabled}")
     private boolean fileStorageEnabled;
     @Autowired(required = false)
     private FileStorageService fileStorageService;
 
-    @Value("${database.uuidPropertyName}")
+    @Value("${database.uuid-property-name}")
     public String uuidPropertyName;
 
-    @Value("${audit.frame.suffix}")
+    @Value("${audit.suffix}")
     public String auditSuffix;
     @Value("${event.enabled}")
     private boolean isEventsEnabled;
-    @Value("${audit.frame.suffixSeparator}")
+    @Value("${audit.suffix-separator}")
     public String auditSuffixSeparator;
 
-    @Value("${conditionalAccess.internal}")
+    @Value("${conditional-access.internal}")
     private String internalFieldsProp;
 
-    @Value("${conditionalAccess.private}")
+    @Value("${conditional-access.private}")
     private String privateFieldsProp;
 
     @Value("${signature.enabled}")
@@ -172,12 +172,12 @@ public class RegistryHelper {
     @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
-    @Value("${attestationPolicy.search_enabled:false}")
+    @Value("${registry.attestation-policy.search-enabled:false}")
     private boolean attestationPolicySearchEnabled;
-    @Value("${view_template.decrypt_private_fields:false}")
+    @Value("${view-template.decrypt-private-fields:false}")
     private boolean viewTemplateDecryptPrivateFields;
 
-    @Value("${registry.hard_delete_enabled}")
+    @Value("${registry.hard-delete-enabled}")
     private boolean isHardDeleteEnabled;
 
     @Autowired

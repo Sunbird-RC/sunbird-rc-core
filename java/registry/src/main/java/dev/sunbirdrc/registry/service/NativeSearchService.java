@@ -61,7 +61,7 @@ public class NativeSearchService implements ISearchService {
 	@Autowired
 	private APIMessage apiMessage;
 
-	@Value("${database.uuidPropertyName}")
+	@Value("${database.uuid-property-name}")
 	public String uuidPropertyName;
 
 	@Value("${search.offset}")
@@ -73,15 +73,15 @@ public class NativeSearchService implements ISearchService {
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
-    @Value("${audit.frame.suffix}")
+    @Value("${audit.suffix}")
     private String auditSuffix;
 
-	@Value("${search.expandInternal}")
+	@Value("${search.expand-internal}")
 	private boolean expandInternal;
-	@Value("${registry.expandReference}")
+	@Value("${registry.expand-reference}")
 	private boolean expandReferenceObj;
 
-	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
+	@Value("${search.remove-non-public-fields-for-native-search:true}")
 	private boolean removeNonPublicFieldsForNativeSearch;
 
 	@Autowired(required = false)

@@ -14,6 +14,6 @@ import java.util.List;
 @Component
 @Data
 public class OAuth2Configuration {
-	List<OAuth2Resources> resources;
+	List<OAuth2Resource> resource;
 
 }

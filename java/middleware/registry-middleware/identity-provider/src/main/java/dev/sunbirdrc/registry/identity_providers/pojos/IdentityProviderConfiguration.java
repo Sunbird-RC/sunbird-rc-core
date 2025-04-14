@@ -9,24 +9,26 @@ import java.util.List;
 @Component
 @Getter
 public class IdentityProviderConfiguration {
-	@Value("${identity.provider}")
+	@Value("${identity.provider-name}")
 	private String provider;
 	@Value("${identity.url}")
 	private String url;
+	@Value("${identity.create-user-path}")
+	private String createUserPath;
 	@Value("${identity.realm}")
 	private String realm;
-	@Value("${identity.client_id}")
+	@Value("${identity.admin-client-id}")
 	private String clientId;
-	@Value("${identity.client_secret}")
+	@Value("${identity.admin-client-secret}")
 	private String clientSecret;
-	@Value("${identity.set_default_password}")
+	@Value("${identity.set-default-password}")
 	private Boolean setDefaultPassword;
-	@Value("${identity.default_password}")
+	@Value("${identity.default-password}")
 	private String defaultPassword;
-	@Value("${identity.user_actions}")
+	@Value("${identity.user-actions}")
 	private List<String> userActions;
 
-	@Value("${httpConnection.maxConnections:5}")
+	@Value("${http.max-connections:5}")
 	private int httpMaxConnections;
 
 	@Value("${authentication.enabled:true}")
@@ -34,5 +36,9 @@ public class IdentityProviderConfiguration {
 
 	public Boolean setDefaultPassword() {
 		return setDefaultPassword;
+	}
+
+	public String getCreateUserUrl() {
+		return (url + createUserPath).replaceAll("(?<!:)//", "/");
 	}
 }

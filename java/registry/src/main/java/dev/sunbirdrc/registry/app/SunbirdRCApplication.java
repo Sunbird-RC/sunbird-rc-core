@@ -26,12 +26,12 @@ import java.time.Duration;
 public class SunbirdRCApplication {
     private static ApplicationContext context;
     private static SpringApplication application = new SpringApplication(SunbirdRCApplication.class);
-    @Value("${registry.manager.type}")
+    @Value("${definitions.manager-type}")
     private String definitionManagerType;
 
-    @Value("${registry.redis.host:localhost}")
+    @Value("${redis.host:localhost}")
     private String redisHost;
-    @Value("${registry.redis.port:6379}")
+    @Value("${redis.port:6379}")
     private String redisPort;
 
 
@@ -50,7 +50,7 @@ public class SunbirdRCApplication {
         return context;
     }
 
-    @Value("${cors.allowedOrigin}")
+    @Value("${cors.allowed-origin}")
     public String corsAllowedOrigin;
 
     @Bean
@@ -72,7 +72,7 @@ public class SunbirdRCApplication {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "registry.manager.type", havingValue = "DistributedDefinitionsManager")
+    @ConditionalOnProperty(value = "definitions.manager-type", havingValue = "DistributedDefinitionsManager")
     public JedisPool jedisPool() {
         final JedisPoolConfig poolConfig = new JedisPoolConfig();
         JedisPool jedisPool = new JedisPool(poolConfig, redisHost, Integer.parseInt(redisPort));
@@ -91,6 +91,7 @@ public class SunbirdRCApplication {
 
     @Bean
     public IDefinitionsManager definitionsManager() {
+        System.out.println("IDefinitionManager: " + definitionManagerType);
         if(definitionManagerType.equals("DefinitionsManager")) {
             return new DefinitionsManager();
         }

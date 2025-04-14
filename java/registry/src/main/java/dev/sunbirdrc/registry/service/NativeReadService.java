@@ -41,13 +41,13 @@ public class NativeReadService implements IReadService {
 	@Autowired
 	private IAuditService auditService;
 
-	@Value("${database.uuidPropertyName}")
+	@Value("${database.uuid-property-name}")
 	public String uuidPropertyName;
 
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
-	@Value("${registry.expandReference}")
+	@Value("${registry.expand-reference}")
 	private boolean expandReferenceObj;
 
 	/**

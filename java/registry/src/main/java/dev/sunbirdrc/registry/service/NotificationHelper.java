@@ -28,7 +28,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
 
 @Service
-@ConditionalOnProperty(name = "notification.service.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "notification.enabled", havingValue = "true")
 public class NotificationHelper {
     private static Logger logger = LoggerFactory.getLogger(NotificationHelper.class);
     boolean notificationEnabled;
@@ -37,7 +37,7 @@ public class NotificationHelper {
     private RegistryService registryService;
     private ObjectMapper objectMapper;
     @Autowired
-    public NotificationHelper(@Value("${notification.service.enabled}") boolean notificationEnabled, IDefinitionsManager definitionsManager, EntityStateHelper entityStateHelper, RegistryService registryService, ObjectMapper objectMapper) {
+    public NotificationHelper(@Value("${notification.enabled}") boolean notificationEnabled, IDefinitionsManager definitionsManager, EntityStateHelper entityStateHelper, RegistryService registryService, ObjectMapper objectMapper) {
         this.notificationEnabled = notificationEnabled;
         this.definitionsManager = definitionsManager;
         this.entityStateHelper = entityStateHelper;

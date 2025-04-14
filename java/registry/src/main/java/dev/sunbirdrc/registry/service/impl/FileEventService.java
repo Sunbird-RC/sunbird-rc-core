@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(name = "event.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.FileEventService")
+@ConditionalOnProperty(name = "event.provider-name", havingValue = "dev.sunbirdrc.registry.service.impl.FileEventService")
 public class FileEventService implements IEventService {
 
     private static Logger logger = LoggerFactory.getLogger(FileEventService.class);
