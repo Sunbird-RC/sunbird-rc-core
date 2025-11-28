@@ -153,11 +153,36 @@ export class CredentialsService {
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         issuerId
       );
-      const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
-        .find(d => d.indexOf("verificationMethod") > -1)]
+      
+      // Extract verification method from proof - handle both standard and nested structures
+      let credVerificationMethod: string | undefined;
+      if (credToVerify?.proof) {
+        // Standard structure: proof.verificationMethod
+        if (typeof credToVerify.proof === 'object' && 'verificationMethod' in credToVerify.proof) {
+          credVerificationMethod = typeof credToVerify.proof.verificationMethod === 'string' 
+            ? credToVerify.proof.verificationMethod 
+            : credToVerify.proof.verificationMethod?.id;
+        } else {
+          // Fallback: search for any key containing "verificationMethod"
+          const proofKeys = Object.keys(credToVerify.proof);
+          const vmKey = proofKeys.find(key => key.toLowerCase().includes('verificationmethod'));
+          if (vmKey) {
+            const vmValue = (credToVerify.proof as any)[vmKey];
+            credVerificationMethod = typeof vmValue === 'string' ? vmValue : vmValue?.id;
+          }
+        }
+      }
+
+      if (!credVerificationMethod) {
+        throw new BadRequestException('Verification method not found in credential proof');
+      }
 
       // VERIFYING THE JWS
       const vm = did.verificationMethod?.find(d => (d.id === credVerificationMethod || d.id === credVerificationMethod?.id));
+      
+      if (!vm) {
+        throw new NotFoundException(`Verification method ${credVerificationMethod} not found in DID document for issuer ${issuerId}`);
+      }
       const suite = await this.getSuite(vm, credToVerify?.proof?.type);
       let results;
       if(credToVerify?.proof?.type === "RsaSignature2018") {
@@ -179,10 +204,41 @@ export class CredentialsService {
           documentLoader: this.getDocumentLoader(did)
         });
       }
+      // Extract error details from verification results
+      let errorMessages: string[] = [];
+      let verificationErrors: any[] = [];
+      
       if(!results?.verified) {
-        this.logger.error('Error in verifying credentials: ', results);
+        // Extract error messages from results
+        if (results?.error) {
+          errorMessages.push(String(results.error));
+          verificationErrors.push(results.error);
+        }
+        if (results?.errors && Array.isArray(results.errors)) {
+          results.errors.forEach((err: any) => {
+            const errorMsg = err?.message || String(err);
+            if (!errorMessages.includes(errorMsg)) {
+              errorMessages.push(errorMsg);
+            }
+            verificationErrors.push(err);
+          });
+        }
+        // If no specific errors found, log the entire results object for debugging
+        if (errorMessages.length === 0) {
+          errorMessages.push('Verification failed - no specific error details available');
+          this.logger.error('Verification failed but no error details in results: ', JSON.stringify(results, null, 2));
+        } else {
+          this.logger.error('Error in verifying credentials: ', {
+            verified: results?.verified,
+            errors: errorMessages,
+            proofType: credToVerify?.proof?.type,
+            verificationMethod: credVerificationMethod,
+            issuerId: issuerId
+          });
+        }
       }
-      return {
+      
+      const response: any = {
         status: status,
         checks: [
           {
@@ -195,10 +251,39 @@ export class CredentialsService {
           },
         ],
       };
+      
+      // Include error details if verification failed
+      if (!results?.verified && errorMessages.length > 0) {
+        response.errors = errorMessages;
+        response.errorDetails = verificationErrors;
+      }
+      
+      return response;
     } catch (e) {
-      this.logger.error('Error in verifying credentials: ', e);
+      const errorMessage = e?.message || String(e);
+      const errorStack = e?.stack;
+      
+      this.logger.error('Error in verifying credentials: ', {
+        error: errorMessage,
+        stack: errorStack,
+        proofType: credToVerify?.proof?.type,
+        issuerId: credToVerify?.issuer?.id || credToVerify?.issuer
+      });
+      
       return {
-        errors: [e],
+        status: status,
+        checks: [
+          {
+            ...(status && {revoked: status === VCStatus.REVOKED ? 'NOK' : 'OK'}),
+            expired:
+              credToVerify.expirationDate && new Date(credToVerify.expirationDate).getTime() < Date.now()
+                ? 'NOK'
+                : 'OK',
+            proof: 'NOK',
+          },
+        ],
+        errors: [errorMessage],
+        errorDetails: [e],
       };
     }
   }
