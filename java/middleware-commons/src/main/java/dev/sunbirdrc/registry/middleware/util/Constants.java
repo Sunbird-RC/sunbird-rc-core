@@ -127,7 +127,8 @@ public class Constants {
 	public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
 
     public enum GraphDatabaseProvider {
-		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
+		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH"),
+		YUGABYTE("YUGABYTE");
 
 		private String name;
 

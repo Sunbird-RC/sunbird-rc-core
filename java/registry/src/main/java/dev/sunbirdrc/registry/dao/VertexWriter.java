@@ -12,6 +12,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public class VertexWriter {
      * @return
      */
     public Vertex createVertex(String label) {
-        Vertex vertex = graph.addVertex(label);
+        Vertex vertex = graph.addVertex(T.label, label);
 
         vertex.property(TypePropertyHelper.getTypeName(), label);
         vertex.property(uuidPropertyName, databaseProvider.generateId(vertex));
