@@ -1,6 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, Reflector } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CredentialsModule } from './credentials/credentials.module';
@@ -11,6 +12,7 @@ import { RevocationList } from './revocation-list/revocation-list.helper';
 import { RevocationListImpl } from './revocation-list/revocation-list.impl';
 import { RevocationListService } from './revocation-list/revocation-list.service';
 import { RevocationListModule } from './revocation-list/revocation-list.module';
+import { AuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [
@@ -21,6 +23,6 @@ import { RevocationListModule } from './revocation-list/revocation-list.module';
     RevocationListModule
   ],
   controllers: [AppController],
-  providers: [AppService, ConfigService, PrismaClient, HealthCheckUtilsService, RevocationList, RevocationListImpl, RevocationListService],
+  providers: [AppService, ConfigService, PrismaClient, HealthCheckUtilsService, RevocationList, RevocationListImpl, RevocationListService, Reflector, { provide: APP_GUARD, useClass: AuthGuard }],
 })
 export class AppModule {}
