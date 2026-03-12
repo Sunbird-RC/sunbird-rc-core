@@ -1,8 +1,7 @@
-import { Logger, CanActivate, Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Logger, CanActivate, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
-import * as jwksClient from 'jwks-rsa';
+import jwksClient from 'jwks-rsa';
 import { AsyncLocalStorage } from 'async_hooks';
 import axios from 'axios';
 
@@ -22,14 +21,10 @@ export class AuthGuard implements CanActivate {
   private getKey: any;
   private readonly logger = new Logger(AuthGuard.name);
 
-  public constructor(
-    private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
-  ) {
+  public constructor(private readonly reflector: Reflector) {
     this.client = jwksClient({
       jwksUri: process.env.JWKS_URI,
-      requestHeaders: {}, // Optional
-      timeout: 30000, // Defaults to 30s
+      timeout: 30000,
     });
 
     this.getKey = (header, callback) => {
@@ -42,17 +37,10 @@ export class AuthGuard implements CanActivate {
   }
 
   async canActivate(context: any): Promise<boolean> {
-    const isPublic = this.reflector.get<boolean>(
-      'isPublic',
-      context.getHandler(),
-    );
-    if (isPublic) return true;
-
     if (process.env.ENABLE_AUTH === undefined) {
       this.logger.warn('ENABLE_AUTH is not set, defaulting to true');
     }
-    if (process.env.ENABLE_AUTH && process.env.ENABLE_AUTH.trim() === 'false')
-      return true;
+    if (process.env.ENABLE_AUTH && process.env.ENABLE_AUTH.trim() === 'false') return true;
 
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
@@ -69,7 +57,8 @@ export class AuthGuard implements CanActivate {
           this.logger.log(err);
           resolve(false);
         }
-        if (decoded) resolve(true);
+        if (decoded)
+          resolve(true);
         resolve(false);
       });
     });

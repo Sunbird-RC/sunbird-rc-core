@@ -51,6 +51,7 @@
     "jsonld-signatures": "7.0.0",
     "jsonwebtoken": "^8.5.1",
     "jszip": "^3.10.1",
+    "jwks-rsa": "3",
     "prisma": "4.8.1",
     "qrcode": "^1.5.1",
     "reflect-metadata": "^0.1.13",
