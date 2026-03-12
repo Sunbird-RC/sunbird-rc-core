@@ -3,6 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
 import * as jwksClient from 'jwks-rsa';
+import { AsyncLocalStorage } from 'async_hooks';
+import axios from 'axios';
+
+const tokenStorage = new AsyncLocalStorage<string>();
+
+axios.interceptors.request.use((reqConfig) => {
+  if (!reqConfig.headers['Authorization'] && !reqConfig.headers['authorization']) {
+    const token = tokenStorage.getStore();
+    if (token) reqConfig.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return reqConfig;
+});
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -50,6 +62,7 @@ export class AuthGuard implements CanActivate {
       return false;
     }
     const bearerToken = authHeader.substring(7, authHeader.length);
+    tokenStorage.enterWith(bearerToken);
     return new Promise((resolve) => {
       jwt.verify(bearerToken, this.getKey, (err, decoded) => {
         if (err) {
