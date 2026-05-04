@@ -91,9 +91,6 @@ public class Constants {
 	public static final String RESOURCE_LOCATION = "classpath*:public/_schemas/*.json";
 	public static final String INTERNAL_RESOURCE_LOCATION = "classpath*:internal/_schemas/*.json";
 
-	//elastic search document type
-	public static final String ES_DOC_TYPE = "_doc";
-
 	public static final String AUDIT_ACTION_READ = "READ";
 	public static final String AUDIT_ACTION_ADD = "ADD";
 	public static final String AUDIT_ACTION_ADD_OP = "add";
