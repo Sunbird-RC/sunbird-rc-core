@@ -91,3 +91,8 @@ db-data*
 vault-data
 es-data*
 keycloak-mobile*.jar
+
+# Environment secrets — never commit
+.env
+.env.local
+.env.*.local

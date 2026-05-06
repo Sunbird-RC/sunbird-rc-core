@@ -21,7 +21,10 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
 
-@SpringBootApplication(exclude={SecurityAutoConfiguration.class})
+@SpringBootApplication(
+        exclude = {SecurityAutoConfiguration.class},
+        excludeName = {"org.keycloak.adapters.springboot.KeycloakAutoConfiguration"}
+)
 @ComponentScan(basePackages = {"dev.sunbirdrc.registry", "dev.sunbirdrc.pojos", "dev.sunbirdrc.auth", "dev.sunbirdrc.workflow", "dev.sunbirdrc.plugin"})
 public class SunbirdRCApplication {
     private static ApplicationContext context;

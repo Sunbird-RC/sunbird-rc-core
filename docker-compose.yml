@@ -21,8 +21,6 @@ services:
           'curl',
           '-f',
           'localhost:9200/_cluster/health',
-          '--header',
-          'Authorization: Basic ZWxhc3RpYzpEa0llZFBQU0Ni',
         ]
       interval: 30s
       timeout: 10s
@@ -36,7 +34,7 @@ services:
     environment:
       - POSTGRES_DB=registry
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
@@ -50,7 +48,7 @@ services:
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
-      - connectionInfo_password=postgres
+      - connectionInfo_password=${POSTGRES_PASSWORD}
       - encryption_enabled=${ENCRYPTION_ENABLED-false}
       - encryption_health_check_url=http://encryption-service:8013/health
       - encryption_uri=http://encryption-service:8013/crypto/v1/_encrypt
@@ -112,11 +110,11 @@ services:
       - sunbird_keycloak_user_set_password=true
       - filestorage_enabled=${FILESSTORAGE_ENABLED-false}
       - filestorage_connection_url=http://file-storage:9000
-      - filestorage_access_key=admin
-      - filestorage_secret_key=12345678
+      - filestorage_access_key=${MINIO_ROOT_USER}
+      - filestorage_secret_key=${MINIO_ROOT_PASSWORD}
       - filestorage_bucket_key=issuance
       - registry_base_apis_enable=false
-      - sunbird_keycloak_user_password=abcd@123
+      - sunbird_keycloak_user_password=${KEYCLOAK_DEFAULT_USER_PASSWORD}
       - logging.level.root=INFO
       - enable_external_templates=true
       - async_enabled=${ASYNC_ENABLED-false}
@@ -133,7 +131,7 @@ services:
       - notification_enabled=${NOTIFICATION_ENABLED-false}
       - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
-      - '8081:8081'
+      - '8091:8081'
     depends_on:
       db:
         condition: service_healthy
@@ -159,9 +157,9 @@ services:
       - DB_PORT=5432
       - DB_DATABASE=registry
       - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER-admin}
-      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER}
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
       - PROXY_ADDRESS_FORWARDING=true
     healthcheck:
@@ -180,7 +178,7 @@ services:
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
-      - connectionInfo_password=postgres
+      - connectionInfo_password=${POSTGRES_PASSWORD}
       - sunbirdrc_url=http://registry:8081
     ports:
       - '8082:8082'
@@ -299,8 +297,8 @@ services:
     volumes:
       - ${HOME}/minio/data:/data
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=12345678
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     command: server --address 0.0.0.0:9000 --console-address 0.0.0.0:9001 /data
     ports:
       - '9000:9000'

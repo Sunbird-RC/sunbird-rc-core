@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>5.0.2.RELEASE</version>
+            <version>5.3.39</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish</groupId>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>5.0.13.RELEASE</version>
+            <version>5.3.39</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

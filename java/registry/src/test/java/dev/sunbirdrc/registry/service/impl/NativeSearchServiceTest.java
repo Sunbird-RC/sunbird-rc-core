@@ -23,7 +23,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.keycloak.common.util.RandomString;
+import java.util.UUID;
 import org.kie.api.runtime.manager.audit.AuditService;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +66,7 @@ public class NativeSearchServiceTest {
 	public void init() throws IOException {
 		dbConnectionInfoMgr.setUuidPropertyName("tid");
 		DBConnectionInfo dbConnectionInfo = new DBConnectionInfo();
-		dbConnectionInfo.setShardId(RandomString.randomCode(4));
+		dbConnectionInfo.setShardId(UUID.randomUUID().toString().substring(0, 4));
 		dbConnectionInfo.setShardLabel("");
 		dbConnectionInfoMgr.setConnectionInfo(Collections.singletonList(dbConnectionInfo));
 

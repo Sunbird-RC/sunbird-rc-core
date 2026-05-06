@@ -11,7 +11,7 @@
 
     <artifactId>workflow</artifactId>
     <properties>
-        <drools.version>7.49.0.Final</drools.version>
+        <drools.version>7.60.0.Final</drools.version>
     </properties>
     <dependencies>
         <dependency>

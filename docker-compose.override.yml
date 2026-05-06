@@ -1,0 +1,17 @@
+version: '2.4'
+
+# Overrides for local development
+services:
+  db:
+    image: postgres:14
+    ports: !reset
+      - '5433:5432'   # host port 5433 to avoid conflict with local postgres
+
+  registry:
+    image: sunbird-rc-core:local
+
+  keycloak:
+    platform: linux/amd64
+
+  claim-ms:
+    platform: linux/amd64

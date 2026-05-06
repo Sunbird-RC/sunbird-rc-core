@@ -1,4 +1,12 @@
-FROM openjdk:8-jdk-alpine
+FROM eclipse-temurin:11-jre
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 ARG JAR_FILE=*.jar
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+COPY ${JAR_FILE} /app/app.jar
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser && \
+    mkdir -p /app/audit_logs /app/metrics_log && \
+    chown -R appuser:appgroup /app
+USER appuser
+WORKDIR /app
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8081/health || exit 1
+ENTRYPOINT ["java","-jar","/app/app.jar"]
