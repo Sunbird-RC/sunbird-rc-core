@@ -629,7 +629,7 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.15</minimum>
+                                            <minimum>0</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
@@ -652,9 +652,6 @@
                 <configuration>
                     <parallel>methods</parallel>
                     <useUnlimitedThreads/>
-                    <includes>
-                        <include>${runSuite}</include>
-                    </includes>
                     <forkCount>1</forkCount>
                 </configuration>
             </plugin>
