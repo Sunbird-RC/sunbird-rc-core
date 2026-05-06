@@ -8,7 +8,7 @@ endif
 all: notification-service
 
 deps:
-	@GO111MODULE=off go get -u github.com/myitcv/gobin
+	@GO111MODULE=on go get -u github.com/myitcv/gobin
 	@$(GOPATH)/bin/gobin github.com/go-swagger/go-swagger/cmd/swagger@v0.25.0
 	@$(GOPATH)/bin/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 
