@@ -1,6 +1,6 @@
 module metrics
 
-go 1.22.0
+go 1.22
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.23.0
