@@ -22,24 +22,24 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.*;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.opensearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.opensearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.opensearch.client.indices.CreateIndexRequest;
+import org.opensearch.client.indices.CreateIndexResponse;
+import org.opensearch.action.get.GetRequest;
+import org.opensearch.action.get.GetResponse;
+import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.index.IndexResponse;
+import org.opensearch.action.search.SearchRequest;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.action.update.UpdateRequest;
+import org.opensearch.action.update.UpdateResponse;
+import org.opensearch.client.*;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.core.rest.RestStatus;
+import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
@@ -53,17 +53,12 @@ public class ElasticServiceImpl implements IElasticService {
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
     private static String connectionInfo;
-    private static String searchType;
     private static boolean authEnabled;
     private static String userName;
     private static String password;
 
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
-    }
-
-    public void setType(String type) {
-        searchType = type;
     }
 
     /**
@@ -75,7 +70,7 @@ public class ElasticServiceImpl implements IElasticService {
     public void init(Set<String> indices) throws RuntimeException {
         indices.iterator().forEachRemaining(index -> {
             try {
-                addIndex(index.toLowerCase(), searchType);
+                addIndex(index.toLowerCase());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -129,14 +124,13 @@ public class ElasticServiceImpl implements IElasticService {
     /**
      * creates index for elastic-search
      *
-     * @param indexName    of ElasticSearch
-     * @param documentType of ElasticSearch
+     * @param indexName of ElasticSearch
      * @return
      * @throws IOException
      */
     @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
-    public static boolean addIndex(String indexName, String documentType) throws IOException {
+    public static boolean addIndex(String indexName) throws IOException {
         boolean response = false;
         //To do need to analysis regarding settings and analysis and modify this code later
         /*String settings = "{\"analysis\": {       \"analyzer\": {         \"doc_index_analyzer\": {           \"type\": \"custom\",           \"tokenizer\": \"standard\",           \"filter\": [             \"lowercase\",             \"mynGram\"           ]         },         \"doc_search_analyzer\": {           \"type\": \"custom\",           \"tokenizer\": \"standard\",           \"filter\": [             \"standard\",             \"lowercase\"           ]         },         \"keylower\": {           \"tokenizer\": \"keyword\",           \"filter\": \"lowercase\"         }       },       \"filter\": {         \"mynGram\": {           \"type\": \"nGram\",           \"min_gram\": 1,           \"max_gram\": 20,           \"token_chars\": [             \"letter\",             \"digit\",             \"whitespace\",             \"punctuation\",             \"symbol\"           ]         }       }     }   }";
@@ -187,7 +181,7 @@ public class ElasticServiceImpl implements IElasticService {
         IndexResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
-            response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
+            response = getClient(index).index(new IndexRequest(index).id(entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
         }
@@ -208,7 +202,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
         
         GetResponse response = null;
-        response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
+        response = getClient(index).get(new GetRequest(index, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
     
@@ -229,7 +223,7 @@ public class ElasticServiceImpl implements IElasticService {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
-            response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
+            response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch", e);
         }
@@ -251,7 +245,7 @@ public class ElasticServiceImpl implements IElasticService {
             Map<String, Object> readMap = readEntity(indexL, osid);
            // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
             readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
-            response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
+            response = getClient(indexL).update(new UpdateRequest(indexL, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", e);
             return RestStatus.NOT_FOUND;
