@@ -1,12 +1,12 @@
 FROM golang:1.23-alpine AS notification-service
 
-RUN apk add make git gcc musl-dev
+RUN apk add make git gcc musl-dev openssl-dev cyrus-sasl-dev zlib-dev
 
 WORKDIR /app/notification-service
 
 COPY . .
 RUN go mod download
-RUN GOFLAGS=" -tags=musl" SPEC_FILE="./notification-service.yaml" make all
+RUN CGO_ENABLED=1 GO111MODULE=on go build -tags=musl -o notification-service github.com/sunbirdrc/notification-service/cmd/notification-service
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
