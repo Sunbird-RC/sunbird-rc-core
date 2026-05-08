@@ -45,7 +45,7 @@
     "encrypt-rsa": "^2.0.1",
     "hashi-vault-js": "^0.4.12",
     "jsonld": "^8.3.2",
-    "jsonld-signatures": "6.0.0",
+    "jsonld-signatures": "^7.0.0",
     "jwks-rsa": "^3.0.0",
     "nodemailer": "^6.8.0",
     "p-limit": "^3.0.0",

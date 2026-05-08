@@ -6,7 +6,6 @@ WORKDIR /app/notification-service
 
 COPY . .
 RUN go mod download
-RUN make deps
 RUN GOFLAGS=" -tags=musl" SPEC_FILE="./notification-service.yaml" make all
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
