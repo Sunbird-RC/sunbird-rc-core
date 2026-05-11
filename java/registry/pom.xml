@@ -310,6 +310,13 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
+                <!-- CVE-2020-10683: dom4j 1.6.1 has no fix; excluded as it is only
+                     used by reflections for XML config scanning which JanusGraph
+                     does not require at runtime with the SQLG/PostgreSQL backend -->
+                <exclusion>
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
