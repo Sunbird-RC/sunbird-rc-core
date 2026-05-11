@@ -1,5 +1,6 @@
 FROM node:20.11.0-alpine3.18 AS install
 WORKDIR /app
+RUN apk add --no-cache git
 COPY package.json yarn.lock ./
 RUN yarn
 
