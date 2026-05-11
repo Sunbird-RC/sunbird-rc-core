@@ -1,6 +1,7 @@
 FROM node:20.11.0-alpine3.18 AS install
 WORKDIR /app
-RUN apk add --no-cache git
+RUN apk add --no-cache git openssh-client
+RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 COPY package.json yarn.lock ./
 RUN yarn
 
