@@ -27,7 +27,7 @@ services:
       timeout: 10s
       retries: 4
   db:
-    image: postgres
+    image: postgres:14
     volumes:
       - ./${DB_DIR-db-data}:/var/lib/postgresql/data
     ports:
@@ -41,6 +41,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
   registry:
     image: ghcr.io/sunbird-rc/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
@@ -148,6 +149,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 60s
     ports:
       - '8080:8080'
       - '9990:9990'
