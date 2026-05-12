@@ -145,7 +145,7 @@ services:
       - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
       - PROXY_ADDRESS_FORWARDING=true
     healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:9990/ || exit 1']
+      test: ['CMD-SHELL', 'curl -f http://localhost:8080/auth/ || exit 1']
       interval: 30s
       timeout: 10s
       retries: 10

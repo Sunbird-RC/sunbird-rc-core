@@ -5,7 +5,7 @@ i=0
 while ! curl localhost:$1; do
   sleep 10
   ((i=i+1))
-  if [[ $i -gt 60 ]]; then
+  if [ "$i" -gt 60 ]; then
     echo "Failed to get the service in sane state!"
     exit 1;
   fi
