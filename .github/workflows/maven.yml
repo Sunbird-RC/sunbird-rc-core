@@ -44,6 +44,11 @@ jobs:
 #        limit-access-to-actor: true
     - name: Build and test
       run: make test
+    - name: Dump container logs on failure
+      if: failure()
+      run: |
+        docker-compose -f docker-compose-v1.yml logs --no-color registry keycloak db || true
+        docker ps -a
     - name: Check space after tests
       run: df -h
 #  test:
