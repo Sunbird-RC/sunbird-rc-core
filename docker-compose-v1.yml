@@ -244,14 +244,14 @@ services:
       kafka:
         condition: service_started
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.6.1
     ports:
       - '2181:2181'
     environment:
       ZOOKEEPER_CLIENT_PORT: '2181'
       ZOOKEEPER_TICK_TIME: '2000'
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.6.1
     depends_on:
       zookeeper:
         condition: service_started
