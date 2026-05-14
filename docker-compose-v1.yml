@@ -333,6 +333,7 @@ services:
       REDIS_URL: redis:6379
     ports:
       - '8070:8070'
+    restart: on-failure
     depends_on:
       kafka:
         condition: service_healthy
@@ -340,6 +341,12 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -nv -t1 --spider http://localhost:8070/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   redis:
     image: redis:latest
     ports:
