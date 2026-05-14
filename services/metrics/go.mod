@@ -4,7 +4,6 @@ go 1.24.1
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.46.0
-	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-co-op/gocron v1.28.2
 	github.com/go-co-op/gocron-redis-lock v1.1.1
@@ -17,6 +16,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jinzhu/configor v1.2.1
 	github.com/redis/go-redis/v9 v9.0.5
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.50.0
 )
