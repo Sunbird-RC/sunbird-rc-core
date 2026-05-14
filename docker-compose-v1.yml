@@ -338,6 +338,8 @@ services:
         condition: service_healthy
       registry:
         condition: service_healthy
+      clickhouse:
+        condition: service_healthy
   redis:
     image: redis:latest
     ports:
