@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.authorization;
 
 import lombok.Getter;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -29,7 +30,11 @@ public final class TenantJwtDecoder implements JwtDecoder {
         if (this.jwtDecoder == null) {
             synchronized (this) {
                 if (this.jwtDecoder == null) {
-                    this.jwtDecoder = CustomJwtDecoders.buildDecoder(this.oidcIssuerLocation);
+                    try {
+                        this.jwtDecoder = CustomJwtDecoders.buildDecoder(this.oidcIssuerLocation);
+                    } catch (Exception e) {
+                        throw new BadJwtException("Unable to initialize JWT decoder: " + e.getMessage(), e);
+                    }
                 }
             }
         }

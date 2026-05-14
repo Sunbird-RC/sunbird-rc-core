@@ -3,7 +3,6 @@ package dev.sunbirdrc.registry.authorization;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -14,14 +13,7 @@ import java.util.Map;
 
 final class CustomJwtDecoderProviderConfigurationUtils {
     private static final String OIDC_METADATA_PATH = "/.well-known/openid-configuration";
-    private static final RestTemplate rest = buildRestTemplate();
-
-    private static RestTemplate buildRestTemplate() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10_000);
-        factory.setReadTimeout(15_000);
-        return new RestTemplate(factory);
-    }
+    private static final RestTemplate rest = new RestTemplate();
     private static final ParameterizedTypeReference<Map<String, Object>> typeReference =
             new ParameterizedTypeReference<Map<String, Object>>() {};
 
