@@ -113,6 +113,7 @@ services:
       - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
       - '8081:8081'
+    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
@@ -127,6 +128,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 60s
   keycloak:
     image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
     volumes:
