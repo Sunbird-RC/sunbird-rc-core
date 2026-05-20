@@ -42,7 +42,7 @@ func createTableIfNotExists(tableName string, c *Clickhouse) error {
 	) ENGINE = MergeTree() order by createdAt`
 	err := c.connection.Exec(ctx, createTableCmd)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Failed to create table %s: %v", tableName, err)
 	}
 	return err
 }
@@ -52,7 +52,7 @@ func (c *Clickhouse) InsertRecord(metricData Metrics) error {
 	createTableIfNotExists(metricData.Object.Type, c)
 	batch, err := c.connection.PrepareBatch(ctx, "INSERT INTO "+strings.ToLower(metricData.Object.Type))
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Failed to prepare batch for table %s: %v", metricData.Object.Type, err)
 		return err
 	}
 	metricTime, _ := utils.GetTimeFromMilliseconds(metricData.Ets)
@@ -63,12 +63,12 @@ func (c *Clickhouse) InsertRecord(metricData Metrics) error {
 	}
 	err = batch.Append(metricData.Eid, string(entityJSON), metricTime, metricData.Object.Id)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Failed to append to batch: %v", err)
 		return err
 	}
 	err = batch.Send()
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Failed to send batch: %v", err)
 		return err
 	}
 	log.Info("Insert successful")
@@ -86,14 +86,16 @@ func (c *Clickhouse) GetCount() map[string]map[string]string {
 		query := "SELECT operationType, count(*) FROM " + tables[i] + " group by operationType"
 		rows, err := c.connection.Query(ctx, query)
 		if err != nil {
-			log.Fatal(err)
+			log.Errorf("Error querying table %s: %v", tables[i], err)
+			continue
 		}
 		var count *uint64
 		var operationType string
 		operationCountMap := map[string]string{}
 		for rows.Next() {
 			if err := rows.Scan(&operationType, &count); err != nil {
-				log.Fatal(err)
+				log.Errorf("Error scanning row from table %s: %v", tables[i], err)
+				continue
 			}
 			operationCountMap[operationType] = strconv.FormatUint(*count, 10)
 		}
@@ -111,7 +113,8 @@ func getTables(c *Clickhouse, ctx context.Context) ([]string, error) {
 	for rows.Next() {
 		var tableName string
 		if err := rows.Scan(&tableName); err != nil {
-			log.Fatal(err)
+			log.Errorf("Error scanning table name: %v", err)
+			continue
 		}
 		tables = append(tables, tableName)
 	}
@@ -130,14 +133,16 @@ func (c *Clickhouse) GetAggregates(clauses string) map[string]map[string]string 
 		log.Debugf("Query : %v", query)
 		rows, err := c.connection.Query(ctx, query)
 		if err != nil {
-			log.Fatal(err)
+			log.Errorf("Error querying table %s: %v", tables[i], err)
+			continue
 		}
 		var count *uint64
 		var operationType string
 		operationCountMap := map[string]string{}
 		for rows.Next() {
 			if err := rows.Scan(&operationType, &count); err != nil {
-				log.Fatal(err)
+				log.Errorf("Error scanning row from table %s: %v", tables[i], err)
+				continue
 			}
 			operationCountMap[operationType] = strconv.FormatUint(*count, 10)
 		}

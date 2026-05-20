@@ -60,7 +60,7 @@
                 <artifactId>jackson-annotations</artifactId>
                 <version>2.15.4</version>
             </dependency>
-            <!-- CVE-2025-24813, CVE-2026-29145: tomcat-embed → 9.0.116 (covers modules without SB parent) -->
+            <!-- CVE-2025-24813, CVE-2025-29145: tomcat-embed → 9.0.116 (covers modules without SB parent) -->
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>

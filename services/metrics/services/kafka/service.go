@@ -20,7 +20,7 @@ func StartConsumer(servers string, groupId string, autoOffsetReset string, autoC
 		Brokers:     brokers,
 		GroupID:     groupId,
 		Topic:       topic,
-		StartOffset: kafka.FirstOffset,
+		StartOffset: kafka.LastOffset,
 	})
 	defer r.Close()
 

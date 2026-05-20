@@ -4,7 +4,6 @@ go 1.24.1
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.46.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-co-op/gocron v1.28.2
 	github.com/go-co-op/gocron-redis-lock v1.1.1
 	github.com/go-openapi/errors v0.20.3
@@ -13,6 +12,7 @@ require (
 	github.com/go-openapi/spec v0.20.8
 	github.com/go-openapi/strfmt v0.21.5
 	github.com/go-openapi/swag v0.22.3
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jinzhu/configor v1.2.1
 	github.com/redis/go-redis/v9 v9.0.5

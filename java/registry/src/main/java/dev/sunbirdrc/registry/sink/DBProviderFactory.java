@@ -50,7 +50,7 @@ public class DBProviderFactory {
 			}
 
 			if (connectionInfo != null) {
-				dbProviderInstances.put(connectionInfo.getShardId(), provider);
+				dbProviderInstances.putIfAbsent(connectionInfo.getShardId(), provider);
 			}
 		}
 		provider.setUuidPropertyName(uuidPropertyName);

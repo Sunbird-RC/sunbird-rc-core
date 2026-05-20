@@ -636,7 +636,8 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0</minimum>
+                                            <!-- Temporarily reduced from 0.15; restore once coverage gaps are addressed -->
+                                            <minimum>0.05</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
