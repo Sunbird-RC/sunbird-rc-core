@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"metrics/config"
 	"metrics/utils"
 	"strconv"
@@ -23,9 +24,7 @@ func (c *Clickhouse) InitDB() {
 		Auth: clickhouse.Auth{
 			Database: config.Config.Clickhouse.Database,
 		},
-		Settings: clickhouse.Settings{
-			"allow_experimental_object_type": 1,
-		},
+		Settings: clickhouse.Settings{},
 	})
 	c.connection = connect
 	if err != nil {
@@ -37,7 +36,7 @@ func createTableIfNotExists(tableName string, c *Clickhouse) error {
 	ctx := context.Background()
 	createTableCmd := `CREATE TABLE IF NOT EXISTS ` + strings.ToLower(tableName) + ` (
 		operationType 	String,
-		entity			JSON,
+		entity			String,
 		createdAt 			Date,
 		id 				String
 	) ENGINE = MergeTree() order by createdAt`
@@ -57,7 +56,12 @@ func (c *Clickhouse) InsertRecord(metricData Metrics) error {
 		return err
 	}
 	metricTime, _ := utils.GetTimeFromMilliseconds(metricData.Ets)
-	err = batch.Append(metricData.Eid, metricData.Edata, metricTime, metricData.Object.Id)
+	entityJSON, err := json.Marshal(metricData.Edata)
+	if err != nil {
+		log.Errorf("Failed to marshal edata: %v", err)
+		return err
+	}
+	err = batch.Append(metricData.Eid, string(entityJSON), metricTime, metricData.Object.Id)
 	if err != nil {
 		log.Fatal(err)
 		return err

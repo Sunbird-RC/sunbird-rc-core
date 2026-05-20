@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Component("entityParenter")
@@ -60,6 +61,12 @@ public class EntityParenter {
      * Holds information for all definitions and it's indices
      */
     private Map<String, IndexFields> definitionIndexFields = new ConcurrentHashMap<String, IndexFields>();
+
+    /**
+     * Per-label lock to serialize concurrent DDL (index creation) on the same schema label.
+     * Prevents "Timeout lapsed to acquire write lock" when async threads race on the same label.
+     */
+    private final ConcurrentHashMap<String, ReentrantLock> indexCreationLocks = new ConcurrentHashMap<>();
 
 
     @Autowired
@@ -310,35 +317,43 @@ public class EntityParenter {
             Definition definition) {
         logger.debug("asyncAddIndex starts");
         if (parentVertex != null && definition != null) {
-
-            IndexFields inxFields = definitionIndexFields.get(definition.getTitle());
-            if(inxFields == null) {
-                logger.info("Index Fields are null, reloading index fields for definition: {}", definition.getTitle());
-                this.loadDefinitionIndex(definition.getTitle(), shardId);
-                inxFields = definitionIndexFields.get(definition.getTitle());
+            String label = definition.getTitle();
+            ReentrantLock lock = indexCreationLocks.computeIfAbsent(label, k -> new ReentrantLock());
+            if (!lock.tryLock()) {
+                logger.info("Index creation already in progress for {}, skipping duplicate DDL", label);
+                return;
             }
-            try (OSGraph osGraph = dbProvider.getOSGraph()) {
-                Graph graph = osGraph.getGraphStore();
-                try (Transaction tx = dbProvider.startTransaction(graph)) {
-
-					Indexer indexer = new Indexer(dbProvider);
-					indexer.setSingleIndexFields(inxFields.getNewSingleIndexFields());
-					indexer.setCompositeIndexFields(inxFields.getNewCompositeIndexFields());
-
-					indexer.setUniqueIndexFields(inxFields.getNewUniqueIndexFields());
-					indexer.setCompositeUniqueIndexFields(inxFields.getNewCompositeUniqueIndexFields());
-                    indexer.createIndex(graph, definition.getTitle());
-                    dbProvider.commitTransaction(graph, tx);
-
-                    updateParentVertexIndexProperties(dbProvider, parentVertex, inxFields.getIndexFields(), inxFields.getUniqueIndexFields());
-                    indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
+            try {
+                IndexFields inxFields = definitionIndexFields.get(label);
+                if (inxFields == null) {
+                    logger.info("Index Fields are null, reloading index fields for definition: {}", label);
+                    this.loadDefinitionIndex(label, shardId);
+                    inxFields = definitionIndexFields.get(label);
                 }
-            } catch (IndexException.LabelNotFoundException ex) {
-                logger.warn(ex.getMessage());
-            } catch (Exception e) {
-                logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), ExceptionUtils.getStackTrace(e));
-            }
+                try (OSGraph osGraph = dbProvider.getOSGraph()) {
+                    Graph graph = osGraph.getGraphStore();
+                    try (Transaction tx = dbProvider.startTransaction(graph)) {
 
+                        Indexer indexer = new Indexer(dbProvider);
+                        indexer.setSingleIndexFields(inxFields.getNewSingleIndexFields());
+                        indexer.setCompositeIndexFields(inxFields.getNewCompositeIndexFields());
+
+                        indexer.setUniqueIndexFields(inxFields.getNewUniqueIndexFields());
+                        indexer.setCompositeUniqueIndexFields(inxFields.getNewCompositeUniqueIndexFields());
+                        indexer.createIndex(graph, label);
+                        dbProvider.commitTransaction(graph, tx);
+
+                        updateParentVertexIndexProperties(dbProvider, parentVertex, inxFields.getIndexFields(), inxFields.getUniqueIndexFields());
+                        indexHelper.updateDefinitionIndex(shardId, label, true);
+                    }
+                } catch (IndexException.LabelNotFoundException ex) {
+                    logger.warn(ex.getMessage());
+                } catch (Exception e) {
+                    logger.error("Failed Transaction creating index {}: {}", label, ExceptionUtils.getStackTrace(e));
+                }
+            } finally {
+                lock.unlock();
+            }
         } else {
             logger.info("No definition found for create index");
         }
