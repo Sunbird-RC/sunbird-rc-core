@@ -660,6 +660,9 @@
                 <configuration>
                     <parallel>methods</parallel>
                     <useUnlimitedThreads/>
+                    <includes>
+                        <include>${runSuite}</include>
+                    </includes>
                     <forkCount>1</forkCount>
                 </configuration>
             </plugin>
