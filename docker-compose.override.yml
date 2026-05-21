@@ -1,6 +1,6 @@
 version: '2.4'
 
-# Overrides for local development
+# Overrides for local development — all Java/Node V2 services use locally-built images
 services:
   db:
     image: postgres:14
@@ -9,9 +9,31 @@ services:
 
   registry:
     image: sunbird-rc-core:local
+    environment:
+      - certificate_enabled=true
 
   keycloak:
     platform: linux/amd64
 
   claim-ms:
+    image: sunbird-rc-claim-ms:local
+
+  # Node.js V2 services — built from services/* in this repo for linux/amd64
+  identity:
     platform: linux/amd64
+    image: sunbird-rc-identity:local
+    environment:
+      # dedicated DB avoids Prisma P3005 conflict with the Java registry schema
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/identity
+
+  credential-schema:
+    platform: linux/amd64
+    image: sunbird-rc-credential-schema:local
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/credential_schema
+
+  credential:
+    platform: linux/amd64
+    image: sunbird-rc-credential:local
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/credential

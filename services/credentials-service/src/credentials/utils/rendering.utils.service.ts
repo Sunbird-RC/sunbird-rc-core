@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import * as wkhtmltopdf from 'wkhtmltopdf';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const wkhtmltopdf = require('wkhtmltopdf');
 import { compile } from 'handlebars';
 import * as QRCode from 'qrcode';
 import {generateQRCode } from '@mosip/pixelpass';
