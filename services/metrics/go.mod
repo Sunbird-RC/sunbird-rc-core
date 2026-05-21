@@ -1,6 +1,6 @@
 module metrics
 
-go 1.24.1
+go 1.26.3
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.46.0
@@ -15,10 +15,10 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jinzhu/configor v1.2.1
-	github.com/redis/go-redis/v9 v9.0.5
+	github.com/redis/go-redis/v9 v9.6.3
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.53.0
 )
 
 require (
@@ -54,7 +54,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
