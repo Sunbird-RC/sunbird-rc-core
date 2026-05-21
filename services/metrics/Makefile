@@ -16,7 +16,7 @@ swagger_gen/restapi/server.go: $(SPEC_FILE)
 
 metrics-server: $(source) swagger_gen/restapi/server.go
 	@echo "Building Server to $(PWD)/metrics ..."
-	@CGO_ENABLED=1 GO111MODULE=on go build $(OTHER_FLAGS) metrics
+	@CGO_ENABLED=0 GO111MODULE=on go build $(OTHER_FLAGS) metrics
 
 api_docs:
 	@echo "Installing swagger-merger" && npm install swagger-merger -g

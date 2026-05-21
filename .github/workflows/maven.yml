@@ -44,6 +44,12 @@ jobs:
 #        limit-access-to-actor: true
     - name: Build and test
       run: make test
+    - name: Dump container logs on failure
+      if: failure()
+      run: |
+        docker-compose -f docker-compose-v1.yml logs --no-color registry keycloak db metrics clickhouse kafka || true
+        docker ps -a
+        docker inspect $(docker ps -aq) --format '{{.Name}} exit={{.State.ExitCode}} status={{.State.Status}}' 2>/dev/null || true
     - name: Check space after tests
       run: df -h
 #  test:

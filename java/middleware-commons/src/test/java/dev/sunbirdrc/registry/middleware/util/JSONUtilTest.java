@@ -173,7 +173,7 @@ public class JSONUtilTest {
 
     @Test
     public void diffJsonNode_WithExistingValueAsEmpty() throws IOException {
-        String beforeJsonStr = "";
+        String beforeJsonStr = "{}";
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
         JsonNode afterNode = mapper.readTree(afterJsonStr);
@@ -193,8 +193,8 @@ public class JSONUtilTest {
 
     @Test
     public void diffJsonNode_WithBothValuesempty() throws IOException {
-        String beforeJsonStr = "";
-        String afterJsonStr = "";
+        String beforeJsonStr = "{}";
+        String afterJsonStr = "{}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
         JsonNode afterNode = mapper.readTree(afterJsonStr);
         JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode, afterNode);

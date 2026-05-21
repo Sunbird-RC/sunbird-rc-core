@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component("dbProviderFactory")
 public class DBProviderFactory {
-	public Map<String, DatabaseProvider> dbProviderInstances = new HashMap<>();
+	public Map<String, DatabaseProvider> dbProviderInstances = new ConcurrentHashMap<>();
 
 	// This must not be needed. All vars must be sought from DBConnectionInfoMgr only.
 	@Autowired
@@ -21,7 +21,7 @@ public class DBProviderFactory {
 	@Autowired
 	DBConnectionInfoMgr dbConnectionInfoMgr;
 
-	public DatabaseProvider getInstance(DBConnectionInfo connectionInfo) {
+	public synchronized DatabaseProvider getInstance(DBConnectionInfo connectionInfo) {
 		DatabaseProvider provider = null;
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
 		String uuidPropertyName = dbConnectionInfoMgr.getUuidPropertyName();

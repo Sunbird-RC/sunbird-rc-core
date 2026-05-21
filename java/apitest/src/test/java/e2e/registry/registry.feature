@@ -36,7 +36,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
 # create entity for birth certificate
     Given url registryUrl
     And path 'api/v1/BirthCertificate'
@@ -125,7 +125,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
   # invite entity for student
     Given url registryUrl
     And path 'api/v1/Student/invite'
@@ -218,7 +218,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
   # create entity for teacher
     Given url registryUrl
     And path 'api/v1/Teacher?mode=async'
@@ -279,7 +279,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
   # create institute schema
     Given url registryUrl
     And path 'api/v1/Schema'
@@ -288,7 +288,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
    # invite institute without token should fail
     Given url registryUrl
     And path 'api/v1/Institute/invite'
@@ -537,7 +537,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
   # invite entity for student
     Given url registryUrl
     And path 'api/v1/StudentWithPassword/invite'
@@ -598,7 +598,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-    * sleep(10000)
+    * sleep(25000)
 # create entity for birth certificate
     Given url registryUrl
     And path 'api/v1/BirthCertificate1'

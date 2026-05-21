@@ -27,7 +27,7 @@ services:
       timeout: 10s
       retries: 4
   db:
-    image: postgres
+    image: postgres:14
     volumes:
       - ./${DB_DIR-db-data}:/var/lib/postgresql/data
     ports:
@@ -113,6 +113,7 @@ services:
       - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
       - '8081:8081'
+    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
@@ -127,6 +128,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 60s
   keycloak:
     image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
     volumes:
@@ -148,6 +150,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 60s
     ports:
       - '8080:8080'
       - '9990:9990'
@@ -243,14 +246,14 @@ services:
       kafka:
         condition: service_started
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.6.1
     ports:
       - '2181:2181'
     environment:
       ZOOKEEPER_CLIENT_PORT: '2181'
       ZOOKEEPER_TICK_TIME: '2000'
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.6.1
     depends_on:
       zookeeper:
         condition: service_started
@@ -259,6 +262,7 @@ services:
     environment:
       KAFKA_BROKER_ID: '1'
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094'
       KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:9092,OUTSIDE://localhost:9094'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
@@ -275,6 +279,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 30s
   public-key-service:
     image: ghcr.io/sunbird-rc/sunbird-rc-public-key-service
     environment:
@@ -330,11 +335,20 @@ services:
       REDIS_URL: redis:6379
     ports:
       - '8070:8070'
+    restart: on-failure
     depends_on:
       kafka:
         condition: service_healthy
       registry:
         condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -nv -t1 --spider http://localhost:8070/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   redis:
     image: redis:latest
     ports:
@@ -368,9 +382,11 @@ services:
     ports:
       - '9002:9000'
     healthcheck:
-      test:
-        wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit
-        1
+      test: ['CMD-SHELL', 'clickhouse-client --query "SELECT 1" 2>/dev/null | grep -q "^1"']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
   id-gen-service:
     image: ghcr.io/sunbird-rc/id-gen-service:${RELEASE_VERSION}
     ports:

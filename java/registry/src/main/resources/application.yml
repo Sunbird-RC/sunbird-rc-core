@@ -4,7 +4,8 @@ spring:
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: default
+    allow-circular-references: true
+  config.activate.on-profile: default
   servlet:
     multipart:
       enabled: true
@@ -13,6 +14,19 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+  mvc:
+    # Mitigates CVE-2022-22965 (Spring4Shell) DataBinder attack surface
+    dispatch-options-request: false
+    # Mitigates CVE-2023-20860 wildcard pattern bypass
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+# Actuator: explicit allowlist prevents CVE-2023-20873 wildcard bypass
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 
 
 oauth2:
@@ -172,7 +186,7 @@ database:
       uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/registry}
 
       username: ${connectionInfo_username:postgres}
-      password: ${connectionInfo_password:postgres}
+      password: ${connectionInfo_password}
       maxPoolSize: ${connectionInfo_maxPoolSize:200}
 
       # Any other shard information follows...
@@ -246,7 +260,7 @@ identity:
   client_id: ${sunbird_sso_admin_client_id:admin-api}
   client_secret: ${sunbird_sso_admin_client_secret:xxx}
   set_default_password: ${sunbird_keycloak_user_set_password:false}
-  default_password: ${sunbird_keycloak_user_password:abcd@1234}
+  default_password: ${sunbird_keycloak_user_password}
   user_actions: ${identity_user_actions:}
 
 keycloak:
@@ -259,7 +273,7 @@ keycloak-admin:
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:false}
-  default-password: ${sunbird_keycloak_user_password:abcd@123}
+  default-password: ${sunbird_keycloak_user_password}
   # email actions which will be trigger by keycloak
   # example email actions: VERIFY_EMAIL, UPDATE_PROFILE, UPDATE_PASSWORD, TERMS_AND_CONDITIONS etc.
   # email details should be configured in keycloak realm settings
@@ -332,7 +346,7 @@ elastic:
     #if authentication is enabled
     auth_enabled: ${elastic_search_auth_enabled:false}
     elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:elastic}
+    elastic_password: ${elastic_search_password}
     scheme: ${elastic_search_scheme:http}
 filestorage:
   enabled: ${filestorage_enabled:false}
@@ -395,7 +409,7 @@ signature:
 spring:
   main:
     allow-bean-definition-overriding: true
-  profiles: test
+  config.activate.on-profile: test
   output:
     ansi:
       enabled: ALWAYS

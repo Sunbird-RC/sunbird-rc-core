@@ -1,11 +1,11 @@
 package models
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 type JWTClaimBody struct {
-	*jwt.StandardClaims
+	*jwt.RegisteredClaims
 	TokenType         string
 	ResourceAccess    map[string]Group `json:"resource_access"`
 	Scope             string           `json:"scope"`

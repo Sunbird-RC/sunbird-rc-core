@@ -10,18 +10,20 @@ import static org.springframework.security.oauth2.jwt.NimbusJwtDecoder.withJwkSe
 
 final class CustomJwtDecoders {
 
+    // Returns a lazy decoder — no HTTP call to Keycloak at startup.
+    // The OIDC discovery fetch is deferred until the first token decode.
     public static TenantJwtDecoder fromOidcIssuerLocation(String oidcIssuerLocation) {
         Assert.hasText(oidcIssuerLocation, "oidcIssuerLocation cannot be empty");
-        Map<String, Object> configuration = CustomJwtDecoderProviderConfigurationUtils.getConfigurationForOidcIssuerLocation(oidcIssuerLocation);
-        return withProviderConfiguration(configuration);
+        return TenantJwtDecoder.lazy(oidcIssuerLocation);
     }
-    
-    private static TenantJwtDecoder withProviderConfiguration(Map<String, Object> configuration) {
+
+    static NimbusJwtDecoder buildDecoder(String oidcIssuerLocation) {
+        Map<String, Object> configuration = CustomJwtDecoderProviderConfigurationUtils.getConfigurationForOidcIssuerLocation(oidcIssuerLocation);
         String metadataIssuer = CustomJwtDecoderProviderConfigurationUtils.getIssuer(configuration);
         OAuth2TokenValidator<Jwt> jwtValidator = JwtValidators.createDefaultWithIssuer(metadataIssuer);
         NimbusJwtDecoder jwtDecoder = withJwkSetUri(configuration.get("jwks_uri").toString()).build();
         jwtDecoder.setJwtValidator(jwtValidator);
-        return TenantJwtDecoder.from(jwtDecoder, metadataIssuer);
+        return jwtDecoder;
     }
 
     private CustomJwtDecoders() {}

@@ -1,41 +1,44 @@
 package kafka
 
 import (
+	"context"
 	"encoding/json"
 	"metrics/config"
 	"metrics/models"
+	"strings"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/segmentio/kafka-go"
 	log "github.com/sirupsen/logrus"
 )
 
 func StartConsumer(servers string, groupId string, autoOffsetReset string, autoCommit string, c models.IDatabase) {
-	log.Infof("%v", servers)
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  servers,
-		"group.id":           groupId,
-		"auto.offset.reset":  autoOffsetReset,
-		"enable.auto.commit": autoCommit,
-	})
-	if err != nil {
-		panic(err)
-	}
-	consumer.SubscribeTopics([]string{config.Config.Kafka.KAFKA_METRICS_TOPIC}, nil)
-	ReadMessage(consumer, c)
-	consumer.Close()
-}
+	log.Infof("Kafka bootstrap servers: %v", servers)
+	brokers := strings.Split(servers, ",")
+	topic := config.Config.Kafka.KAFKA_METRICS_TOPIC
 
-func ReadMessage(consumer *kafka.Consumer, c models.IDatabase) {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     brokers,
+		GroupID:     groupId,
+		Topic:       topic,
+		StartOffset: kafka.LastOffset,
+	})
+	defer r.Close()
+
+	ctx := context.Background()
 	for {
-		var metricData models.Metrics
-		msg, err := consumer.ReadMessage(-1)
+		msg, err := r.FetchMessage(ctx)
 		if err != nil {
-			log.Fatal(err)
+			log.Errorf("Error fetching message from Kafka: %v", err)
+			continue
 		}
+		var metricData models.Metrics
 		if err = json.Unmarshal(msg.Value, &metricData); err != nil {
-			log.Errorf("%v", err)
+			log.Errorf("Error unmarshalling metric data: %v", err)
+		} else {
+			c.InsertRecord(metricData)
 		}
-		c.InsertRecord(metricData)
-		consumer.CommitMessage(msg)
+		if err = r.CommitMessages(ctx, msg); err != nil {
+			log.Errorf("Error committing Kafka message: %v", err)
+		}
 	}
 }

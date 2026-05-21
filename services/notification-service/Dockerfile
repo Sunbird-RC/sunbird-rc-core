@@ -1,13 +1,17 @@
-FROM golang:1.15-alpine AS notification-service
+FROM golang:1.23-alpine AS notification-service
 
-RUN  apk add make git gcc musl-dev
-# Set the Current Working Directory inside the container
+RUN apk add make git gcc musl-dev openssl-dev cyrus-sasl-dev zlib-dev
 
 WORKDIR /app/notification-service
 
 COPY . .
 RUN go mod download
-RUN make deps
-RUN GOFLAGS=" -tags=musl" SPEC_FILE="./notification-service.yaml" make all
+RUN CGO_ENABLED=1 GO111MODULE=on go build -tags=musl -o notification-service github.com/sunbirdrc/notification-service/cmd/notification-service
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 EXPOSE 8765
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:8765/health || exit 1
 CMD ["/app/notification-service/notification-service", "--scheme", "http", "--port", "8765", "--host", "0.0.0.0"]

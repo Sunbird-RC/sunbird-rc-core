@@ -8,9 +8,8 @@ endif
 all: notification-service
 
 deps:
-	@GO111MODULE=off go get -u github.com/myitcv/gobin
-	@$(GOPATH)/bin/gobin github.com/go-swagger/go-swagger/cmd/swagger@v0.25.0
-	@$(GOPATH)/bin/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
+	@go install github.com/go-swagger/go-swagger/cmd/swagger@v0.25.0
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 
 swagger_gen/restapi/server.go: . $(SPEC_FILE)
 	@mkdir $(PWD)/swagger_gen || echo 'exists'

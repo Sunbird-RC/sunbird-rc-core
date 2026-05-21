@@ -61,7 +61,7 @@ public class FunctionExecutor {
 			return matcher.group(0)
 					.replace("(", "")
 					.replace(")", "")
-					.split(",");
+					.split("\\s*,\\s*");
 		}
 		return new String[]{};
 	}

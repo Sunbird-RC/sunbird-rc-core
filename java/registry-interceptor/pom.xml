@@ -51,12 +51,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>5.0.2.RELEASE</version>
+            <version>5.3.39</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>5.0.2.RELEASE</version>
+            <version>5.3.39</version>
         </dependency>
     </dependencies>
 </project>
