@@ -3,7 +3,7 @@ import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 const { DIDDocument } = require('did-resolver');
 type DIDDocument = typeof DIDDocument;
-import { VaultService } from '../utils/vault.service';
+import { SecretsProvider } from '../secrets/secrets-provider';
 import { Identity } from '@prisma/client';
 import * as jsigs from '@digitalcredentials/jsonld-signatures';
 import * as jsigs2 from 'jsonld-signatures';
@@ -32,7 +32,7 @@ export default class VcService {
   constructor(
     private readonly primsa: PrismaService,
     private readonly didService: DidService,
-    private readonly vault: VaultService,
+    private readonly secrets: SecretsProvider,
   ) {
     this.init();
   }
@@ -125,7 +125,7 @@ export default class VcService {
     if(!supportedSignatures[signatureType]) await this.init();
     let keyPair = await this.map[verificationMethod?.type].from(verificationMethod);
     if(withPrivateKey) {
-      const privateKeys = await this.vault.readPvtKey(verificationMethod.id.split("#")[0]) || {};
+      const privateKeys = await this.secrets.readPvtKey(verificationMethod.id.split("#")[0]) || {};
       Object.keys(privateKeys[verificationMethod.id] || {}).forEach(key => {
         keyPair[key] = privateKeys[verificationMethod.id][key];
       });

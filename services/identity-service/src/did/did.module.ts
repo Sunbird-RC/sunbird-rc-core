@@ -4,15 +4,14 @@ import { APP_GUARD } from '@nestjs/core';
 import { PrismaService } from 'src/utils/prisma.service';
 import { DidController } from './did.controller';
 import { DidService } from './did.service';
-import { VaultService } from '../utils/vault.service';
+import { SecretsModule } from '../secrets/secrets.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, SecretsModule],
   controllers: [DidController],
   providers: [
     DidService,
     PrismaService,
-    VaultService,
   ],
 })
 export class DidModule {}

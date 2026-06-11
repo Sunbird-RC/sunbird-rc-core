@@ -7,15 +7,16 @@ import { DidModule } from './did/did.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { VcModule } from './vc/vc.module';
-import { VaultService } from './utils/vault.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { TerminusModule } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
-import { VaultHealthIndicator } from './utils/vault.health';
+import { SecretsHealthIndicator } from './utils/secrets.health';
+import { SecretsModule } from './secrets/secrets.module';
 
 @Module({
   imports: [
+    SecretsModule,
     DidModule,
     VcModule,
     HttpModule,
@@ -26,13 +27,13 @@ import { VaultHealthIndicator } from './utils/vault.health';
   ],
   controllers: [AppController, DidController],
   providers: [
-    PrismaService, DidService, VaultService,
+    PrismaService, DidService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
     PrismaHealthIndicator,
-    VaultHealthIndicator
+    SecretsHealthIndicator,
   ],
 })
 export class AppModule {}

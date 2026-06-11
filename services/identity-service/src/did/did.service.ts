@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
 import { v4 as uuid } from 'uuid';
-import { VaultService } from '../utils/vault.service';
+import { SecretsProvider } from '../secrets/secrets-provider';
 import { Identity } from '@prisma/client';
 import { RSAKeyPair } from 'crypto-ld';
 import { GenerateDidDTO } from './dtos/GenerateDidRequest.dto';
@@ -21,7 +21,7 @@ export class DidService {
   webDidPrefix: string;
   signingAlgorithm: string;
   didResolver: any;
-  constructor(private prisma: PrismaService, private vault: VaultService) {
+  constructor(private prisma: PrismaService, private secrets: SecretsProvider) {
     let baseUrl: string = process.env.WEB_DID_BASE_URL;
     this.webDidPrefix = this.getDidPrefixForBaseUrl(baseUrl);
     this.signingAlgorithm = process.env.SIGNING_ALGORITHM;
@@ -169,7 +169,7 @@ export class DidService {
     }
 
     try {
-      await this.vault.writePvtKey(privateKeys, didUri);
+      await this.secrets.writePvtKey(privateKeys, didUri);
     } catch (err) {
       Logger.error(err);
       throw new InternalServerErrorException('Error writing private key to vault');

@@ -38,6 +38,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/platform-fastify": "^9.2.1",
     "@nestjs/swagger": "^6.1.4",
+    "@aws-sdk/client-secrets-manager": "^3.826.0",
     "@nestjs/terminus": "^10.0.1",
     "@prisma/client": "4.8.1",
     "crypto-ld": "3.9.0",

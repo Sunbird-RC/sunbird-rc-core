@@ -1,0 +1,23 @@
+# AWS mode — no Vault required for identity.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d db identity credential-schema credential keycloak registry
+services:
+  vault:
+    profiles:
+      - vault
+
+  identity:
+    platform: linux/amd64
+    build:
+      context: ./services/identity-service
+      dockerfile: Dockerfile
+    image: sunbird-rc-identity-service:local
+    depends_on: !reset
+      db:
+        condition: service_healthy
+    environment:
+      - SECRET_PROVIDER=aws
+      - AWS_REGION=${AWS_REGION}
+      - AWS_SECRETS_PREFIX=${AWS_SECRETS_PREFIX:-credflow}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}

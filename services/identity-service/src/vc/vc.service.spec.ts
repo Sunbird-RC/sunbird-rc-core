@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
-import { VaultService } from '../utils/vault.service';
+import { SecretsModule } from '../secrets/secrets.module';
 
 describe('DidService', () => {
   let service: VcService;
@@ -17,7 +17,8 @@ describe('DidService', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [VcService, PrismaService, DidService, VaultService],
+      imports: [SecretsModule],
+      providers: [VcService, PrismaService, DidService],
     }).compile();
 
     service = module.get<VcService>(VcService);

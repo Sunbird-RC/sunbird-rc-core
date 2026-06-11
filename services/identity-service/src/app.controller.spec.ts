@@ -8,7 +8,7 @@ import {
   TerminusModule,
 } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
-import { VaultHealthIndicator } from './utils/vault.health';
+import { SecretsHealthIndicator } from './utils/secrets.health';
 import { HealthCheckExecutor } from '@nestjs/terminus/dist/health-check/health-check-executor.service';
 import {
   ERROR_LOGGER,
@@ -21,7 +21,7 @@ import { ServiceUnavailableException } from '@nestjs/common';
 describe('AppController', () => {
   let appController: AppController;
   let prismaHealthIndicator: PrismaHealthIndicator;
-  let vaultHealthIndicator: VaultHealthIndicator;
+  let secretsHealthIndicator: SecretsHealthIndicator;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -44,7 +44,7 @@ describe('AppController', () => {
           }),
         },
         {
-          provide: VaultHealthIndicator,
+          provide: SecretsHealthIndicator,
           useFactory: () => ({
             isHealthy: jest.fn(),
           }),
@@ -54,7 +54,7 @@ describe('AppController', () => {
 
     appController = module.get<AppController>(AppController);
     prismaHealthIndicator = module.get<PrismaHealthIndicator>(PrismaHealthIndicator);
-    vaultHealthIndicator = module.get<VaultHealthIndicator>(VaultHealthIndicator);
+    secretsHealthIndicator = module.get<SecretsHealthIndicator>(SecretsHealthIndicator);
   });
 
   beforeEach(async () => {
@@ -67,22 +67,22 @@ describe('AppController', () => {
         .mockResolvedValue(new Promise((resolve) => {
           resolve({ db: { status: 'up' }} as HealthIndicatorResult);
         }));
-      jest.spyOn(vaultHealthIndicator, 'isHealthy')
+      jest.spyOn(secretsHealthIndicator, 'isHealthy')
         .mockResolvedValue(new Promise((resolve) => {
-          resolve({ vault: { status: 'up' }} as HealthIndicatorResult);
+          resolve({ secrets: { status: 'up' }} as HealthIndicatorResult);
         }));
       const result = await appController.checkHealth();
       expect(result.status).toEqual('ok');
       expect(result.info.db.status).toEqual('up');
-      expect(result.info.vault.status).toEqual('up');
+      expect(result.info.secrets.status).toEqual('up');
     });
 
     it('should return a health check result with one service unhealthy', async () => {
       jest.spyOn(prismaHealthIndicator, 'isHealthy')
         .mockRejectedValue(new HealthCheckError("Prisma health check failed", null));
-      jest.spyOn(vaultHealthIndicator, 'isHealthy')
+      jest.spyOn(secretsHealthIndicator, 'isHealthy')
         .mockResolvedValue(new Promise((resolve) => {
-          resolve({ vault: { status: 'up' }} as HealthIndicatorResult);
+          resolve({ secrets: { status: 'up' }} as HealthIndicatorResult);
         }));
       await expect(appController.checkHealth()).rejects.toThrow(ServiceUnavailableException);
     });

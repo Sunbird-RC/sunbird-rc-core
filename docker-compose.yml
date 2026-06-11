@@ -233,12 +233,16 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/registry
+      - SECRET_PROVIDER=${SECRET_PROVIDER:-vault}
       - VAULT_ADDR=${VAULT_ADDR}
       - VAULT_TOKEN=${VAULT_TOKEN}
       - VAULT_BASE_URL=${VAULT_BASE_URL}
       - VAULT_ROOT_PATH=${VAULT_ROOT_PATH}
       - VAULT_TIMEOUT=${VAULT_TIMEOUT}
       - VAULT_PROXY=${VAULT_PROXY}
+      - AWS_REGION=${AWS_REGION:-}
+      - AWS_SECRETS_PREFIX=${AWS_SECRETS_PREFIX:-}
+      - AWS_SECRETS_PROBE_SECRET=${AWS_SECRETS_PROBE_SECRET:-rcw/identity/health}
       - SIGNING_ALGORITHM=${SIGNING_ALGORITHM}
       - JWKS_URI=${JWKS_URI}
       - ENABLE_AUTH=${ENABLE_AUTH}

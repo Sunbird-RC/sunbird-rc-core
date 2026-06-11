@@ -3,7 +3,7 @@ import { DidController } from './did.controller';
 import { InternalServerErrorException } from '@nestjs/common';
 import { DidService } from './did.service';
 import { PrismaService } from '../utils/prisma.service';
-import { VaultService } from '../utils/vault.service';
+import { SecretsModule } from '../secrets/secrets.module';
 import { ConfigService } from '@nestjs/config';
 
 describe('DidController', () => {
@@ -37,8 +37,9 @@ describe('DidController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [SecretsModule],
       controllers: [DidController],
-      providers: [DidService, PrismaService, ConfigService, VaultService]
+      providers: [DidService, PrismaService, ConfigService],
     }).compile();
 
     controller = module.get<DidController>(DidController);
