@@ -15,16 +15,25 @@
     <properties>
         <java.version>11</java.version>
         <!-- Security overrides -->
-        <tomcat.version>9.0.116</tomcat.version>
+        <tomcat.version>9.0.118</tomcat.version>
         <logback.version>1.2.13</logback.version>
+        <!-- CVE-2024-38821, CVE-2025-22228: spring-security → 5.8.16 (latest 5.8.x) -->
+        <spring-security.version>5.8.16</spring-security.version>
+        <!-- CVE-2024-22243/22259/22262, CVE-2025-41249: spring-framework → 5.3.39 (latest 5.3.x) -->
+        <spring-framework.version>5.3.39</spring-framework.version>
+        <!-- CVE-2022-1471: snakeyaml → 2.0 -->
+        <snakeyaml.version>2.0</snakeyaml.version>
+        <!-- CVE-2023-52428: nimbus-jose-jwt → 9.37.2 (also bumps json-smart transitively) -->
+        <nimbus-jose-jwt.version>9.37.2</nimbus-jose-jwt.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- CVE-2026-42198: postgresql → 42.7.11 -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>42.7.2</version>
+                <version>42.7.11</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -41,22 +50,7 @@
                 <artifactId>jackson-databind</artifactId>
                 <version>2.15.4</version>
             </dependency>
-            <!-- CVE-2024-38821: spring-security-web 5.7.11 → 5.7.13 -->
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-web</artifactId>
-                <version>5.7.13</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-core</artifactId>
-                <version>5.7.13</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-config</artifactId>
-                <version>5.7.13</version>
-            </dependency>
+            <!-- spring-security versions managed by <spring-security.version>5.8.16</spring-security.version> property -->
         </dependencies>
     </dependencyManagement>
 
