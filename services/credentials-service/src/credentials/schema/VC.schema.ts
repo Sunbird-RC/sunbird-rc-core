@@ -3,8 +3,10 @@ export class IssuedVerifiableCredential {
   id: string;
   type: ReadonlyArray<string>;
   issuer: string | { id: string };
-  issuanceDate: string;
-  expirationDate: string;
+  issuanceDate?: string;
+  expirationDate?: string;
+  validFrom?: string;
+  validUntil?: string;
   credentialSubject: JSON;
   proof: {
     type: string;

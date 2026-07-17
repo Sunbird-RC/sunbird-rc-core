@@ -8,6 +8,7 @@ import { RenderingUtilsService } from './utils/rendering.utils.service';
 import { PrismaClient } from '@prisma/client';
 import {
   generateCredentialRequestPayload,
+  generateV2CredentialRequestPayload,
   generateCredentialSchemaTestBody,
   getCredentialByIdSchema,
   issueCredentialReturnTypeSchema,
@@ -101,6 +102,39 @@ describe('CredentialsService', () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     VCValidator.parse(newCred.credential);
     expect(validate(newCred)).toBe(true);
+  });
+
+  it('should issue a VC 2.0 credential (validFrom/validUntil, v2 context)', async () => {
+    const v2Payload = generateV2CredentialRequestPayload(
+      issuerDID,
+      subjectDID,
+      credentialSchemaID,
+      sampleCredReqPayload.credentialSchemaVersion
+    );
+    const newCred = await service.issueCredential(v2Payload);
+    UnsignedVCValidator.parse(newCred.credential);
+    expect(newCred.credential['@context']).toContain(
+      'https://www.w3.org/ns/credentials/v2'
+    );
+    expect(newCred.credential['validFrom']).toBeDefined();
+    expect(newCred.credential['issuanceDate']).toBeUndefined();
+  });
+
+  it('should verify both a 1.1 and a 2.0 credential in the same run', async () => {
+    const v1Cred = await service.issueCredential(sampleCredReqPayload);
+    const v2Payload = generateV2CredentialRequestPayload(
+      issuerDID,
+      subjectDID,
+      credentialSchemaID,
+      sampleCredReqPayload.credentialSchemaVersion
+    );
+    const v2Cred = await service.issueCredential(v2Payload);
+
+    const v1Result = await service.verifyCredential(v1Cred.credential as any);
+    const v2Result = await service.verifyCredential(v2Cred.credential as any);
+
+    expect(v1Result.checks?.[0]?.proof).toBe('OK');
+    expect(v2Result.checks?.[0]?.proof).toBe('OK');
   });
 
   describe("getCredentialById", () => {

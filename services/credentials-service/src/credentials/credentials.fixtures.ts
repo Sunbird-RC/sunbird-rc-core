@@ -112,6 +112,52 @@ export const generateCredentialRequestPayload = (
   };
 };
 
+export const generateV2CredentialRequestPayload = (
+  issuerid,
+  subjectid,
+  schemaid,
+  credentialSchemaVersion
+) => {
+  return {
+    credential: {
+      '@context': [
+        'https://www.w3.org/ns/credentials/v2',
+        {
+          "schema": "https://schema.org/",
+          "UniversityDegreeCredential": {
+            "@id": "urn:UniversityDegreeCredential",
+            "@context": {
+              "@version": 1.1,
+              "@protected": true,
+              "id": "@id",
+              "type": "@type",
+              "grade": "schema:grade",
+              "programme": "schema:programme",
+              "certifyingInstitute": "schema:certifyingInstitute",
+              "evaluatingInstitute": "schema:evaluatingInstitute"
+            }
+          }
+        }
+      ],
+      type: ['VerifiableCredential', 'UniversityDegreeCredential'],
+      issuer: issuerid,
+      validFrom: '2023-02-06T11:56:27.259Z',
+      validUntil: '2023-02-08T11:56:27.259Z',
+      credentialSubject: {
+        id: subjectid,
+        type: "UniversityDegreeCredential",
+        grade: '9.23',
+        programme: 'B.Tech',
+        certifyingInstitute: 'IIIT Sonepat',
+        evaluatingInstitute: 'NIT Kurukshetra',
+      },
+    },
+    credentialSchemaId: schemaid,
+    credentialSchemaVersion: credentialSchemaVersion,
+    tags: ['tag1', 'tag2', 'tag3'],
+  };
+};
+
 export const issueCredentialReturnTypeSchema = {
   type: 'object',
   properties: {
