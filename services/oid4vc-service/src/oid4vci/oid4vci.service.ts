@@ -164,7 +164,11 @@ export class Oid4vciService {
     }
     return {
       credential_issuer: this.config.publicUrl,
-      credential_configuration_ids: [configId],
+      // draft-13 offers list `credentials`; final-1.0 offers list
+      // `credential_configuration_ids` — matches issuerMetadata()'s split.
+      ...(this.config.draft13CompatMode
+        ? { credentials: [configId] }
+        : { credential_configuration_ids: [configId] }),
       grants: { [PREAUTH_GRANT]: grant },
     };
   }

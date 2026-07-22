@@ -13,6 +13,7 @@
     { "key": "holder_did", "value": "" },
     { "key": "impostor_did", "value": "" },
     { "key": "schema_id", "value": "" },
+    { "key": "offer_id", "value": "" },
     { "key": "pre_auth_code", "value": "" },
     { "key": "access_token", "value": "" },
     { "key": "c_nonce", "value": "" },
@@ -98,7 +99,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{schema_base}}/credential-schema",
-            "body": { "mode": "raw", "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"OID4VC Pilot Credential\",\n    \"author\": \"{{issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"OID4VC-Pilot-Credential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"type\": \"object\",\n      \"properties\": { \"name\": { \"type\": \"string\" } },\n      \"required\": [\"name\"],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"oid4vc-pilot\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"ldp_vc\", \"jwt_vc_json\"],\n    \"display\": [{ \"name\": \"OID4VC Pilot Credential\", \"locale\": \"en-US\" }]\n  }\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"OID4VC Pilot Credential\",\n    \"author\": \"{{issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"OID4VC-Pilot-Credential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"Pilot credential for OID4VC Postman collection testing\",\n      \"type\": \"object\",\n      \"properties\": { \"name\": { \"type\": \"string\" } },\n      \"required\": [\"name\"],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"oid4vc-pilot\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"ldp_vc\", \"jwt_vc_json\"],\n    \"display\": [{ \"name\": \"OID4VC Pilot Credential\", \"locale\": \"en-US\" }]\n  }\n}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
             "const json = pm.response.json();",
@@ -135,6 +136,7 @@
             "const json = pm.response.json();",
             "const grant = json.credential_offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
             "pm.collectionVariables.set('pre_auth_code', grant['pre-authorized_code']);",
+            "pm.collectionVariables.set('offer_id', json.offer_id);",
             "pm.test('offer created', () => pm.expect(json.offer_id).to.not.be.undefined);",
             "pm.test('credential_configuration_ids matches metadata key', () => {",
             "  pm.expect(json.credential_offer.credential_configuration_ids[0]).to.eql('OID4VC Pilot Credential_jwt_vc_json');",
@@ -144,8 +146,13 @@
         {
           "name": "Dereference offer (wallet)",
           "request": { "method": "GET", "url": "{{oid4vc_base}}/oid4vc/offer/{{offer_id}}" },
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "// offer_id isn't chained separately above for brevity; this step is optional/informational."
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('offer dereferences with matching grant', () => {",
+            "  pm.response.to.have.status(200);",
+            "  const grant = json.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+            "  pm.expect(grant['pre-authorized_code']).to.eql(pm.collectionVariables.get('pre_auth_code'));",
+            "});"
           ]}}]
         },
         {
@@ -399,7 +406,37 @@
           ]}}]
         },
         {
-          "name": "N19 setup - Impostor signs someone else's credential",
+          "name": "N19 setup (a) - Verifier creates a fresh DCQL request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{oid4vc_base}}/vp/request",
+            "body": { "mode": "raw", "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"name\"] }] }]\n  }\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.collectionVariables.set('vp_transaction_id', json.transaction_id);",
+            "pm.collectionVariables.set('vp_request_uri', json.request_uri);"
+          ]}}]
+        },
+        {
+          "name": "N19 setup (b) - Wallet fetches the fresh JAR",
+          "request": { "method": "GET", "url": "{{vp_request_uri}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const jwt = pm.response.text();",
+            "const parts = jwt.split('.');",
+            "function b64urlDecode(str) {",
+            "  str = str.replace(/-/g, '+').replace(/_/g, '/');",
+            "  while (str.length % 4) str += '=';",
+            "  return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));",
+            "}",
+            "const payload = JSON.parse(b64urlDecode(parts[1]));",
+            "pm.collectionVariables.set('vp_nonce', payload.nonce);",
+            "pm.collectionVariables.set('vp_state', payload.state);"
+          ]}}]
+        },
+        {
+          "name": "N19 setup (c) - Impostor signs someone else's credential",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -407,8 +444,7 @@
             "body": { "mode": "raw", "raw": "{\n  \"DID\": \"{{impostor_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.collectionVariables.set('vp_jwt', pm.response.json().jwt);",
-            "// NOTE: run a fresh 'Verifier creates DCQL request' + JAR-fetch first so state/nonce are live before this."
+            "pm.collectionVariables.set('vp_jwt', pm.response.json().jwt);"
           ]}}]
         },
         {

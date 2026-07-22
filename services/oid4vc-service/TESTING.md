@@ -416,6 +416,23 @@ checkout):
    `credential_configurations_supported` — a real wallet correlating the
    offer against issuer metadata would never find a match. Fixed to use the
    canonical `<name>` / `<name>_<format>` id.
+5. `oid4vci.service.ts`'s `buildOfferObject()` always emitted
+   `credential_configuration_ids` regardless of `DRAFT13_COMPAT_MODE` — draft-13
+   offers should use a `credentials` field instead. Fixed to branch on the flag,
+   matching what `issuerMetadata()` already did.
+6. `credential-schema`'s `SchemaController` had `@UseInterceptors(CacheInterceptor)`
+   at the **controller level**, caching `GET /credential-schema/oid4vci-configs`
+   under a single, unparameterized cache key with no TTL set (defaults to
+   effectively-permanent, evicted only by the `max: 1000` LRU limit or a
+   restart). Found by a Postman/newman regression run: a schema created and
+   opted into OID4VCI moments earlier was invisible to a follow-up call to
+   this endpoint, even though the row existed in Postgres. Since
+   `oid4vc-service` polls this exact endpoint live for both issuer metadata
+   and offer-creation validation, a newly onboarded schema could stay
+   invisible indefinitely — `POST /oid4vc/offer` would 404 as "not enabled"
+   until the cache entry happened to be evicted. Fixed by moving the
+   interceptor off the controller and onto only the other three (properly
+   parameterized, less mutation-sensitive) `GET` routes.
 
 Still-open items worth knowing about (not fixed, out of scope for this pass):
 

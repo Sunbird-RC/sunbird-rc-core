@@ -25,12 +25,18 @@ import { VCModelSchema } from './entities/VCModelSchema.entity';
 import { SchemaService } from './schema.service';
 
 @Controller('credential-schema')
-@UseInterceptors(CacheInterceptor)
 export class SchemaController {
   constructor(private readonly schemaService: SchemaService) {}
 
   // Registered before the ':id' routes so 'oid4vci-configs' is not swallowed
   // by the single-segment @Get(':id') matcher.
+  //
+  // Deliberately NOT cached: oid4vc-service polls this endpoint live for both
+  // issuer metadata (credential_configurations_supported) and offer creation
+  // (POST /oid4vc/offer). This route has a single, unparameterized cache key,
+  // so caching it here previously meant a schema newly opted into OID4VCI
+  // could stay invisible to oid4vc-service indefinitely (until LRU eviction
+  // or a restart) — offers for it would silently 404 as "not enabled".
   @Get('oid4vci-configs')
   @ApiOperation({ summary: 'List published schemas opted into OID4VCI' })
   @ApiOkResponse({ status: 200, description: 'OID4VCI-enabled schema configs' })
@@ -40,6 +46,7 @@ export class SchemaController {
 
   // TODO: Add role based guards here
   @Get(':id/:ver')
+  @UseInterceptors(CacheInterceptor)
   @ApiQuery({ name: 'id', required: true, type: String })
   @ApiOperation({ summary: 'Get a Verifiable Credential Schema by id (did)' })
   @ApiOkResponse({
@@ -64,6 +71,7 @@ export class SchemaController {
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   @ApiQuery({ name: 'id', required: true, type: String })
   @ApiOperation({ summary: 'Get a Verifiable Credential Schema by id (did)' })
   @ApiOkResponse({
@@ -88,6 +96,7 @@ export class SchemaController {
   }
 
   @Get(':id')
+  @UseInterceptors(CacheInterceptor)
   async getAllSchemasWithId(@Param('id') id: string) {
     return this.schemaService.getAllSchemasById(id);
   }

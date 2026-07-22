@@ -1,4 +1,4 @@
-# oid4vc-service — Production Deployment & Inji Wallet Testing Guide
+# oid4vc-service — Production Deployment & Wallet Testing Guide
 
 Companion to `README.md` (architecture), `TESTING.md` (verified manual test
 cases), and `API_FLOW_DESIGN.md` (sequence diagrams). This doc covers:
@@ -8,6 +8,8 @@ cases), and `API_FLOW_DESIGN.md` (sequence diagrams). This doc covers:
 3. Step-by-step deployment
 4. How to test against MOSIP's Inji Wallet, including two known integration
    gaps you should fix or work around first
+5. How to test against the **EUDI reference wallet** — recommended as the
+   easier, more natural interop target for this codebase (see §5.1 for why)
 
 ---
 
@@ -370,3 +372,98 @@ step 3 above):
 - [mosip/inji-config repository](https://github.com/mosip/inji-config)
 - [MOSIP community: Mimoto issuer-validation startup failure thread](https://community.mosip.io/t/mimoto-v0-19-2-fails-during-startup-issuer-validation-when-issuer-config-is-loaded-from-local-filesystem/2573)
 - [MOSIP Inji Certify developer-release announcement](https://www.biometricupdate.com/202511/mosip-advances-tool-for-verifiable-credential-issuance-with-developer-release)
+
+---
+
+## 5. Testing with the EUDI Reference Wallet
+
+### 5.1 Why this is arguably the better interop target for this codebase
+
+Unlike Inji Wallet (§4), the EUDI reference wallet (`eu-digital-identity-wallet`
+org on GitHub — Android/iOS apps, part of the EU's ARF reference
+implementation) fits this codebase with **no compat-mode flag and no
+intermediary backend**:
+
+- It supports adding **any issuer by URL directly** — no static
+  pre-registration file, no Mimoto-equivalent required. The wallet does
+  dynamic discovery against the issuer's own `.well-known/openid-credential-issuer`.
+- It natively scans **Credential Offer** deep links / QR codes in exactly
+  the format `oid4vc-service` already produces:
+  `openid-credential-offer://?credential_offer_uri=ENCODED_URL` — this is
+  verbatim the `qr_data` field returned by `POST /oid4vc/offer`
+  (`oid4vci.service.ts:createOffer`, verified in `TESTING.md` §4 P6).
+- It targets **final OID4VCI/OID4VP**, not draft-13 — which is exactly what
+  `oid4vc-service` implements by default (`DRAFT13_COMPAT_MODE=false`, no
+  fix needed here unlike the Inji path in §4.2).
+- **DCQL** is the query language on the presentation side, matching Plan.md's
+  explicit choice (*"DCQL (OID4VP 1.0 final; Presentation Exchange
+  dropped)"*) — no Presentation Exchange adapter needed.
+
+### 5.2 One thing to pick deliberately: credential format
+
+The EU wallet ecosystem is built primarily around `mso_mdoc` (ISO 18013-5
+mobile documents) and `vc+sd-jwt` (IETF SD-JWT VC), with `ldp_vc`/plain
+`jwt_vc_json` being less central to that world. `oid4vc-service` does **not**
+implement `mso_mdoc` at all, but `vc+sd-jwt` is fully wired end-to-end already
+(confirmed by reading the code, not assumed):
+- `identity-service`'s `JwtSignerService.signSdJwt()` / `verifySdJwt()` (`src/vc/jwt.service.ts:169-262`)
+- `credentials-service`'s `CredentialFormatService` has a `case 'vc+sd-jwt'` branch (`src/credentials/utils/credential-format.service.ts:36`)
+- `oid4vc-service`'s VP side already normalizes `vc+sd-jwt` presentations in `extractCredentials()` (`src/oid4vp/oid4vp.service.ts` — detects the `~` disclosure separator)
+
+**Recommendation:** opt your test schema into `vc+sd-jwt` (alongside or
+instead of `jwt_vc_json`) and issue/present in that format for the EUDI
+wallet test — it's the format that ecosystem actually expects, and this
+repo already supports it, it just wasn't the format exercised in
+`TESTING.md`'s manual runs (those used `jwt_vc_json` throughout).
+
+### 5.3 One real open risk: OID4VP draft-version drift
+
+The EUDI Android wallet's own README describes its presentation support as
+*"OpenID4VP - draft 24"*, not explicitly "1.0 final." Late OID4VP drafts and
+the final 1.0 spec are close but not guaranteed byte-identical (response
+encryption requirements and a few request-object details shifted across late
+drafts). `oid4vc-service` implements plain `direct_post` with an unencrypted
+JAR. **Verify this specific point in your first test** — if the wallet
+insists on `direct_post.jwt` (encrypted response) or a slightly different JAR
+shape, that's a real gap to close, not assumed to already work. This is the
+EUDI-side analogue of the Inji draft-13 caveat in §4.2 — flagging it now so
+you check it, not so you avoid testing.
+
+### 5.4 Step-by-step
+
+1. Install/build the EUDI reference wallet app (Android:
+   `eu-digital-identity-wallet/eudi-app-android-wallet-ui`; a public test
+   APK may also be available from the project — check current releases).
+2. Opt a test schema into OID4VCI with `"oid4vciFormats": ["vc+sd-jwt"]`
+   (per §5.2), following the same pattern as `TESTING.md` §4 P4.
+3. Confirm metadata is final-1.0 shaped (default, no flag needed):
+   ```bash
+   curl -s https://<host>/.well-known/openid-credential-issuer
+   # expect: "credential_configurations_supported", vct present on the
+   # vc+sd-jwt entry
+   ```
+4. Create an offer (`credential_configuration_id`, `format: "vc+sd-jwt"`)
+   and take the `qr_data` string from the response.
+5. Render `qr_data` as a QR code and scan it with the EUDI wallet app — it
+   should resolve the `credential_offer_uri`, fetch your issuer metadata,
+   and present the offered credential(s) for the user to accept.
+6. Confirm in your logs the same sequence verified manually in `TESTING.md`
+   §4 P6: `GET /oid4vc/offer/:id` → `POST /oid4vc/token` →
+   `POST /oid4vc/credential`, now from the EUDI wallet's device/emulator.
+7. For OID4VP: create a `POST /vp/request` with a DCQL query matching the
+   `vc+sd-jwt` credential's disclosable claims, get the `qr_data`
+   (`openid4vp://...`), scan it with the wallet, and confirm `GET /vp/status/:id`
+   comes back `verified: true` with all six checks `OK` — same acceptance
+   bar as `TESTING.md` §4 P8, now from a real device. If the wallet's
+   `direct_post` request looks different than expected (per §5.3), you'll
+   see it fail at the `holderSignature`/JAR-parsing step first, before any
+   of the credential-specific checks run.
+
+### 5.5 Sources (EUDI research)
+
+- [eudi-app-android-wallet-ui README](https://github.com/eu-digital-identity-wallet/eudi-app-android-wallet-ui/blob/main/README.md)
+- [eudi-app-android-wallet-ui repository](https://github.com/eu-digital-identity-wallet/eudi-app-android-wallet-ui)
+- [eu-digital-identity-wallet GitHub org (all reference repos)](https://github.com/orgs/eu-digital-identity-wallet/repositories)
+- [eudi-srv-web-issuing-eudiw-py — reference PID/mDL/EAA issuer (OID4VCI)](https://github.com/eu-digital-identity-wallet/eudi-srv-web-issuing-eudiw-py)
+- [eudi-srv-pid-issuer — reference PID/mDL microservice issuer](https://github.com/eu-digital-identity-wallet/eudi-srv-pid-issuer)
+- [walt.id — EUDI Wallet / eIDAS2 overview](https://walt.id/eidas2/eudi-wallet)
