@@ -122,7 +122,17 @@ export class CredentialsController {
 
   @Post('/verify')
   verifyCredential(@Body() verifyRequest: VerifyCredentialDTO) {
-    return this.credentialsService.verifyCredential(verifyRequest.verifiableCredential);
+    return this.credentialsService.verifyCredential(
+      verifyRequest.verifiableCredential as any,
+      undefined,
+      verifyRequest.options
+    );
+  }
+
+  @Get('status-list/:id')
+  @ApiResponse({ description: 'Returns the signed StatusList/RevocationList2020 credential' })
+  getStatusListCredential(@Param('id') id: string) {
+    return this.credentialsService.getStatusListCredential(id);
   }
 
   @Get('revocation-list')

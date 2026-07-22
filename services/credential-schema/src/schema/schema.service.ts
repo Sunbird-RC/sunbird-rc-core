@@ -65,6 +65,37 @@ export class SchemaService {
     }
   }
 
+  // Returns published schemas that have opted into OID4VCI
+  // (oid4vciConfig.oid4vciEnabled === true). Consumed by oid4vc-service to
+  // build the issuer metadata (credential_configurations_supported).
+  async getOid4vciConfigs() {
+    let schemas: VerifiableCredentialSchema[];
+    try {
+      schemas = await this.prisma.verifiableCredentialSchema.findMany({
+        where: { status: SchemaStatus.PUBLISHED },
+      });
+    } catch (err) {
+      this.logger.error('Error fetching OID4VCI configs', err);
+      throw new InternalServerErrorException('Error fetching OID4VCI configs');
+    }
+    return schemas
+      .filter((s) => (s.oid4vciConfig as any)?.oid4vciEnabled === true)
+      .map((s) => {
+        const cfg = (s.oid4vciConfig as any) || {};
+        return {
+          schemaId: s.id,
+          version: s.version,
+          name: s.name,
+          type: s.type,
+          tags: s.tags,
+          formats: cfg.oid4vciFormats || ['ldp_vc'],
+          vct: cfg.vct || s.name,
+          display: cfg.display || [{ name: s.name }],
+          schema: s.schema,
+        };
+      });
+  }
+
   async getAllSchemasById(id: string) {
     try {
       const schemas = await this.prisma.verifiableCredentialSchema.findMany({
@@ -189,6 +220,7 @@ export class SchemaService {
             proof: credSchema.schema.proof as Prisma.JsonValue || undefined,
             tags: credSchema.tags as string[],
             deprecatedId: deprecatedId,
+            oid4vciConfig: (createCredentialDto.oid4vciConfig as unknown as Prisma.InputJsonValue) || undefined,
           },
         });
 

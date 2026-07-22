@@ -29,6 +29,15 @@ import { SchemaService } from './schema.service';
 export class SchemaController {
   constructor(private readonly schemaService: SchemaService) {}
 
+  // Registered before the ':id' routes so 'oid4vci-configs' is not swallowed
+  // by the single-segment @Get(':id') matcher.
+  @Get('oid4vci-configs')
+  @ApiOperation({ summary: 'List published schemas opted into OID4VCI' })
+  @ApiOkResponse({ status: 200, description: 'OID4VCI-enabled schema configs' })
+  getOid4vciConfigs() {
+    return this.schemaService.getOid4vciConfigs();
+  }
+
   // TODO: Add role based guards here
   @Get(':id/:ver')
   @ApiQuery({ name: 'id', required: true, type: String })

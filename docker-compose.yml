@@ -286,9 +286,43 @@ services:
       - JWKS_URI=${JWKS_URI}
       - ENABLE_AUTH=${ENABLE_AUTH}
       - QR_TYPE=${QR_TYPE}
+      - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-false}
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # OID4VCI / OID4VP protocol facade (optional; part of the 'oid4vc' profile).
+  # Deploying it changes nothing existing — the registry only calls it when
+  # oid4vc.enabled=true, and its routes are separate nginx locations.
+  oid4vc-service:
+    image: ghcr.io/sunbird-rc/sunbird-rc-oid4vc-service:${RELEASE_VERSION}
+    build: ./services/oid4vc-service
+    profiles: ["oid4vc"]
+    ports:
+      - "3400:3400"
+    depends_on:
+      credential:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+    environment:
+      - PORT=3400
+      - PUBLIC_URL=${OID4VC_PUBLIC_URL-http://localhost:3400}
+      - CREDENTIAL_SERVICE_BASE_URL=${CREDENTIAL_SERVICE_BASE_URL-http://credential:3000}
+      - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
+      - SCHEMA_BASE_URL=${SCHEMA_BASE_URL}
+      - REDIS_URL=${OID4VC_REDIS_URL-redis://redis:6379}
+      - SESSION_STORE=${OID4VC_SESSION_STORE-memory}
+      - ISSUER_DID=${OID4VC_ISSUER_DID-}
+      - OID4VP_ENABLED=${OID4VP_ENABLED-true}
+      - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3400/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
