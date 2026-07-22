@@ -5,13 +5,12 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import formbody from '@fastify/formbody';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // OID4VC token + direct_post endpoints use application/x-www-form-urlencoded;
+  // FastifyAdapter registers this content-type parser by default.
   const adapter = new FastifyAdapter();
-  // OID4VC token + direct_post endpoints use application/x-www-form-urlencoded.
-  await adapter.register(formbody as any);
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,

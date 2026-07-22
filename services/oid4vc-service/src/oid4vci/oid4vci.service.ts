@@ -111,11 +111,14 @@ export class Oid4vciService {
     if (!cfg.formats.includes(format)) {
       throw new BadRequestException(`Format '${format}' not supported for this credential`);
     }
+    // Must match the key issuerMetadata() publishes under
+    // credential_configurations_supported so wallets can correlate the offer.
+    const configId = cfg.formats.length > 1 ? `${cfg.name}_${format}` : cfg.name;
 
     const id = uuid();
     const preAuthCode = this.randomToken();
     const session: OfferSession = {
-      credentialConfigurationId: body.credential_configuration_id,
+      credentialConfigurationId: configId,
       format,
       schemaId: cfg.schemaId,
       schemaVersion: cfg.version,
@@ -129,7 +132,7 @@ export class Oid4vciService {
     // Index by pre-auth code for the token endpoint.
     await this.store.set(`oid4vc:code:${preAuthCode}`, { offerId: id }, this.config.ttl.offer);
 
-    const offerObject = this.buildOfferObject(id, preAuthCode, session.txCodeRequired);
+    const offerObject = this.buildOfferObject(configId, preAuthCode, session.txCodeRequired);
     const offerUri = `${this.config.publicUrl}/oid4vc/offer/${id}`;
     const qrData = `openid-credential-offer://?credential_offer_uri=${encodeURIComponent(offerUri)}`;
 
@@ -144,10 +147,14 @@ export class Oid4vciService {
   async getOffer(id: string) {
     const session = await this.store.get<OfferSession>(`oid4vc:offer:${id}`);
     if (!session) throw new NotFoundException('Offer not found or expired');
-    return this.buildOfferObject(id, session.preAuthCode, session.txCodeRequired);
+    return this.buildOfferObject(
+      session.credentialConfigurationId,
+      session.preAuthCode,
+      session.txCodeRequired,
+    );
   }
 
-  private buildOfferObject(id: string, preAuthCode: string, txCodeRequired: boolean) {
+  private buildOfferObject(configId: string, preAuthCode: string, txCodeRequired: boolean) {
     const grant: any = { 'pre-authorized_code': preAuthCode };
     if (this.config.draft13CompatMode) {
       // draft-13 idiom
@@ -157,7 +164,7 @@ export class Oid4vciService {
     }
     return {
       credential_issuer: this.config.publicUrl,
-      credential_configuration_ids: [id],
+      credential_configuration_ids: [configId],
       grants: { [PREAUTH_GRANT]: grant },
     };
   }
