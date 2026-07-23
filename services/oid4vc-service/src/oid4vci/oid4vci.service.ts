@@ -9,10 +9,11 @@ import { v4 as uuid } from 'uuid';
 import * as crypto from 'crypto';
 import { SESSION_STORE, SessionStore } from '../session/session-store.interface';
 import { CredentialsClient } from '../clients/credentials.client';
-import { SchemaClient } from '../clients/schema.client';
+import { SchemaClient, Oid4vciSchemaConfig } from '../clients/schema.client';
 import { TokenService } from './token.service';
 import { PopService } from './pop.service';
 import { loadConfig } from '../config/configuration';
+import { digestMultibase } from '../utils/multibase.util';
 
 const PREAUTH_GRANT = 'urn:ietf:params:oauth:grant-type:pre-authorized_code';
 
@@ -29,6 +30,16 @@ interface OfferSession {
   tags: string[];
   // Optional deferred: when set, issuance waits on this claim id.
   deferredClaimId?: string;
+  // W3C VC Render Method (https://www.w3.org/TR/vc-render-method/) entry to
+  // embed in the issued credential, pre-resolved at offer-creation time
+  // (URL + digest) since only ldp_vc/jwt_vc_json carry a full W3C-shaped VC
+  // object that has somewhere to put it.
+  renderMethod?: Record<string, any>;
+  // mso_mdoc (ISO/IEC 18013-5) docType/namespace config, carried from the
+  // schema's oid4vciConfig.mdoc when format === 'mso_mdoc'.
+  docType?: string;
+  namespace?: string;
+  elementMapping?: Record<string, { namespace: string; elementIdentifier: string }>;
 }
 
 // Core OID4VCI orchestration. Owns short-lived session state (offers, codes,
@@ -63,17 +74,29 @@ export class Oid4vciService {
         // per-record by credential-schema and is always unique, so it's the
         // only safe basis for the actual OID4VCI `credential_configuration_id`.
         const id = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
+        // mso_mdoc has no credentialSubject/type concept — OID4VCI's own
+        // profile for it uses `doctype` and per-namespace `claims` display
+        // instead of `credential_definition.type`, mirroring how `vct` is
+        // the vc+sd-jwt-only field just above.
+        const isMdoc = format === 'mso_mdoc';
         supported[id] = {
           format,
           scope: cfg.name,
           cryptographic_binding_methods_supported: ['did:web', 'did:key', 'jwk'],
-          credential_signing_alg_values_supported: ['ES256', 'Ed25519Signature2020'],
+          credential_signing_alg_values_supported: isMdoc ? ['ES256'] : ['ES256', 'Ed25519Signature2020'],
           proof_types_supported: { jwt: { proof_signing_alg_values_supported: ['ES256'] } },
           ...(format === 'vc+sd-jwt' ? { vct: cfg.vct } : {}),
           display: cfg.display,
-          credential_definition: {
-            type: ['VerifiableCredential', cfg.name],
-          },
+          ...(isMdoc
+            ? {
+                doctype: cfg.mdoc?.docType,
+                claims: { [cfg.mdoc?.namespace]: {} },
+              }
+            : {
+                credential_definition: {
+                  type: ['VerifiableCredential', cfg.name],
+                },
+              }),
           // internal hint (not part of the spec response consumers care about)
           _schema: { id: cfg.schemaId, version: cfg.version, tags: cfg.tags },
         };
@@ -148,6 +171,11 @@ export class Oid4vciService {
     if (!cfg.formats.includes(format)) {
       throw new BadRequestException(`Format '${format}' not supported for this credential`);
     }
+    if (format === 'mso_mdoc' && !cfg.mdoc) {
+      throw new BadRequestException(
+        `Schema '${cfg.schemaId}' is missing oid4vciConfig.mdoc (docType/namespace) required for mso_mdoc`,
+      );
+    }
     // Must match the key issuerMetadata() publishes under
     // credential_configurations_supported so wallets can correlate the offer.
     const configId = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
@@ -172,6 +200,10 @@ export class Oid4vciService {
       txCodeRequired: !!body.tx_code_required,
       tags: body.tags || cfg.tags || [cfg.name],
       deferredClaimId: body.deferred_claim_id,
+      renderMethod: this.resolveRenderMethod(cfg, format),
+      docType: cfg.mdoc?.docType,
+      namespace: cfg.mdoc?.namespace,
+      elementMapping: cfg.mdoc?.elementMapping,
     };
     await this.store.set(`oid4vc:offer:${id}`, session, this.config.ttl.offer);
     // Index by pre-auth code for the token endpoint.
@@ -371,6 +403,12 @@ export class Oid4vciService {
         ...(holderDid ? { id: holderDid } : {}),
         ...session.claims,
       },
+      // W3C VC Render Method (https://www.w3.org/TR/vc-render-method/) —
+      // resolved once at offer-creation time (resolveRenderMethod()); the
+      // per-type @vocab context above already covers its terms too, since
+      // it maps any undefined property to a generic IRI rather than just
+      // the schema's own claim names.
+      ...(session.renderMethod ? { renderMethod: [session.renderMethod] } : {}),
     };
     const res = await this.credentials.issue({
       credential,
@@ -379,14 +417,67 @@ export class Oid4vciService {
       tags: session.tags,
       format: session.format,
       holderJwk,
+      // mso_mdoc-only: the generic W3C `credential` object above is still
+      // built (and still schema-validated against its flat
+      // credentialSubject) for consistency with every other format, but the
+      // actual signed wire content for mdoc comes from these fields instead
+      // — see credential-format.service.ts signMdoc().
+      ...(session.format === 'mso_mdoc'
+        ? { docType: session.docType, namespaces: this.buildMdocNamespaces(session) }
+        : {}),
     });
     return res.credential;
+  }
+
+  // Maps flat OID4VCI claims into mdoc's {namespace: {elementIdentifier:
+  // value}} shape, using elementMapping to override the default namespace
+  // for specific claim names when they don't already match an ISO-registered
+  // element identifier in that namespace.
+  private buildMdocNamespaces(session: OfferSession): Record<string, Record<string, any>> {
+    const namespaces: Record<string, Record<string, any>> = {};
+    for (const [claim, value] of Object.entries(session.claims)) {
+      const mapping = session.elementMapping?.[claim];
+      const ns = mapping?.namespace || session.namespace;
+      const elementId = mapping?.elementIdentifier || claim;
+      namespaces[ns] = { ...(namespaces[ns] || {}), [elementId]: value };
+    }
+    return namespaces;
   }
 
   // Hook point for deferred issuance backed by the attestation/claim workflow.
   // Default (no claim workflow wired): treat as ready.
   private async isClaimReady(_claimId: string): Promise<boolean> {
     return true;
+  }
+
+  // W3C VC Render Method (https://www.w3.org/TR/vc-render-method/): only
+  // applies to formats that carry a full W3C-shaped VC object to attach it
+  // to (ldp_vc, jwt_vc_json) — vc+sd-jwt has its own, separate IETF
+  // mechanism (SD-JWT VC Type Metadata) and mso_mdoc has no analog. Resolved
+  // once at offer-creation time (not per-issuance) since the URL/digest are
+  // fixed for a given schema.
+  private resolveRenderMethod(
+    cfg: Oid4vciSchemaConfig,
+    format: string,
+  ): Record<string, any> | undefined {
+    const rm = cfg.renderMethod;
+    if (!rm || (format !== 'ldp_vc' && format !== 'jwt_vc_json')) return undefined;
+    const base = {
+      type: rm.type || 'SvgRenderingTemplate',
+      ...(rm.name ? { name: rm.name } : {}),
+      ...(rm.cssMediaQuery ? { css3MediaQuery: rm.cssMediaQuery } : {}),
+    };
+    if (rm.svg) {
+      return {
+        id: `${this.config.publicUrl}/render-templates/${encodeURIComponent(cfg.schemaId)}`,
+        ...base,
+        digestMultibase: digestMultibase(rm.svg),
+      };
+    }
+    if (rm.url) {
+      return { id: rm.url, ...base };
+    }
+    return undefined;
   }
 
   private randomToken(): string {

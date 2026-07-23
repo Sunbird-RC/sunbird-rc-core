@@ -26,7 +26,12 @@ export class CredentialFormatService {
     credInReq: W3CCredential,
     issuer: IssuerType,
     format: CredentialFormat = 'ldp_vc',
-    opts: { disclosable?: string[]; holderJwk?: Record<string, any> } = {}
+    opts: {
+      disclosable?: string[];
+      holderJwk?: Record<string, any>;
+      docType?: string;
+      namespaces?: Record<string, Record<string, any>>;
+    } = {}
   ): Promise<SignResult> {
     switch (format) {
       case 'ldp_vc':
@@ -35,6 +40,8 @@ export class CredentialFormatService {
         return this.signJwtVc(credInReq, issuer);
       case 'vc+sd-jwt':
         return this.signSdJwtVc(credInReq, issuer, opts);
+      case 'mso_mdoc':
+        return this.signMdoc(credInReq, issuer, opts);
       default:
         throw new InternalServerErrorException(`Unsupported format: ${format}`);
     }
@@ -85,6 +92,26 @@ export class CredentialFormatService {
     delete payload.id; // subject.id already mapped to sub
     const sdJwt = await this.identityUtilsService.signSdJwt(issuer, payload, disclosable, {});
     return { signed: this.envelope(credInReq.id, `data:application/vc+sd-jwt,${sdJwt}`), enveloped: sdJwt };
+  }
+
+  // mso_mdoc has no W3C credentialSubject shape at all — claims live under
+  // {namespace: {element: value}}, supplied via opts.namespaces rather than
+  // derived from credInReq.credentialSubject like every other format.
+  private async signMdoc(
+    credInReq: W3CCredential,
+    issuer: IssuerType,
+    opts: { holderJwk?: Record<string, any>; docType?: string; namespaces?: Record<string, Record<string, any>> }
+  ): Promise<SignResult> {
+    if (!opts.docType || !opts.namespaces) {
+      throw new InternalServerErrorException('mso_mdoc requires docType and namespaces');
+    }
+    const mdoc = await this.identityUtilsService.signMdoc(
+      issuer,
+      opts.docType,
+      opts.namespaces,
+      opts.holderJwk,
+    );
+    return { signed: this.envelope(credInReq.id, `data:application/mdoc,${mdoc}`), enveloped: mdoc };
   }
 
   // W3C VC Data Model 2.0 EnvelopedVerifiableCredential wrapper — lets the

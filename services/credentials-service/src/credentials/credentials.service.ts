@@ -244,8 +244,14 @@ export class CredentialsService {
   ) {
     try {
       const isSdJwt = compact.includes('~');
+      // A compact JWS always has exactly 2 '.' separators; base64url (our
+      // mdoc envelope) never contains '.' at all — an unambiguous, cheap
+      // shape check without needing the caller to pass the format down.
+      const isJwt = !isSdJwt && compact.includes('.');
+      const isMdoc = !isSdJwt && !isJwt;
       let verified: boolean;
       let claims: any;
+      let mdocDocType: string | undefined;
       if (isSdJwt) {
         const res = await this.identityUtilsService.verifySdJwt(compact, undefined, {
           nonce: options?.challenge,
@@ -253,13 +259,24 @@ export class CredentialsService {
         });
         verified = res.verified;
         claims = res.claims;
+      } else if (isMdoc) {
+        const res = await this.identityUtilsService.verifyMdoc(compact);
+        verified = res.verified;
+        claims = res.claims;
+        mdocDocType = res.docType;
       } else {
         const res = await this.identityUtilsService.verifyJwt(compact);
         verified = res.verified;
         claims = res.payload?.vc || res.payload;
       }
 
-      const expEpoch = claims?.exp || (claims?.expirationDate ? new Date(claims.expirationDate).getTime() / 1000 : undefined);
+      // mdoc has no exp/expirationDate concept at this level (validity is
+      // its own validityInfo, already checked inside verifyMdoc's digest
+      // pass) — treat as non-expiring here rather than misreading namespace
+      // claims as JWT-shaped expiry fields.
+      const expEpoch = isMdoc
+        ? undefined
+        : claims?.exp || (claims?.expirationDate ? new Date(claims.expirationDate).getTime() / 1000 : undefined);
       const expired = expEpoch && expEpoch * 1000 < Date.now() ? 'NOK' : 'OK';
 
       const credentialStatus = claims?.credentialStatus || claims?.vc?.credentialStatus;
@@ -275,6 +292,7 @@ export class CredentialsService {
             proof: verified ? 'OK' : 'NOK',
           },
         ],
+        ...(mdocDocType ? { docType: mdocDocType } : {}),
       };
     } catch (e) {
       this.logger.error('Error verifying enveloped credential: ', e);
@@ -441,7 +459,12 @@ export class CredentialsService {
         credInReq,
         credInReq.issuer,
         format,
-        { disclosable: issueRequest.disclosable, holderJwk: issueRequest.holderJwk }
+        {
+          disclosable: issueRequest.disclosable,
+          holderJwk: issueRequest.holderJwk,
+          docType: issueRequest.docType,
+          namespaces: issueRequest.namespaces,
+        }
       );
     } catch (err) {
       this.logger.error('Error signing the credential', err);

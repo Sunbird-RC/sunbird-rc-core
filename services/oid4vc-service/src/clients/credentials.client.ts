@@ -20,6 +20,8 @@ export class CredentialsClient {
     format?: string;
     disclosable?: string[];
     holderJwk?: Record<string, any>;
+    docType?: string;
+    namespaces?: Record<string, Record<string, any>>;
   }): Promise<{ credential: any; format?: string }> {
     try {
       const res = await this.http.axiosRef.post(

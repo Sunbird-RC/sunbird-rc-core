@@ -12,7 +12,7 @@ export class DcqlService {
   // Returns { satisfied, matched: { [credentialQueryId]: disclosedClaims } }.
   evaluate(
     query: any,
-    presented: Array<{ types: string[]; vct?: string; format: string; claims: Record<string, any> }>,
+    presented: Array<{ types: string[]; vct?: string; docType?: string; format: string; claims: Record<string, any> }>,
   ): { satisfied: boolean; matched: Record<string, any>; reason?: string } {
     const credentialQueries = query?.credentials || [];
     if (!Array.isArray(credentialQueries) || credentialQueries.length === 0) {
@@ -70,7 +70,7 @@ export class DcqlService {
 
   private matchesMeta(
     cq: any,
-    p: { types: string[]; vct?: string; format: string },
+    p: { types: string[]; vct?: string; docType?: string; format: string },
   ): boolean {
     if (cq.format && cq.format !== p.format) return false;
     const meta = cq.meta || {};
@@ -83,6 +83,11 @@ export class DcqlService {
     }
     if (Array.isArray(meta.vct_values)) {
       if (!p.vct || !meta.vct_values.includes(p.vct)) return false;
+    }
+    // mso_mdoc: a single docType string, not an array — one mdoc has exactly
+    // one docType, unlike type_values' OR-of-AND-sets shape.
+    if (meta.doctype_value) {
+      if (!p.docType || p.docType !== meta.doctype_value) return false;
     }
     return true;
   }

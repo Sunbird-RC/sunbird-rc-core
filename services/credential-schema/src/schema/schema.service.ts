@@ -97,6 +97,12 @@ export class SchemaService {
           // sign each credential as its OWN schema's issuer instead of one
           // hardcoded, server-wide ISSUER_DID for every schema.
           author: s.author,
+          // W3C VC Render Method (https://www.w3.org/TR/vc-render-method/)
+          // config, if the schema author supplied one.
+          renderMethod: cfg.renderMethod,
+          // mso_mdoc (ISO/IEC 18013-5) docType/namespace config, if this
+          // schema opts into that format.
+          mdoc: cfg.mdoc,
         };
       });
   }

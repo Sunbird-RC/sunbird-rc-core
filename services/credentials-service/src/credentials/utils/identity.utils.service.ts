@@ -111,6 +111,42 @@ export class IdentityUtilsService {
     }
   }
 
+  // Signs an mso_mdoc (ISO/IEC 18013-5) credential via identity-service.
+  async signMdoc(
+    did: IssuerType,
+    docType: string,
+    namespaces: Record<string, Record<string, any>>,
+    deviceKeyJwk?: Record<string, any>,
+  ): Promise<string> {
+    try {
+      const res: AxiosResponse = await this.httpService.axiosRef.post(
+        `${this.identityBaseUrl}/utils/sign-mdoc`,
+        { DID: did, docType, namespaces, deviceKeyJwk },
+      );
+      return res.data?.mdoc as string;
+    } catch (err) {
+      this.logger.error('Error signing mdoc: ', err);
+      throw new InternalServerErrorException('Error signing mdoc');
+    }
+  }
+
+  // Verifies a standalone mso_mdoc credential via identity-service (issuer
+  // signature + per-item digests, no device/presentation context).
+  async verifyMdoc(
+    mdoc: string,
+  ): Promise<{ verified: boolean; claims?: Record<string, any>; docType?: string; error?: string }> {
+    try {
+      const res: AxiosResponse = await this.httpService.axiosRef.post(
+        `${this.identityBaseUrl}/utils/verify-mdoc`,
+        { mdoc },
+      );
+      return res.data;
+    } catch (err) {
+      this.logger.error('Error verifying mdoc: ', err);
+      return { verified: false, error: 'Error verifying mdoc' };
+    }
+  }
+
   async resolveDID(issuer: string): Promise<DIDDocument> {
     try {
       let url = `${this.identityBaseUrl}/did/resolve/${encodeURIComponent(issuer)}`;

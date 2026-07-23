@@ -1,16 +1,36 @@
-import { Controller, Get, Param, Header } from '@nestjs/common';
+import { Controller, Get, Param, Header, NotFoundException } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loadConfig } from './config/configuration';
+import { SchemaClient } from './clients/schema.client';
 
 @ApiTags('Health')
 @Controller()
 export class AppController {
   private readonly config = loadConfig();
 
+  constructor(private readonly schema: SchemaClient) {}
+
   @ApiOperation({ summary: 'Liveness probe' })
   @Get('health')
   health() {
     return { status: 'UP', service: 'oid4vc-service' };
+  }
+
+  // Serves a schema's inline W3C VC Render Method SVG template
+  // (https://www.w3.org/TR/vc-render-method/), for schemas that configure
+  // `oid4vciConfig.renderMethod.svg` instead of an already-hosted `url`.
+  // Referenced by `renderMethod[].id` on issued credentials — see
+  // oid4vci.service.ts createOffer()/issueForSession().
+  @ApiOperation({ summary: 'Inline SVG render-method template for a schema' })
+  @Get('render-templates/:schemaId')
+  @Header('content-type', 'image/svg+xml')
+  async renderTemplate(@Param('schemaId') schemaId: string) {
+    const configs = await this.schema.getOid4vciConfigs();
+    const cfg = configs.find((c) => c.schemaId === schemaId);
+    if (!cfg?.renderMethod?.svg) {
+      throw new NotFoundException(`No inline render-method template for schema '${schemaId}'`);
+    }
+    return cfg.renderMethod.svg;
   }
 
   // Dynamic per-type-name JSON-LD context document, referenced BY URL (not

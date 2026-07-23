@@ -9,6 +9,7 @@ import {
 } from './dtos/SignJwt.dto';
 import VcService from './vc.service';
 import { JwtSignerService } from './jwt.service';
+import { MdocService } from './mdoc.service';
 import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('VC')
@@ -17,6 +18,7 @@ export class VcController {
   constructor(
     private readonly VcService: VcService,
     private readonly jwtSigner: JwtSignerService,
+    private readonly mdocSigner: MdocService,
   ) {}
 
   @ApiOperation({ summary: 'Sign an unsigned VC' })
@@ -65,5 +67,32 @@ export class VcController {
   @Post('/verify-sd-jwt')
   verifySdJwt(@Body() body: VerifySdJwtDTO) {
     return this.jwtSigner.verifySdJwt(body.sdJwt, body.DID, body.keyBinding);
+  }
+
+  @ApiOperation({ summary: 'Sign an mso_mdoc (ISO/IEC 18013-5) credential' })
+  @ApiOkResponse({ description: 'base64url-encoded CBOR MDoc returned' })
+  @Post('/sign-mdoc')
+  async signMdoc(
+    @Body()
+    body: {
+      DID: string;
+      docType: string;
+      namespaces: Record<string, Record<string, any>>;
+      deviceKeyJwk?: Record<string, any>;
+    },
+  ) {
+    const mdoc = await this.mdocSigner.signMdoc(
+      body.DID,
+      body.docType,
+      body.namespaces,
+      body.deviceKeyJwk,
+    );
+    return { mdoc };
+  }
+
+  @ApiOperation({ summary: 'Verify a standalone mso_mdoc credential (no device/presentation context)' })
+  @Post('/verify-mdoc')
+  verifyMdoc(@Body() body: { mdoc: string }) {
+    return this.mdocSigner.verifyMdoc(body.mdoc);
   }
 }
