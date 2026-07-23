@@ -21,6 +21,7 @@ interface OfferSession {
   format: string;
   schemaId: string;
   schemaVersion: string;
+  schemaName: string;
   claims: Record<string, any>;
   preAuthCode: string;
   txCodeRequired: boolean;
@@ -51,7 +52,16 @@ export class Oid4vciService {
     const supported: Record<string, any> = {};
     for (const cfg of configs) {
       for (const format of cfg.formats) {
-        const id = cfg.formats.length > 1 ? `${cfg.name}_${format}` : cfg.name;
+        // Schema *names* are user-chosen display labels, not guaranteed
+        // unique (found live: three separate credential-schema records all
+        // named "Age Verification Credential", onboarded at different
+        // times, only some supporting vc+sd-jwt) — keying this map by
+        // name+format let two different schemas compute the exact same id,
+        // silently overwriting one schema's metadata entry with another's
+        // whenever they shared a name+format pair. `schemaId` is assigned
+        // per-record by credential-schema and is always unique, so it's the
+        // only safe basis for the actual OID4VCI `credential_configuration_id`.
+        const id = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
         supported[id] = {
           format,
           scope: cfg.name,
@@ -97,11 +107,37 @@ export class Oid4vciService {
     deferred_claim_id?: string;
   }) {
     const configs = await this.schema.getOid4vciConfigs();
-    const cfg = configs.find(
+    // Prefer an exact match on the stable, always-unique schemaId — this is
+    // what issuerMetadata() now actually publishes as credential_configuration_id
+    // (see comment there), and the only lookup that's unambiguous regardless
+    // of how many schemas happen to share a display name. Schema names are
+    // kept as a convenience-only fallback for callers still passing the
+    // human-readable label (e.g. hand-typed test curls).
+    let cfg = configs.find(
       (c) =>
-        c.name === body.credential_configuration_id ||
-        `${c.name}_${body.format}` === body.credential_configuration_id,
+        c.schemaId === body.credential_configuration_id ||
+        `${c.schemaId}_${body.format}` === body.credential_configuration_id,
     );
+    if (!cfg) {
+      const candidates = configs.filter(
+        (c) =>
+          c.name === body.credential_configuration_id ||
+          `${c.name}_${body.format}` === body.credential_configuration_id,
+      );
+      // Multiple schemas can share the same display name (found live: three
+      // separate "Age Verification Credential" schemas onboarded at
+      // different times, only the newer ones supporting vc+sd-jwt) —
+      // picking the first name match unconditionally made the SD-JWT-capable
+      // schemas permanently unreachable by name. Prefer whichever candidate
+      // actually supports the requested format; fall back to the first
+      // match when no format was specified or none support it (surfaces the
+      // error below). Still ambiguous in principle if two same-named
+      // schemas both support the requested format — pass schemaId to avoid
+      // that entirely.
+      cfg =
+        (body.format && candidates.find((c) => c.formats.includes(body.format))) ||
+        candidates[0];
+    }
     if (!cfg) {
       throw new NotFoundException(
         `Credential configuration '${body.credential_configuration_id}' not enabled for OID4VCI`,
@@ -113,7 +149,7 @@ export class Oid4vciService {
     }
     // Must match the key issuerMetadata() publishes under
     // credential_configurations_supported so wallets can correlate the offer.
-    const configId = cfg.formats.length > 1 ? `${cfg.name}_${format}` : cfg.name;
+    const configId = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
 
     const id = uuid();
     const preAuthCode = this.randomToken();
@@ -122,6 +158,7 @@ export class Oid4vciService {
       format,
       schemaId: cfg.schemaId,
       schemaVersion: cfg.version,
+      schemaName: cfg.name,
       claims: body.claims || {},
       preAuthCode,
       txCodeRequired: !!body.tx_code_required,
@@ -294,9 +331,32 @@ export class Oid4vciService {
     holderDid?: string,
     holderJwk?: any,
   ) {
+    // credentialConfigurationId is now schemaId-based (see createOffer /
+    // issuerMetadata) rather than name-based, so the readable VC type name
+    // can no longer be derived by splitting it — it's carried separately.
+    const typeName = session.schemaName;
     const credential = {
-      '@context': ['https://www.w3.org/2018/credentials/v1'],
-      type: ['VerifiableCredential', session.credentialConfigurationId.split('_')[0]],
+      // The base VC context alone only defines id/type/issuer/credentialSubject
+      // etc. — it has no term for schema-specific claims like `name` or
+      // `birthdate`, and no term for a type name containing spaces (e.g.
+      // "OID4VC Pilot Credential"). For ldp_vc, identity-service's Ed25519
+      // linked-data-proof signer canonicalizes in JSON-LD "safe mode" (found
+      // live: undefined property terms get silently dropped and throw
+      // `jsonld.ValidationError: Safe mode validation error`; a type name
+      // with a space expands to a malformed IRI and throws "relative @type
+      // reference" — neither ever surfaced before since every prior test in
+      // this session used jwt_vc_json, which never runs JSON-LD expansion at
+      // all). A `@vocab` fallback plus an explicit type-name term fixes both
+      // — but found live AGAIN: inlining that as a JSON object in @context
+      // crashes walt.id's wallet on receipt ("Element class ...JsonObject is
+      // not a JsonPrimitive"), since its parser assumes every @context entry
+      // is a plain URL string. So the mapping is served as a real document
+      // (AppController's `/contexts/:typeName`) and referenced by URL here.
+      '@context': [
+        'https://www.w3.org/2018/credentials/v1',
+        `${this.config.publicUrl}/contexts/${encodeURIComponent(typeName)}`,
+      ],
+      type: ['VerifiableCredential', typeName],
       issuer: this.tokens.getIssuerDid(),
       issuanceDate: new Date().toISOString(),
       credentialSubject: {

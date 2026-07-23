@@ -467,3 +467,76 @@ you check it, not so you avoid testing.
 - [eudi-srv-web-issuing-eudiw-py — reference PID/mDL/EAA issuer (OID4VCI)](https://github.com/eu-digital-identity-wallet/eudi-srv-web-issuing-eudiw-py)
 - [eudi-srv-pid-issuer — reference PID/mDL microservice issuer](https://github.com/eu-digital-identity-wallet/eudi-srv-pid-issuer)
 - [walt.id — EUDI Wallet / eIDAS2 overview](https://walt.id/eidas2/eudi-wallet)
+
+---
+
+## 6. Testing with walt.id's Wallet
+
+### 6.1 What it offers — and the one hard blocker
+
+[walt.id](https://walt.id/wallet) offers a white-label web wallet (PWA),
+embeddable wallet components, and mobile libraries. For quick testing, the
+most relevant piece is a **hosted demo instance at `wallet.demo.walt.id`** —
+no local deployment, no APK build, no intermediary backend (unlike Inji's
+Mimoto). Confirmed from walt.id's own docs:
+
+- **No issuer pre-registration required.** The wallet's credential-offer
+  acceptance API
+  (`/wallet-api/wallet/{walletId}/exchange/useOfferRequest`) takes the full
+  `openid-credential-offer://...` deep link as plain text — same format
+  `oid4vc-service`'s `qr_data` field already produces. You can scan a QR
+  encoding it, or paste the URI directly into the web wallet's UI.
+- **Format support** (community/open stack): W3C VC (JWT), IETF SD-JWT VC,
+  ISO 18013-5 mDL — covers our `jwt_vc_json` and `vc+sd-jwt`.
+
+**The hard blocker, stated directly in walt.id's own documentation:**
+*"OID4VP v1.0 is not yet supported in the wallet or demo apps"* — the
+wallet currently only implements **Presentation Exchange (PEX)**, not
+**DCQL**. `oid4vc-service` implements **only DCQL**
+(Plan.md's explicit decision: *"DCQL (OID4VP 1.0 final; Presentation
+Exchange dropped)"*). This isn't a version-drift risk to double-check like
+the EUDI wallet's draft-24 concern (§5.3) — it's two query languages that
+don't interoperate at all. **Presentation/VP testing against walt.id's
+wallet is not possible today.**
+
+### 6.2 One thing to verify before relying on it for issuance
+
+walt.id has two tiers: a free, self-hostable **Community Stack** and a
+commercial **Enterprise Stack**. The Community Stack's own docs describe
+OID4VCI support as "Draft 11, 13" without confirming final 1.0, while a
+*separate* Enterprise-only doc page is explicitly titled "Accept Credentials
+via OID4VCI 1.0." Which tier the hosted `wallet.demo.walt.id` instance runs
+isn't clear from public docs. **Don't assume final-1.0 metadata works
+against the hosted demo** — test with `DRAFT13_COMPAT_MODE=true` first (the
+same mode already fixed and verified working for Inji, §4.2), and only try
+final-1.0 mode if that fails.
+
+### 6.3 Step-by-step (issuance only)
+
+1. Go to `wallet.demo.walt.id`, get access to a wallet instance (account/guest
+   flow not independently verified here — check the site directly).
+2. Set `DRAFT13_COMPAT_MODE=true` on `oid4vc-service` per §6.2's caution
+   (apply the §4.2 fix first if you haven't already — it's required for
+   `DRAFT13_COMPAT_MODE` to emit a correctly-shaped offer object either way).
+3. Opt a test schema into OID4VCI with `jwt_vc_json` or `vc+sd-jwt`.
+4. Create an offer and take the `qr_data` string.
+5. Paste the `qr_data` URI directly into the web wallet's "add credential"
+   flow (or render it as a QR and scan with a mobile session of the same
+   demo, if the UI supports that) — no issuer pre-registration needed.
+6. Confirm in your logs the same sequence verified manually in `TESTING.md`
+   §4 P6: `GET /oid4vc/offer/:id` → `POST /oid4vc/token` →
+   `POST /oid4vc/credential`, now from walt.id's wallet.
+7. Do not attempt the OID4VP/presentation half against this wallet (§6.1) —
+   use the EUDI reference wallet (§5) for that instead.
+
+### 6.4 Sources (walt.id research)
+
+- [walt.id — Wallet product page](https://walt.id/wallet)
+- [walt.id docs — Community Stack home](https://docs.walt.id/community-stack/home)
+- [walt.id docs — Wallet getting started](https://docs.walt.id/community-stack/wallet/getting-started)
+- [How to Accept W3C Verifiable Credentials via OID4VCI in a Wallet with walt.id](https://docs.walt.id/community-stack/wallet/credential-exchange/guides/accept-w3c-vc-oid4vci)
+- [How to Present Digital Credentials via OID4VP with walt.id](https://docs.walt.id/community-stack/wallet/credential-exchange/guides/present-digital-credentials-oid4vp)
+- [What is OpenID4VCI? The Developer's Guide (2026) — walt.id docs](https://docs.walt.id/concepts/data-exchange-protocols/openid4vci)
+- [What is OpenID4VP? The Developer's Guide (2026) — walt.id docs](https://docs.walt.id/concepts/data-exchange-protocols/openid4vp)
+- [Product Update #26 — walt.id Blog (OID4VP v1/DCQL roadmap status)](https://walt.id/blog/product-update-26)
+- [Accept Credentials via OID4VCI 1.0 — Enterprise Stack wallet-service docs](https://docs.walt.id/enterprise-stack/services/wallet-service/credential-receiving/vc-oid4vci)

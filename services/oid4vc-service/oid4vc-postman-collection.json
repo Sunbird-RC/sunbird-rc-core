@@ -130,7 +130,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{oid4vc_base}}/oid4vc/offer",
-            "body": { "mode": "raw", "raw": "{\n  \"credential_configuration_id\": \"OID4VC Pilot Credential\",\n  \"format\": \"jwt_vc_json\",\n  \"claims\": { \"name\": \"Postman Test Holder\" }\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"credential_configuration_id\": \"{{schema_id}}\",\n  \"format\": \"jwt_vc_json\",\n  \"claims\": { \"name\": \"Postman Test Holder\" }\n}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
             "const json = pm.response.json();",
@@ -139,7 +139,11 @@
             "pm.collectionVariables.set('offer_id', json.offer_id);",
             "pm.test('offer created', () => pm.expect(json.offer_id).to.not.be.undefined);",
             "pm.test('credential_configuration_ids matches metadata key', () => {",
-            "  pm.expect(json.credential_offer.credential_configuration_ids[0]).to.eql('OID4VC Pilot Credential_jwt_vc_json');",
+            "  // credential_configuration_id is schemaId-based, not name-based —",
+            "  // schema display names aren't guaranteed unique (found live: multiple",
+            "  // schemas can share a name), so schemaId is the only safe basis.",
+            "  const expected = `${pm.collectionVariables.get('schema_id')}_jwt_vc_json`;",
+            "  pm.expect(json.credential_offer.credential_configuration_ids[0]).to.eql(expected);",
             "});"
           ]}}]
         },
@@ -263,7 +267,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{oid4vc_base}}/oid4vc/offer",
-            "body": { "mode": "raw", "raw": "{\"credential_configuration_id\":\"OID4VC Pilot Credential\",\"format\":\"vc+sd-jwt\",\"claims\":{}}" }
+            "body": { "mode": "raw", "raw": "{\"credential_configuration_id\":\"{{schema_id}}\",\"format\":\"vc+sd-jwt\",\"claims\":{}}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('400 format not supported', () => pm.response.to.have.status(400));"
@@ -299,7 +303,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{oid4vc_base}}/vp/request",
-            "body": { "mode": "raw", "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"name\"] }] }]\n  }\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"credentialSubject\", \"name\"] }] }]\n  }\n}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
             "const json = pm.response.json();",
@@ -308,21 +312,17 @@
           ]}}]
         },
         {
-          "name": "Wallet fetches signed request object (JAR)",
+          "name": "Wallet fetches request object",
           "request": { "method": "GET", "url": "{{vp_request_uri}}" },
           "event": [{ "listen": "test", "script": { "exec": [
-            "// Decode the JWT payload (no signature verification needed here, just reading claims)",
-            "const jwt = pm.response.text();",
-            "const parts = jwt.split('.');",
-            "function b64urlDecode(str) {",
-            "  str = str.replace(/-/g, '+').replace(/_/g, '/');",
-            "  while (str.length % 4) str += '=';",
-            "  return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));",
-            "}",
-            "const payload = JSON.parse(b64urlDecode(parts[1]));",
+            "// Plain unsigned JSON, not a JWT/JAR — client_id_scheme is served as",
+            "// a separate field (see oid4vp.service.ts createRequest()) rather than",
+            "// a signed request object, for compatibility with wallets (e.g. walt.id)",
+            "// that target an older OID4VP draft.",
+            "const payload = pm.response.json();",
             "pm.collectionVariables.set('vp_nonce', payload.nonce);",
             "pm.collectionVariables.set('vp_state', payload.state);",
-            "pm.test('JAR has nonce+state+dcql_query', () => {",
+            "pm.test('request object has nonce+state+dcql_query', () => {",
             "  pm.expect(payload.nonce).to.not.be.undefined;",
             "  pm.expect(payload.dcql_query).to.not.be.undefined;",
             "});"
@@ -411,7 +411,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{oid4vc_base}}/vp/request",
-            "body": { "mode": "raw", "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"name\"] }] }]\n  }\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"credentialSubject\", \"name\"] }] }]\n  }\n}" }
           },
           "event": [{ "listen": "test", "script": { "exec": [
             "const json = pm.response.json();",
@@ -420,17 +420,12 @@
           ]}}]
         },
         {
-          "name": "N19 setup (b) - Wallet fetches the fresh JAR",
+          "name": "N19 setup (b) - Wallet fetches the fresh request object",
           "request": { "method": "GET", "url": "{{vp_request_uri}}" },
           "event": [{ "listen": "test", "script": { "exec": [
-            "const jwt = pm.response.text();",
-            "const parts = jwt.split('.');",
-            "function b64urlDecode(str) {",
-            "  str = str.replace(/-/g, '+').replace(/_/g, '/');",
-            "  while (str.length % 4) str += '=';",
-            "  return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));",
-            "}",
-            "const payload = JSON.parse(b64urlDecode(parts[1]));",
+            "// Plain unsigned JSON, not a JWT/JAR — see the equivalent step in",
+            "// section 4 for why.",
+            "const payload = pm.response.json();",
             "pm.collectionVariables.set('vp_nonce', payload.nonce);",
             "pm.collectionVariables.set('vp_state', payload.state);"
           ]}}]

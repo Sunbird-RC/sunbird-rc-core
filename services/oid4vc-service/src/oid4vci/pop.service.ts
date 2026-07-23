@@ -55,6 +55,15 @@ export class PopService {
         return { valid: false, error: 'PoP nonce mismatch' };
       }
 
+      // Some wallets (e.g. did:jwk-based holders) sign an inline-jwk proof
+      // with no `iss` claim — there's no DID to bind to, but the JWK itself
+      // deterministically IS one (did:jwk spec: base64url of the JWK JSON).
+      // Without this, credentialSubject/sub end up empty and downstream
+      // storage fails on a missing required subjectId.
+      if (!holderDid) {
+        holderDid = `did:jwk:${Buffer.from(JSON.stringify(holderJwk)).toString('base64url')}`;
+      }
+
       return { valid: true, holderDid, holderJwk };
     } catch (err) {
       this.logger.warn(`PoP proof verification failed: ${err}`);

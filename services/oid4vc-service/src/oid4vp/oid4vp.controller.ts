@@ -14,9 +14,9 @@ export class Oid4vpController {
     return this.oid4vp.createRequest(body || {});
   }
 
-  @ApiOperation({ summary: 'Wallet fetches the signed request object (JAR)' })
+  @ApiOperation({ summary: 'Wallet fetches the (unsigned, redirect_uri-scheme) request object' })
   @Get('request-object/:id')
-  @Header('content-type', 'application/oauth-authz-req+jwt')
+  @Header('content-type', 'application/json')
   getRequestObject(@Param('id') id: string) {
     return this.oid4vp.getRequestObject(id);
   }

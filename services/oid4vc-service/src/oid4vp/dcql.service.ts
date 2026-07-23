@@ -27,7 +27,23 @@ export class DcqlService {
       const requestedClaims = cq.claims || [];
       const disclosed: Record<string, any> = {};
       for (const claimQuery of requestedClaims) {
-        const path: string[] = claimQuery.path || [];
+        let path: string[] = claimQuery.path || [];
+        // Per OID4VP DCQL, W3C VC-format (jwt_vc_json/ldp_vc) claim paths are
+        // relative to the full credential and conventionally start with
+        // "credentialSubject" (real wallets, e.g. walt.id, send/expect this —
+        // found live: walt.id's own DCQL matcher resolves paths against the
+        // untouched VC JSON, so a bare `["name"]` path never matches while
+        // `["credentialSubject","name"]` does). `candidate.claims` here is
+        // already the pre-unwrapped credentialSubject object (see
+        // extractCredentials() in oid4vp.service.ts), so strip that leading
+        // segment before resolving — bare paths still work for callers that
+        // never included the prefix.
+        if (
+          (candidate.format === 'jwt_vc_json' || candidate.format === 'ldp_vc') &&
+          path[0] === 'credentialSubject'
+        ) {
+          path = path.slice(1);
+        }
         const value = this.resolvePath(candidate.claims, path);
         if (value === undefined) {
           return {
