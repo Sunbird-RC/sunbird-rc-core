@@ -418,6 +418,17 @@ dev secrets on disk.
 Step-by-step commands to exercise every flow manually, useful for
 onboarding and regression-checking after changes.
 
+> **Automated regression suite:** `oid4vc-service.postman_collection.json`
+> (this folder) covers discovery, the full `jwt_vc_json` issuance flow,
+> OID4VP presentation, `mso_mdoc` issuance + verification, W3C VC Render
+> Method (including digest verification), and negative cases. Run it with
+> Postman's Collection Runner or headless via
+> `npx newman run oid4vc-service.postman_collection.json` (override the
+> `*_base` variables with `--env-var` to point at a remote deployment).
+> mdoc *presentation* is not in the collection — it needs a CBOR
+> `DeviceResponse` a Postman sandbox can't build; that half is covered by
+> the e2e harness (§10).
+
 ### 6.1 Health & discovery
 
 ```bash
