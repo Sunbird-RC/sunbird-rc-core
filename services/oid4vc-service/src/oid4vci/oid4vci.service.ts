@@ -22,6 +22,7 @@ interface OfferSession {
   schemaId: string;
   schemaVersion: string;
   schemaName: string;
+  issuerDid: string;
   claims: Record<string, any>;
   preAuthCode: string;
   txCodeRequired: boolean;
@@ -159,6 +160,13 @@ export class Oid4vciService {
       schemaId: cfg.schemaId,
       schemaVersion: cfg.version,
       schemaName: cfg.name,
+      // Sign as the schema's own author DID when it has one — falls back to
+      // the single server-wide ISSUER_DID for schemas authored before this
+      // field existed, or left blank. Every schema already requires an
+      // `author` DID at creation time; this is the first place it's
+      // actually used, rather than every issued credential (regardless of
+      // schema) always carrying the same one hardcoded issuer.
+      issuerDid: cfg.author || this.tokens.getIssuerDid(),
       claims: body.claims || {},
       preAuthCode,
       txCodeRequired: !!body.tx_code_required,
@@ -357,7 +365,7 @@ export class Oid4vciService {
         `${this.config.publicUrl}/contexts/${encodeURIComponent(typeName)}`,
       ],
       type: ['VerifiableCredential', typeName],
-      issuer: this.tokens.getIssuerDid(),
+      issuer: session.issuerDid,
       issuanceDate: new Date().toISOString(),
       credentialSubject: {
         ...(holderDid ? { id: holderDid } : {}),

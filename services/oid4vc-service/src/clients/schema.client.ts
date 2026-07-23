@@ -12,6 +12,9 @@ export interface Oid4vciSchemaConfig {
   vct: string;
   display: Record<string, any>[];
   schema: any;
+  // The DID that authored/owns this schema — used as the per-schema issuer
+  // DID for offers created against it (see oid4vci.service.ts createOffer()).
+  author: string;
 }
 
 // Reads OID4VCI-enabled schema configs from credential-schema to build the

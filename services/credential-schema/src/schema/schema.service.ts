@@ -92,6 +92,11 @@ export class SchemaService {
           vct: cfg.vct || s.name,
           display: cfg.display || [{ name: s.name }],
           schema: s.schema,
+          // Every schema already declares its own author DID at creation
+          // time (required field) — exposing it here lets oid4vc-service
+          // sign each credential as its OWN schema's issuer instead of one
+          // hardcoded, server-wide ISSUER_DID for every schema.
+          author: s.author,
         };
       });
   }
