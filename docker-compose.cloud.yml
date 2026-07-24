@@ -199,23 +199,38 @@ services:
     # the /oid4vc/offer auth gap in PRODUCTION_DEPLOYMENT.md §2.1) sits in
     # nginx; only add a direct port mapping here for local debugging.
 
+  # Static holder/test wallet (Vite build served by nginx:alpine). Fronted by
+  # the gateway at /wallet/. Purely a Dev/QA holder UI — no secrets, no state.
+  test-wallet:
+    image: docker.io/snt1/sunbird-rc-oid4vc-test-wallet:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:80/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   nginx:
     image: ghcr.io/sunbird-rc/sunbird-rc-nginx
     restart: unless-stopped
     depends_on:
       oid4vc-service:
         condition: service_healthy
+      test-wallet:
+        condition: service_healthy
     volumes:
       # The published sunbird-rc-nginx image's baked-in config has NO
       # oid4vc/vp routes at all (verified by inspecting the image directly)
       # — this mount is load-bearing, not cosmetic.
       - ./nginx/nginx.cloud.conf:/etc/nginx/conf.d/default.conf:ro
+      # TLS material for the 443 listener (self-signed today; see conf comment).
+      - ./nginx/certs:/etc/nginx/certs:ro
     ports:
-      # Port 80 is far more likely to already be allowed through a cloud
-      # NSG/security-group's default rules than a nonstandard port like 3400.
-      # Put TLS termination (443) in front of this in real production — see
-      # PRODUCTION_DEPLOYMENT.md §2.2.
+      # 80 = plain HTTP (API + wallet for the 3 JOSE formats). 443 = HTTPS,
+      # required for the browser wallet's mso_mdoc (WebCrypto secure context).
       - '80:80'
+      - '443:443'
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:80/health']
       interval: 10s

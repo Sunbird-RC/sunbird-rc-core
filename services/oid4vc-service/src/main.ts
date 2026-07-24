@@ -23,6 +23,12 @@ async function bootstrap() {
     },
   );
 
+  // Allow browser-based clients (e.g. the test-wallet web UI) to call the
+  // wallet-facing endpoints cross-origin. Safe for these public protocol
+  // routes (offer/token/nonce/credential, vp/*, .well-known/*), which carry no
+  // ambient cookie/session auth — the only credential is a Bearer access token.
+  app.enableCors();
+
   const config = new DocumentBuilder()
     .setTitle('OID4VC Service')
     .setDescription('OpenID4VCI / OpenID4VP protocol facade for Sunbird RC')

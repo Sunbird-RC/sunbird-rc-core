@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OID4VC Wallet</title>
+    <link rel="stylesheet" href="/web/style.css" />
+  </head>
+  <body>
+    <aside class="wsidebar">
+      <div class="brand"><span class="logo">👛</span> OID4VC Wallet</div>
+      <nav class="nav">
+        <button data-view="credentials" class="active"><span class="ic">🪪</span> Credentials</button>
+        <button data-view="receive"><span class="ic">📥</span> Receive</button>
+        <button data-view="present"><span class="ic">📤</span> Present</button>
+        <button data-view="activity"><span class="ic">🕑</span> Activity</button>
+        <button data-view="settings"><span class="ic">⚙️</span> Settings</button>
+      </nav>
+      <div class="side-foot">
+        <div class="identity">
+          <div class="lbl"><span class="dot"></span>Holder identity</div>
+          <div class="did" id="side-did">generating…</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="wmain">
+      <div class="topbar">
+        <h1 id="view-title">Credentials</h1>
+        <span class="chip" id="did-chip" title="Copy holder DID">🔑 <code id="did-short">…</code></span>
+      </div>
+
+      <!-- Credentials -->
+      <section class="view" data-view="credentials">
+        <p class="view-hint">Verifiable credentials stored in this wallet. Tap a card for details.</p>
+        <div id="creds" class="cred-grid"></div>
+      </section>
+
+      <!-- Receive -->
+      <section class="view" data-view="receive" hidden>
+        <div class="panel">
+          <h3>Receive a credential</h3>
+          <p class="sub">Paste an <code>openid-credential-offer://</code> link from an issuer, then accept it.</p>
+          <label class="field">Credential offer link
+            <input id="offer-link" type="text" placeholder="openid-credential-offer://?credential_offer_uri=…" />
+          </label>
+          <div class="row"><button class="btn" id="accept-offer">📥 Receive credential</button></div>
+          <div class="devrow">
+            <span class="lbl">Quick test issue:</span>
+            <span class="row" style="display:inline-flex">
+              <button class="btn sm quick-issue" data-format="ldp_vc">ldp_vc</button>
+              <button class="btn sm quick-issue" data-format="jwt_vc_json">jwt_vc_json</button>
+              <button class="btn sm quick-issue" data-format="vc+sd-jwt">vc+sd-jwt</button>
+              <button class="btn sm quick-issue" data-format="mso_mdoc">mso_mdoc</button>
+            </span>
+          </div>
+          <div id="offer-qr" class="qr"></div>
+        </div>
+      </section>
+
+      <!-- Present -->
+      <section class="view" data-view="present" hidden>
+        <div class="panel">
+          <h3>Present a credential</h3>
+          <p class="sub">Paste an <code>openid4vp://</code> request link from a verifier. You'll be asked to consent before anything is shared.</p>
+          <label class="field">Presentation request link
+            <input id="vp-link" type="text" placeholder="openid4vp://?client_id=…&request_uri=…" />
+          </label>
+          <div class="row"><button class="btn green" id="present">📤 Review &amp; present</button></div>
+          <div class="devrow">
+            <span class="lbl">Quick test request:</span>
+            <span class="row" style="display:inline-flex">
+              <button class="btn sm quick-vp" data-format="ldp_vc">ldp_vc</button>
+              <button class="btn sm quick-vp" data-format="jwt_vc_json">jwt_vc_json</button>
+              <button class="btn sm quick-vp" data-format="vc+sd-jwt">vc+sd-jwt</button>
+              <button class="btn sm quick-vp" data-format="mso_mdoc">mso_mdoc</button>
+            </span>
+          </div>
+          <div id="vp-qr" class="qr"></div>
+          <div id="vp-result" class="result"></div>
+        </div>
+      </section>
+
+      <!-- Activity -->
+      <section class="view" data-view="activity" hidden>
+        <div class="panel">
+          <div class="row" style="justify-content:space-between">
+            <h3>Activity log</h3>
+            <button class="btn ghost sm" id="clear-log">Clear</button>
+          </div>
+          <pre id="log"></pre>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="view" data-view="settings" hidden>
+        <div class="panel">
+          <h3>Connection</h3>
+          <p class="sub">The issuer / verifier (oid4vc-service) base URL this wallet talks to.</p>
+          <label class="field">Base URL <input id="base" type="text" /></label>
+          <button class="btn ghost sm" id="save-base">Apply</button>
+        </div>
+        <div class="panel">
+          <h3>Holder identity</h3>
+          <p class="sub">This wallet holds a single ES256 <code>did:jwk</code> key, generated in-browser.</p>
+          <div class="kv"><span class="k">DID</span><span class="v" id="full-did"></span></div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn ghost sm" id="copy-did">Copy DID</button>
+            <button class="btn danger sm" id="regen">Generate new identity (clears credentials)</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Consent modal -->
+    <div class="modal" id="consent-modal">
+      <div class="sheet">
+        <h2>Share request</h2>
+        <p class="sub" id="consent-verifier">A verifier is requesting proof.</p>
+        <p style="font-size:13.5px">Only the following will be shared — everything else stays private:</p>
+        <div class="attrbox" id="consent-attrs"></div>
+        <div class="actions">
+          <button class="btn ghost" id="consent-cancel">Cancel</button>
+          <button class="btn green" id="consent-ok">Share</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credential detail modal -->
+    <div class="modal" id="detail-modal">
+      <div class="sheet">
+        <h2 id="detail-title">Credential</h2>
+        <p class="sub" id="detail-sub"></p>
+        <div class="kv" id="detail-kv"></div>
+        <div class="actions">
+          <button class="btn ghost" id="detail-copy">Copy raw</button>
+          <button class="btn danger" id="detail-delete">Delete</button>
+          <button class="btn" id="detail-close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+    <script type="module" src="/web/app.js"></script>
+  </body>
+</html>

@@ -137,16 +137,34 @@ export class Oid4vciService {
     // of how many schemas happen to share a display name. Schema names are
     // kept as a convenience-only fallback for callers still passing the
     // human-readable label (e.g. hand-typed test curls).
-    let cfg = configs.find(
-      (c) =>
-        c.schemaId === body.credential_configuration_id ||
-        `${c.schemaId}_${body.format}` === body.credential_configuration_id,
-    );
+    const rawId = body.credential_configuration_id;
+    // Resolve in the order a spec-compliant wallet would: the exact config id
+    // published in issuer metadata. That id is the bare schemaId for
+    // single-format schemas, or `schemaId_<format>` for multi-format ones —
+    // and the wallet references it directly, WITHOUT sending a separate
+    // `format`. So derive the format from the suffix when it isn't supplied,
+    // rather than 404ing (found live: posting the metadata key
+    // `did:schema:..._jwt_vc_json` with no `format` failed the old
+    // schemaId/schemaId_${format} match and was rejected).
+    let derivedFormat: string | undefined = body.format;
+    let cfg = configs.find((c) => c.schemaId === rawId);
+    if (cfg) {
+      derivedFormat = derivedFormat || cfg.formats[0];
+    } else {
+      for (const c of configs) {
+        const suffix = c.formats.find((f) => `${c.schemaId}_${f}` === rawId);
+        if (suffix) {
+          cfg = c;
+          derivedFormat = derivedFormat || suffix;
+          break;
+        }
+      }
+    }
     if (!cfg) {
       const candidates = configs.filter(
         (c) =>
-          c.name === body.credential_configuration_id ||
-          `${c.name}_${body.format}` === body.credential_configuration_id,
+          c.name === rawId ||
+          c.formats.some((f) => `${c.name}_${f}` === rawId),
       );
       // Multiple schemas can share the same display name (found live: three
       // separate "Age Verification Credential" schemas onboarded at
@@ -161,13 +179,18 @@ export class Oid4vciService {
       cfg =
         (body.format && candidates.find((c) => c.formats.includes(body.format))) ||
         candidates[0];
+      // Same suffix-derivation as above, for the name-based fallback.
+      if (cfg && !derivedFormat) {
+        const matched = cfg;
+        derivedFormat = matched.formats.find((f) => `${matched.name}_${f}` === rawId) || matched.formats[0];
+      }
     }
     if (!cfg) {
       throw new NotFoundException(
-        `Credential configuration '${body.credential_configuration_id}' not enabled for OID4VCI`,
+        `Credential configuration '${rawId}' not enabled for OID4VCI`,
       );
     }
-    const format = body.format || cfg.formats[0] || 'ldp_vc';
+    const format = derivedFormat || cfg.formats[0] || 'ldp_vc';
     if (!cfg.formats.includes(format)) {
       throw new BadRequestException(`Format '${format}' not supported for this credential`);
     }

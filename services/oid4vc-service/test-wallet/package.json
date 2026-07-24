@@ -1,0 +1,24 @@
+{
+  "name": "oid4vc-test-wallet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent web + headless test wallet (holder) for the Sunbird RC oid4vc-service. Exercises OID4VCI issuance and OID4VP (DCQL) presentation for all four formats: ldp_vc, jwt_vc_json, vc+sd-jwt, mso_mdoc.",
+  "scripts": {
+    "e2e": "node test/e2e.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@auth0/mdl": "^3.0.1",
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
+    "jose": "^4.15.5"
+  },
+  "devDependencies": {
+    "qrcode": "^1.5.3",
+    "vite": "^5.4.0",
+    "vite-plugin-node-polyfills": "^0.22.0"
+  }
+}
