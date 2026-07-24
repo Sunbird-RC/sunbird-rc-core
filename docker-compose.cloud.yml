@@ -1,0 +1,249 @@
+# Deployable subset of the stack — ONLY the services actually stood up and
+# verified end-to-end in this session's testing (T2 topology, no Java
+# registry/keycloak/claim-ms/elasticsearch/kafka): db, vault, redis, identity,
+# credential-schema, credentials-service, oid4vc-service.
+#
+# Images are the exact, already-tested builds pushed to Docker Hub this
+# session (see TESTING.md for the full verification run — 32/32 requests,
+# 0 failures) rather than ghcr.io/sunbird-rc/* or local `build:` contexts.
+#
+# Usage:
+#   docker compose -f docker-compose.cloud.yml up -d
+#
+# Required one-time setup before first `up`:
+#   1. Create a .env file alongside this compose file with at least:
+#        POSTGRES_PASSWORD=<strong password>
+#        VAULT_TOKEN=<vault token — see step 2>
+#        OID4VC_PUBLIC_URL=https://<your-domain>       (real external URL, not localhost)
+#        OID4VC_ISSUER_DID=<pinned DID — see step 3>
+#      (all other vars below have safe defaults for this topology)
+#   2. Vault ships unconfigured for production (file backend, manual unseal —
+#      see PRODUCTION_DEPLOYMENT.md §2.5 for hardening recommendations).
+#      First run: `docker compose -f docker-compose.cloud.yml up -d vault`,
+#      then `vault operator init` / `vault operator unseal` against it
+#      (see setup_vault.sh / enable-v2.sh in the repo root for the pattern),
+#      and set VAULT_TOKEN from the resulting root/scoped token.
+#   3. Pin ISSUER_DID once identity is up (do NOT leave blank in production —
+#      see PRODUCTION_DEPLOYMENT.md §2.3):
+#        curl -s -X POST http://<host>:3332/did/generate -H "Content-Type: application/json" \
+#          -d '{"content":[{"alsoKnownAs":["oid4vc-issuer-prod"],"services":[],"method":"rcw"}]}'
+#      then set OID4VC_ISSUER_DID to the returned `id` and restart oid4vc-service.
+
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=registry
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vault:
+    image: vault:1.13.3
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./vault.json:/vault/config/vault.json
+      - vault-data:/vault/file
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_API_ADDR=http://vault:8200
+      - VAULT_ADDRESS=http://vault:8200
+    command: vault server -config=/vault/config/vault.json
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  identity:
+    image: docker.io/snt1/sunbird-rc-identity-service:${OID4VC_IMAGE_TAG-oid4vc}
+    # amd64-only image (Prisma 4.8.1 has no arm64-musl query engine — same
+    # constraint documented in docker-compose.override.yml). Most cloud VMs
+    # are amd64 by default; this makes that explicit rather than relying on
+    # the pull host's native arch.
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      vault:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/identity
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:?set VAULT_TOKEN in .env — see header comment step 2}
+      - VAULT_BASE_URL=http://vault:8200/v1/
+      - VAULT_ROOT_PATH=${VAULT_ROOT_PATH-kv}
+      - VAULT_TIMEOUT=${VAULT_TIMEOUT-5000}
+      - VAULT_PROXY=${VAULT_PROXY-false}
+      - SIGNING_ALGORITHM=${SIGNING_ALGORITHM-Ed25519Signature2020}
+      - JWKS_URI=${JWKS_URI-}
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+      - WEB_DID_BASE_URL=${WEB_DID_BASE_URL-}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3332/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  credential-schema:
+    image: docker.io/snt1/sunbird-rc-credential-schema:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/credential_schema
+      - IDENTITY_BASE_URL=http://identity:3332
+      - JWKS_URI=${JWKS_URI-}
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3333/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  credential:
+    image: docker.io/snt1/sunbird-rc-credentials-service:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/credential
+      - IDENTITY_BASE_URL=http://identity:3332
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+      - CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
+      - JWKS_URI=${JWKS_URI-}
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+      - QR_TYPE=${QR_TYPE-W3C_VC}
+      # Recommended true in production — otherwise OID4VP's revocation check
+      # always trivially passes (see PRODUCTION_DEPLOYMENT.md §2.6).
+      - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-true}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3000/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  oid4vc-service:
+    image: docker.io/snt1/sunbird-rc-oid4vc-service:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      credential:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=3400
+      # MUST be the real externally-reachable HTTPS URL — embedded as
+      # iss/aud in minted tokens, JARs, and PoP checks (PRODUCTION_DEPLOYMENT.md §1.1).
+      - PUBLIC_URL=${OID4VC_PUBLIC_URL:?set OID4VC_PUBLIC_URL in .env to your real domain, e.g. https://issuer.example.com}
+      - CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
+      - IDENTITY_BASE_URL=http://identity:3332
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+      - REDIS_URL=redis://redis:6379
+      # redis required for any multi-replica/production deployment — see
+      # PRODUCTION_DEPLOYMENT.md §2.4.
+      - SESSION_STORE=redis
+      # Must be pinned in production — see header comment step 3 and
+      # PRODUCTION_DEPLOYMENT.md §2.3. Left blank, a fresh ephemeral DID is
+      # generated on every restart, invalidating all previously-minted tokens.
+      - ISSUER_DID=${OID4VC_ISSUER_DID:?set OID4VC_ISSUER_DID in .env — see header comment step 3}
+      - OID4VP_ENABLED=${OID4VP_ENABLED-true}
+      # Set true only if targeting MOSIP Inji Wallet (draft-13 shapes) — see
+      # PRODUCTION_DEPLOYMENT.md §4. Default false = final OID4VCI/OID4VP 1.0.
+      - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3400/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # No `ports:` here — nginx (below) is the single public entrypoint.
+    # Exposing 3400 directly bypasses whatever hardening (TLS, rate limiting,
+    # the /oid4vc/offer auth gap in PRODUCTION_DEPLOYMENT.md §2.1) sits in
+    # nginx; only add a direct port mapping here for local debugging.
+
+  # Static holder/test wallet (Vite build served by nginx:alpine). Fronted by
+  # the gateway at /wallet/. Purely a Dev/QA holder UI — no secrets, no state.
+  test-wallet:
+    image: docker.io/snt1/sunbird-rc-oid4vc-test-wallet:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:80/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: ghcr.io/sunbird-rc/sunbird-rc-nginx
+    restart: unless-stopped
+    depends_on:
+      oid4vc-service:
+        condition: service_healthy
+      test-wallet:
+        condition: service_healthy
+    volumes:
+      # The published sunbird-rc-nginx image's baked-in config has NO
+      # oid4vc/vp routes at all (verified by inspecting the image directly)
+      # — this mount is load-bearing, not cosmetic.
+      - ./nginx/nginx.cloud.conf:/etc/nginx/conf.d/default.conf:ro
+      # TLS material for the 443 listener (self-signed today; see conf comment).
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports:
+      # 80 = plain HTTP (API + wallet for the 3 JOSE formats). 443 = HTTPS,
+      # required for the browser wallet's mso_mdoc (WebCrypto secure context).
+      - '80:80'
+      - '443:443'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NOTE: identity/credential-schema/credential intentionally have no
+  # `ports:` mapping above — they're internal-only management/signing APIs
+  # in this topology and only need to be reachable from other containers on
+  # the compose network. For direct debugging, add e.g. `ports: ['3332:3332']`
+  # to the identity service block above.
+
+volumes:
+  db-data:
+  vault-data:
+  redis-data:

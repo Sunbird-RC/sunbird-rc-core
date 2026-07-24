@@ -23,6 +23,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@auth0/mdl": "^3.0.1",
+    "@peculiar/x509": "^1.9.7",
     "@digitalbazaar/ed25519-signature-2018": "^4.0.0",
     "@digitalbazaar/ed25519-signature-2020": "^5.2.0",
     "@digitalbazaar/ed25519-verification-key-2018": "^4.0.0",
@@ -44,6 +46,7 @@
     "did-resolver": "^4.1.0",
     "encrypt-rsa": "^2.0.1",
     "hashi-vault-js": "^0.4.12",
+    "jose": "^4.15.9",
     "jsonld": "^8.3.2",
     "jsonld-signatures": "^7.0.0",
     "jwks-rsa": "^3.0.0",

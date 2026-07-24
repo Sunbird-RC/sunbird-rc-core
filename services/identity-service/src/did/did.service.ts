@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
 import { v4 as uuid } from 'uuid';
+import * as crypto from 'crypto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
 import { RSAKeyPair } from 'crypto-ld';
@@ -42,6 +43,13 @@ export class DidService {
     this.keys['RsaSignature2018'] = {
       name: 'RsaVerificationKey2018',
       key: RSAKeyPair
+    };
+    // EC P-256/JsonWebKey2020 — generated directly via Node crypto in
+    // generateDID() below (no digitalbazaar LD-key library covers plain
+    // EC/JWK keys), so `key` is left null here as a lookup sentinel only.
+    this.keys['JsonWebSignature2020'] = {
+      name: 'JsonWebKey2020',
+      key: null
     };
     const { Resolver } = await import('did-resolver');
     const { getResolver } = await import('web-did-resolver');
@@ -108,32 +116,51 @@ export class DidService {
     let verificationKey =  await this.getVerificationKeyByName(doc?.keyPairType);
     if(!verificationKey) verificationKey = await this.getVerificationKey(this.signingAlgorithm);
     try {
-      const keyPair = await (verificationKey as any)?.key.generate({
-        id: `${didUri}#key-0`,
-        controller: didUri
-      });
-      const exportedKey = await keyPair.export({
-        publicKey: true, privateKey: true, includeContext: true
-      });
-      let privateKey = {};
-      if(verificationKey?.name === "Ed25519VerificationKey2020") {
-        const {privateKeyMultibase, ...rest } = exportedKey;
-        authnKeys = rest;
-        privateKey = {privateKeyMultibase};
-      } else if(verificationKey?.name === "Ed25519VerificationKey2018") {
-        const {privateKeyBase58, ...rest } = exportedKey;
-        authnKeys = rest;
-        privateKey = {privateKeyBase58};
-      } else if(verificationKey?.name === "RsaVerificationKey2018") {
-        const {privateKeyPem, ...rest } = exportedKey;
-        authnKeys = {...rest};
-        privateKey = {privateKeyPem};
+      if (verificationKey?.name === "JsonWebKey2020") {
+        // Plain EC P-256 key, generated via Node crypto directly (no LD-key
+        // library covers this) — needed for mso_mdoc's mandatory COSE_Sign1
+        // (ES256) issuer signature.
+        const { publicKey, privateKey: privKeyObj } = crypto.generateKeyPairSync('ec', {
+          namedCurve: 'prime256v1',
+        });
+        const publicKeyJwk = publicKey.export({ format: 'jwk' }) as any;
+        const privateKeyJwk = privKeyObj.export({ format: 'jwk' }) as any;
+        const keyId = `${didUri}#key-0`;
+        authnKeys = {
+          id: keyId,
+          type: 'JsonWebKey2020',
+          controller: didUri,
+          publicKeyJwk,
+        };
+        privateKeys = { [keyId]: { privateKeyJwk } };
       } else {
-        throw new NotFoundException("VerificationKey type not found");
+        const keyPair = await (verificationKey as any)?.key.generate({
+          id: `${didUri}#key-0`,
+          controller: didUri
+        });
+        const exportedKey = await keyPair.export({
+          publicKey: true, privateKey: true, includeContext: true
+        });
+        let privateKey = {};
+        if(verificationKey?.name === "Ed25519VerificationKey2020") {
+          const {privateKeyMultibase, ...rest } = exportedKey;
+          authnKeys = rest;
+          privateKey = {privateKeyMultibase};
+        } else if(verificationKey?.name === "Ed25519VerificationKey2018") {
+          const {privateKeyBase58, ...rest } = exportedKey;
+          authnKeys = rest;
+          privateKey = {privateKeyBase58};
+        } else if(verificationKey?.name === "RsaVerificationKey2018") {
+          const {privateKeyPem, ...rest } = exportedKey;
+          authnKeys = {...rest};
+          privateKey = {privateKeyPem};
+        } else {
+          throw new NotFoundException("VerificationKey type not found");
+        }
+        privateKeys = {
+          [authnKeys.id]: privateKey
+        };
       }
-      privateKeys = {
-        [authnKeys.id]: privateKey
-      };
     } catch (err: any) {
             Logger.error(`Error generating key pair: ${err}`);
       throw new InternalServerErrorException('Error generating key pair: ' + err.message);

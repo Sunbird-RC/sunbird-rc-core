@@ -13,15 +13,19 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { CredentialFormatService } from './utils/credential-format.service';
+import { StatusListService } from './utils/status-list.service';
+import { CredentialFormat } from './dto/issue-credential.dto';
 import * as jsigs from 'jsonld-signatures';
 import * as jsonld from 'jsonld';
 import { DOCUMENTS } from './documents';
 import { RSAKeyPair } from 'crypto-ld';
 const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
-import { 
+import {
   W3CCredential, Verifiable, DIDDocument,
-  CredentialPayload, IssuerType, Proof, VerificationMethod
+  Proof, VerificationMethod
  } from 'vc.types';
+import { SignResult } from './utils/credential-format.service';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
 
 @Injectable()
@@ -37,11 +41,17 @@ export class CredentialsService {
     vc: null
   };
   documents: object
+  // Status-list embedding is opt-in so the default ldp_vc path stays
+  // byte-for-byte identical to today (regression requirement).
+  private statusListEnabled = process.env.STATUS_LIST_ENABLED === 'true';
+
   constructor(
     private readonly prisma: PrismaClient,
     private readonly identityUtilsService: IdentityUtilsService,
     private readonly renderingUtilsService: RenderingUtilsService,
-    private readonly schemaUtilsService: SchemaUtilsSerivce
+    private readonly schemaUtilsService: SchemaUtilsSerivce,
+    private readonly credentialFormatService: CredentialFormatService,
+    private readonly statusListService: StatusListService
   ) {
     this.init();
   }
@@ -146,7 +156,15 @@ export class CredentialsService {
     }
   }
 
-  async verifyCredential(credToVerify: Verifiable<W3CCredential>, status?: VCStatus) {
+  async verifyCredential(
+    credToVerify: Verifiable<W3CCredential> | string,
+    status?: VCStatus,
+    options?: { challenge?: string; domain?: string }
+  ) {
+    // Enveloped formats (jwt_vc_json / vc+sd-jwt) arrive as compact strings.
+    if (typeof credToVerify === 'string') {
+      return this.verifyEnvelopedCredential(credToVerify, status, options);
+    }
     try {
       // calling identity service to verify the issuer DID
       const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
@@ -182,16 +200,29 @@ export class CredentialsService {
       if(!results?.verified) {
         this.logger.error('Error in verifying credentials: ', results);
       }
+
+      // Replay protection (P0.5): only enforced when the caller supplies
+      // challenge/domain — existing callers that omit them are unaffected.
+      const replay = this.checkChallengeDomain(credToVerify?.proof, options);
+
+      // StatusList revocation check (P0.6): consult the bitstring list when the
+      // credential carries a credentialStatus and status-list mode is enabled.
+      const statusListRevoked = await this.checkStatusList(credToVerify);
+      const revoked =
+        status === VCStatus.REVOKED || statusListRevoked ? 'NOK' : 'OK';
+
+      const proofOk = !!results?.verified && replay.ok;
       return {
         status: status,
         checks: [
           {
-            ...(status && {revoked: status === VCStatus.REVOKED ? 'NOK' : 'OK'}), // NOK represents revoked
+            ...((status || statusListRevoked !== null) && { revoked }),
             expired:
               new Date(credToVerify.expirationDate).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
-            proof: !!results?.verified ? 'OK' : 'NOK',
+            proof: proofOk ? 'OK' : 'NOK',
+            ...(replay.checked && { replay: replay.ok ? 'OK' : 'NOK' }),
           },
         ],
       };
@@ -201,6 +232,101 @@ export class CredentialsService {
         errors: [e],
       };
     }
+  }
+
+  // Verifies enveloped (jwt_vc_json / vc+sd-jwt) credentials by delegating the
+  // signature check to identity-service, then applying the same expiry, status,
+  // and replay checks as the JSON-LD path.
+  private async verifyEnvelopedCredential(
+    compact: string,
+    status?: VCStatus,
+    options?: { challenge?: string; domain?: string }
+  ) {
+    try {
+      const isSdJwt = compact.includes('~');
+      // A compact JWS always has exactly 2 '.' separators; base64url (our
+      // mdoc envelope) never contains '.' at all — an unambiguous, cheap
+      // shape check without needing the caller to pass the format down.
+      const isJwt = !isSdJwt && compact.includes('.');
+      const isMdoc = !isSdJwt && !isJwt;
+      let verified: boolean;
+      let claims: any;
+      let mdocDocType: string | undefined;
+      if (isSdJwt) {
+        const res = await this.identityUtilsService.verifySdJwt(compact, undefined, {
+          nonce: options?.challenge,
+          audience: options?.domain,
+        });
+        verified = res.verified;
+        claims = res.claims;
+      } else if (isMdoc) {
+        const res = await this.identityUtilsService.verifyMdoc(compact);
+        verified = res.verified;
+        claims = res.claims;
+        mdocDocType = res.docType;
+      } else {
+        const res = await this.identityUtilsService.verifyJwt(compact);
+        verified = res.verified;
+        claims = res.payload?.vc || res.payload;
+      }
+
+      // mdoc has no exp/expirationDate concept at this level (validity is
+      // its own validityInfo, already checked inside verifyMdoc's digest
+      // pass) — treat as non-expiring here rather than misreading namespace
+      // claims as JWT-shaped expiry fields.
+      const expEpoch = isMdoc
+        ? undefined
+        : claims?.exp || (claims?.expirationDate ? new Date(claims.expirationDate).getTime() / 1000 : undefined);
+      const expired = expEpoch && expEpoch * 1000 < Date.now() ? 'NOK' : 'OK';
+
+      const credentialStatus = claims?.credentialStatus || claims?.vc?.credentialStatus;
+      const statusListRevoked = await this.checkStatusListEntry(credentialStatus);
+      const revoked = status === VCStatus.REVOKED || statusListRevoked ? 'NOK' : 'OK';
+
+      return {
+        status,
+        checks: [
+          {
+            ...((status || statusListRevoked !== null) && { revoked }),
+            expired,
+            proof: verified ? 'OK' : 'NOK',
+          },
+        ],
+        ...(mdocDocType ? { docType: mdocDocType } : {}),
+      };
+    } catch (e) {
+      this.logger.error('Error verifying enveloped credential: ', e);
+      return { errors: [e] };
+    }
+  }
+
+  // Compares LD-proof challenge/domain against caller-supplied options.
+  // Returns { checked:false } when the caller passes nothing (existing behaviour).
+  private checkChallengeDomain(
+    proof: any,
+    options?: { challenge?: string; domain?: string }
+  ): { checked: boolean; ok: boolean } {
+    if (!options || (!options.challenge && !options.domain)) {
+      return { checked: false, ok: true };
+    }
+    let ok = true;
+    if (options.challenge && proof?.challenge !== options.challenge) ok = false;
+    if (options.domain && proof?.domain !== options.domain) ok = false;
+    return { checked: true, ok };
+  }
+
+  // Returns true/false when a status can be determined, null when there is no
+  // credentialStatus to check (so the caller can omit the 'revoked' field).
+  private async checkStatusList(cred: any): Promise<boolean | null> {
+    return this.checkStatusListEntry(cred?.credentialStatus);
+  }
+
+  private async checkStatusListEntry(credentialStatus: any): Promise<boolean | null> {
+    if (!this.statusListEnabled || !credentialStatus) return null;
+    const listId = credentialStatus.revocationListCredential;
+    const index = parseInt(credentialStatus.revocationListIndex, 10);
+    if (!listId || isNaN(index)) return null;
+    return this.statusListService.isRevoked(listId, index);
   }
 
   async verifyCredentialById(credId: string) {
@@ -213,18 +339,23 @@ export class CredentialsService {
       select: {
         signed: true,
         status: true,
+        format: true,
+        enveloped: true,
       },
-    }));
-    const { signed: credToVerify, status } = (stored || {}) as { signed: Verifiable<W3CCredential>; status: VCStatus };
+    })) as { signed: Verifiable<W3CCredential>; status: VCStatus; format?: string; enveloped?: string } | null;
 
     this.logger.debug('Fetched credntial from db to verify');
 
     // invalid request in case credential is not found
-    if (!credToVerify) {
+    if (!stored || (!stored.signed && !stored.enveloped)) {
       this.logger.error('Credential not found');
       throw new NotFoundException({ errors: ['Credential not found'] });
     }
-    return this.verifyCredential(credToVerify, status);
+    // Enveloped formats verify from the compact string, not the JSON envelope.
+    if (stored.format && stored.format !== 'ldp_vc' && stored.enveloped) {
+      return this.verifyCredential(stored.enveloped, stored.status);
+    }
+    return this.verifyCredential(stored.signed, stored.status);
   }
 
   async getSuite(verificationMethod: VerificationMethod, signatureType: string) {
@@ -301,33 +432,68 @@ export class CredentialsService {
       this.logger.error('Invalid response from generate DID', err);
       throw new InternalServerErrorException('Problem creating DID');
     }
-    // sign the credential
-    let signedCredential: W3CCredential = {};
-    try {
-      signedCredential = await this.identityUtilsService.signVC(
-        credInReq as CredentialPayload,
-        credInReq.issuer
-      );
-    } catch (err) {
-      this.logger.error('Error signing the credential');
-      throw new InternalServerErrorException('Problem signing the credential');
+
+    const format: CredentialFormat = issueRequest.format || 'ldp_vc';
+    const issuerId = (credInReq.issuer as any)?.id || (credInReq.issuer as string);
+
+    // Optionally reserve a status-list index and embed credentialStatus
+    // BEFORE signing so the proof covers it. Off by default → ldp_vc unchanged.
+    let statusListCredential: string | undefined;
+    let statusListIndex: number | undefined;
+    if (this.statusListEnabled) {
+      try {
+        const allocation = await this.statusListService.allocateIndex(issuerId);
+        statusListCredential = allocation.statusListCredential;
+        statusListIndex = allocation.index;
+        (credInReq as any).credentialStatus =
+          this.statusListService.buildCredentialStatus(statusListCredential, statusListIndex);
+      } catch (err) {
+        this.logger.error('Error allocating status list index', err);
+      }
     }
 
-    this.logger.debug('signed credential');
+    // sign the credential in the requested format
+    let signResult: SignResult;
+    try {
+      signResult = await this.credentialFormatService.signInFormat(
+        credInReq,
+        credInReq.issuer,
+        format,
+        {
+          disclosable: issueRequest.disclosable,
+          holderJwk: issueRequest.holderJwk,
+          docType: issueRequest.docType,
+          namespaces: issueRequest.namespaces,
+        }
+      );
+    } catch (err) {
+      this.logger.error('Error signing the credential', err);
+      throw new InternalServerErrorException('Problem signing the credential');
+    }
+    this.logger.debug(`signed credential (${format})`);
+
+    const signedObj = signResult.signed as any;
+    // For ldp_vc the proof lives on the signed object; for enveloped formats
+    // there is no detached proof to persist separately.
+    const proof = format === 'ldp_vc' ? (signedObj.proof as Proof) : undefined;
 
     // TODO: add created by and updated by
     const newCred = await this.prisma.verifiableCredentials.create({
       data: {
-        id: signedCredential.id,
-        type: signedCredential.type,
-        issuer: signedCredential.issuer as IssuerType as string,
-        issuanceDate: signedCredential.issuanceDate,
-        expirationDate: signedCredential.expirationDate,
-        subject: signedCredential.credentialSubject as JwtCredentialSubject,
-        subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
-        proof: signedCredential.proof as Proof,
+        id: credInReq.id,
+        type: credInReq.type,
+        issuer: issuerId,
+        issuanceDate: credInReq.issuanceDate,
+        expirationDate: credInReq.expirationDate,
+        subject: credInReq.credentialSubject as JwtCredentialSubject,
+        subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
+        proof: proof,
         credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
-        signed: signedCredential as object,
+        signed: signedObj as object,
+        format,
+        enveloped: signResult.enveloped,
+        statusListCredential,
+        statusListIndex,
         tags: issueRequest.tags,
       },
     });
@@ -338,8 +504,15 @@ export class CredentialsService {
     }
     this.logger.debug('saved credential to db');
 
-    const res = newCred.signed;
-    delete res['options'];
+    // Enveloped formats return the raw compact string as the credential so a
+    // wallet can store it directly; ldp_vc returns the JSON-LD object (as today).
+    let res: any;
+    if (format === 'ldp_vc') {
+      res = newCred.signed;
+      delete res['options'];
+    } else {
+      res = signResult.enveloped;
+    }
     return {
       credential: res,
       credentialSchemaId: newCred.credential_schema,
@@ -348,6 +521,7 @@ export class CredentialsService {
       createdBy: '',
       updatedBy: '',
       tags: newCred.tags,
+      format,
     };
   }
 
@@ -359,6 +533,24 @@ export class CredentialsService {
           status: 'REVOKED',
         },
       });
+      // Also flip the StatusList bit so verifiers relying on the published
+      // bitstring (not the DB) see the revocation. Best-effort; the DB status
+      // remains the source of truth for the by-id verify path.
+      if (
+        this.statusListEnabled &&
+        (credential as any).statusListCredential != null &&
+        (credential as any).statusListIndex != null
+      ) {
+        try {
+          await this.statusListService.setRevoked(
+            (credential as any).statusListCredential,
+            (credential as any).statusListIndex,
+            credential.issuer
+          );
+        } catch (err) {
+          this.logger.error('Error updating status list on revoke', err);
+        }
+      }
       return credential;
     } catch (err) {
       this.logger.error('Error revoking/soft deleting the credential: ', err);
@@ -407,6 +599,14 @@ export class CredentialsService {
       delete signed['options'];
       return { id: cred.id, ...signed };
     });
+  }
+
+  // Serves the signed StatusList/RevocationList2020 credential so verifiers can
+  // check revocation without contacting the issuer's DB (P0.6).
+  async getStatusListCredential(id: string) {
+    const signed = await this.statusListService.getStatusListCredential(id);
+    if (!signed) throw new NotFoundException('Status list credential not found');
+    return signed;
   }
 
   async getRevocationList(

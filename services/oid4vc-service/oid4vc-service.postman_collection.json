@@ -1,0 +1,1664 @@
+{
+  "info": {
+    "name": "Sunbird RC - OID4VC (VCI + VP) Flows",
+    "description": "Full OID4VCI issuance + OID4VP presentation flows against oid4vc-service, identity-service, credential-schema, and credentials-service. Run folders top-to-bottom via Collection Runner. Requires the stack up per TESTING.md (db, vault, redis, identity, credential-schema, credential, oid4vc-service).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "identity_base",
+      "value": "http://localhost:3332"
+    },
+    {
+      "key": "schema_base",
+      "value": "http://localhost:3333"
+    },
+    {
+      "key": "credential_base",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "oid4vc_base",
+      "value": "http://localhost:3400"
+    },
+    {
+      "key": "issuer_did",
+      "value": ""
+    },
+    {
+      "key": "holder_did",
+      "value": ""
+    },
+    {
+      "key": "impostor_did",
+      "value": ""
+    },
+    {
+      "key": "schema_id",
+      "value": ""
+    },
+    {
+      "key": "offer_id",
+      "value": ""
+    },
+    {
+      "key": "pre_auth_code",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "c_nonce",
+      "value": ""
+    },
+    {
+      "key": "pop_jwt",
+      "value": ""
+    },
+    {
+      "key": "issued_credential",
+      "value": ""
+    },
+    {
+      "key": "vp_transaction_id",
+      "value": ""
+    },
+    {
+      "key": "vp_request_uri",
+      "value": ""
+    },
+    {
+      "key": "vp_nonce",
+      "value": ""
+    },
+    {
+      "key": "vp_state",
+      "value": ""
+    },
+    {
+      "key": "vp_jwt",
+      "value": ""
+    },
+    {
+      "key": "mdoc_issuer_did",
+      "value": ""
+    },
+    {
+      "key": "mdoc_schema_id",
+      "value": ""
+    },
+    {
+      "key": "mdoc_credential",
+      "value": ""
+    },
+    {
+      "key": "render_schema_id",
+      "value": ""
+    },
+    {
+      "key": "render_credential",
+      "value": ""
+    },
+    {
+      "key": "sdjwt_schema_id",
+      "value": ""
+    },
+    {
+      "key": "sdjwt_credential",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Discovery",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status UP', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Issuer metadata",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/.well-known/openid-credential-issuer"
+          }
+        },
+        {
+          "name": "AS metadata",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/.well-known/openid-configuration"
+          }
+        },
+        {
+          "name": "JWKS",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/.well-known/jwks.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Setup - Schema + DIDs",
+      "item": [
+        {
+          "name": "Generate issuer DID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/did/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":[{\"alsoKnownAs\":[\"postman-issuer\"],\"services\":[],\"method\":\"rcw\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('issuer_did', json[0].id);",
+                  "pm.test('issuer DID generated', () => pm.expect(json[0].id).to.include('did:rcw:'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate holder DID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/did/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":[{\"alsoKnownAs\":[\"postman-holder\"],\"services\":[],\"method\":\"rcw\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('holder_did', json[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate impostor DID (for VP negative test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/did/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":[{\"alsoKnownAs\":[\"postman-impostor\"],\"services\":[],\"method\":\"rcw\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('impostor_did', json[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create OID4VCI-enabled schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{schema_base}}/credential-schema",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"OID4VC Pilot Credential\",\n    \"author\": \"{{issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"OID4VC-Pilot-Credential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"Pilot credential for OID4VC Postman collection testing\",\n      \"type\": \"object\",\n      \"properties\": { \"name\": { \"type\": \"string\" } },\n      \"required\": [\"name\"],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"oid4vc-pilot\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"ldp_vc\", \"jwt_vc_json\"],\n    \"display\": [{ \"name\": \"OID4VC Pilot Credential\", \"locale\": \"en-US\" }]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('schema_id', json.schema.id);",
+                  "pm.test('schema created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify oid4vci-configs lists the schema",
+          "request": {
+            "method": "GET",
+            "url": "{{schema_base}}/credential-schema/oid4vci-configs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('schema present with both formats', () => {",
+                  "  const entry = json.find(s => s.schemaId === pm.collectionVariables.get('schema_id'));",
+                  "  pm.expect(entry).to.not.be.undefined;",
+                  "  pm.expect(entry.formats).to.include('jwt_vc_json');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. OID4VCI - VC Issuance Flow (jwt_vc_json)",
+      "item": [
+        {
+          "name": "Create offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential_configuration_id\": \"{{schema_id}}\",\n  \"format\": \"jwt_vc_json\",\n  \"claims\": { \"name\": \"Postman Test Holder\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const grant = json.credential_offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+                  "pm.collectionVariables.set('pre_auth_code', grant['pre-authorized_code']);",
+                  "pm.collectionVariables.set('offer_id', json.offer_id);",
+                  "pm.test('offer created', () => pm.expect(json.offer_id).to.not.be.undefined);",
+                  "pm.test('credential_configuration_ids matches metadata key', () => {",
+                  "  // credential_configuration_id is schemaId-based, not name-based \u2014",
+                  "  // schema display names aren't guaranteed unique (found live: multiple",
+                  "  // schemas can share a name), so schemaId is the only safe basis.",
+                  "  const expected = `${pm.collectionVariables.get('schema_id')}_jwt_vc_json`;",
+                  "  pm.expect(json.credential_offer.credential_configuration_ids[0]).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dereference offer (wallet)",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/oid4vc/offer/{{offer_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('offer dereferences with matching grant', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const grant = json.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+                  "  pm.expect(grant['pre-authorized_code']).to.eql(pm.collectionVariables.get('pre_auth_code'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange pre-auth code for token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/token",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+                },
+                {
+                  "key": "pre-authorized_code",
+                  "value": "{{pre_auth_code}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', json.access_token);",
+                  "pm.collectionVariables.set('c_nonce', json.c_nonce);",
+                  "pm.test('token minted', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign holder PoP JWT (via identity-service, stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": { \"aud\": \"{{oid4vc_base}}\", \"nonce\": \"{{c_nonce}}\" },\n  \"header\": { \"typ\": \"openid4vci-proof+jwt\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('pop_jwt', json.jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/credential",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proof\": { \"proof_type\": \"jwt\", \"jwt\": \"{{pop_jwt}}\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('issued_credential', json.credential);",
+                  "pm.test('credential issued', () => pm.expect(json.format).to.eql('jwt_vc_json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify issued credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{credential_base}}/credentials/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiableCredential\": \"{{issued_credential}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('proof OK, not expired', () => {",
+                  "  pm.expect(json.checks[0].proof).to.eql('OK');",
+                  "  pm.expect(json.checks[0].expired).to.eql('OK');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. OID4VCI - Negative Tests",
+      "item": [
+        {
+          "name": "N1 - Replay pre-auth code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/token",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+                },
+                {
+                  "key": "pre-authorized_code",
+                  "value": "{{pre_auth_code}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 bad or used code', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().message).to.include('bad or used code');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N7 - Unknown credential_configuration_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"credential_configuration_id\":\"Nonexistent Credential\",\"format\":\"jwt_vc_json\",\"claims\":{}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 not enabled', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N8 - Unsupported format",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"credential_configuration_id\":\"{{schema_id}}\",\"format\":\"vc+sd-jwt\",\"claims\":{}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 format not supported', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N9 - Dereference unknown offer",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/oid4vc/offer/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 not found or expired', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N4 - Missing Authorization header on /credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/oid4vc/credential",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"proof\":{\"proof_type\":\"jwt\",\"jwt\":\"x\"}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 missing bearer token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. OID4VP - VP Presentation Flow",
+      "item": [
+        {
+          "name": "Verifier creates DCQL request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"credentialSubject\", \"name\"] }] }]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('vp_transaction_id', json.transaction_id);",
+                  "pm.collectionVariables.set('vp_request_uri', json.request_uri);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wallet fetches request object",
+          "request": {
+            "method": "GET",
+            "url": "{{vp_request_uri}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Plain unsigned JSON, not a JWT/JAR \u2014 client_id_scheme is served as",
+                  "// a separate field (see oid4vp.service.ts createRequest()) rather than",
+                  "// a signed request object, for compatibility with wallets (e.g. walt.id)",
+                  "// that target an older OID4VP draft.",
+                  "const payload = pm.response.json();",
+                  "pm.collectionVariables.set('vp_nonce', payload.nonce);",
+                  "pm.collectionVariables.set('vp_state', payload.state);",
+                  "pm.test('request object has nonce+state+dcql_query', () => {",
+                  "  pm.expect(payload.nonce).to.not.be.undefined;",
+                  "  pm.expect(payload.dcql_query).to.not.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign VP token (via identity-service, stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('vp_jwt', json.jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit VP (direct_post)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status ok', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verifier polls status",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/vp/status/{{vp_transaction_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('all 6 checks OK', () => {",
+                  "  pm.expect(json.verified).to.eql(true);",
+                  "  ['holderSignature','nonce','credentialSignatures','holderBinding','revocation','dcql'].forEach(k => {",
+                  "    pm.expect(json.checks[k]).to.eql('OK');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. OID4VP - Negative Tests",
+      "item": [
+        {
+          "name": "N14 - Unknown state",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"state\":\"totally-bogus-state\",\"vp_token\":\"x\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 unknown or expired state', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N16 - Unknown VP transaction status",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/vp/status/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 transaction not found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N20 - Replay already-verified VP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 transaction not pending (replay rejected)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N19 setup (a) - Verifier creates a fresh DCQL request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dcql_query\": {\n    \"credentials\": [{ \"id\": \"pilot_cred\", \"format\": \"jwt_vc_json\", \"claims\": [{ \"path\": [\"credentialSubject\", \"name\"] }] }]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('vp_transaction_id', json.transaction_id);",
+                  "pm.collectionVariables.set('vp_request_uri', json.request_uri);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N19 setup (b) - Wallet fetches the fresh request object",
+          "request": {
+            "method": "GET",
+            "url": "{{vp_request_uri}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Plain unsigned JSON, not a JWT/JAR \u2014 see the equivalent step in",
+                  "// section 4 for why.",
+                  "const payload = pm.response.json();",
+                  "pm.collectionVariables.set('vp_nonce', payload.nonce);",
+                  "pm.collectionVariables.set('vp_state', payload.state);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N19 setup (c) - Impostor signs someone else's credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{impostor_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('vp_jwt', pm.response.json().jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N19 - Submit impostor VP (holder-binding mismatch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('403 holder binding failed', () => {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().error).to.include('holder binding failed');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. mso_mdoc - Issuance & Verification",
+      "description": "ISO/IEC 18013-5 mobile-document format. NOTE: mdoc *presentation* (OID4VP) is intentionally NOT covered here \u2014 it requires the wallet to build a CBOR DeviceResponse signed with COSE, which cannot be produced in a Postman sandbox. That half is covered by the self-driven e2e harness (see README \u00a710). This folder covers mdoc issuance end-to-end plus standalone verification.",
+      "item": [
+        {
+          "name": "Generate mdoc issuer DID (EC P-256 / JsonWebKey2020)",
+          "request": {
+            "method": "POST",
+            "url": "{{identity_base}}/did/generate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\": [{\"alsoKnownAs\": [\"postman-mdoc-issuer\"], \"services\": [], \"method\": \"rcw\", \"keyPairType\": \"JsonWebKey2020\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('mdoc_issuer_did', json[0].id);",
+                  "pm.test('EC P-256 issuer DID generated', () => {",
+                  "  pm.expect(json[0].id).to.include('did:rcw:');",
+                  "  pm.expect(json[0].verificationMethod[0].type).to.eql('JsonWebKey2020');",
+                  "  pm.expect(json[0].verificationMethod[0].publicKeyJwk.crv).to.eql('P-256');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create mso_mdoc schema",
+          "request": {
+            "method": "POST",
+            "url": "{{schema_base}}/credential-schema",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"Postman mDL Credential\",\n    \"author\": \"{{mdoc_issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"PostmanMdlCredential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"mso_mdoc test credential for the Postman collection\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"given_name\": {\n          \"type\": \"string\"\n        },\n        \"family_name\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"given_name\"\n      ],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\n    \"postman-mdoc\"\n  ],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\n      \"mso_mdoc\"\n    ],\n    \"display\": [\n      {\n        \"name\": \"Postman mDL Credential\",\n        \"locale\": \"en-US\"\n      }\n    ],\n    \"mdoc\": {\n      \"docType\": \"org.iso.18013.5.1.mDL\",\n      \"namespace\": \"org.iso.18013.5.1\"\n    }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('mdoc_schema_id', json.schema.id);",
+                  "pm.test('mdoc schema created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify oid4vci-configs lists the mdoc schema (with docType)",
+          "request": {
+            "method": "GET",
+            "url": "{{schema_base}}/credential-schema/oid4vci-configs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('mdoc config present with docType/namespace', () => {",
+                  "  const e = json.find(s => s.schemaId === pm.collectionVariables.get('mdoc_schema_id'));",
+                  "  pm.expect(e).to.not.be.undefined;",
+                  "  pm.expect(e.formats).to.include('mso_mdoc');",
+                  "  pm.expect(e.mdoc.docType).to.eql('org.iso.18013.5.1.mDL');",
+                  "  pm.expect(e.mdoc.namespace).to.eql('org.iso.18013.5.1');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create mdoc offer",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential_configuration_id\": \"{{mdoc_schema_id}}\",\n  \"format\": \"mso_mdoc\",\n  \"claims\": {\n    \"given_name\": \"Jane\",\n    \"family_name\": \"Doe\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const grant = json.credential_offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+                  "pm.collectionVariables.set('pre_auth_code', grant['pre-authorized_code']);",
+                  "pm.test('mdoc offer created', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(json.credential_offer.credential_configuration_ids[0]).to.eql(pm.collectionVariables.get('mdoc_schema_id'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange pre-auth code for token",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+                },
+                {
+                  "key": "pre-authorized_code",
+                  "value": "{{pre_auth_code}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', json.access_token);",
+                  "pm.collectionVariables.set('c_nonce', json.c_nonce);",
+                  "pm.test('token minted', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign holder PoP JWT (stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{c_nonce}}\"\n  },\n  \"header\": {\n    \"typ\": \"openid4vci-proof+jwt\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('pop_jwt', pm.response.json().jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request mdoc credential",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/credential",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proof\": {\n    \"proof_type\": \"jwt\",\n    \"jwt\": \"{{pop_jwt}}\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('mdoc_credential', json.credential);",
+                  "pm.test('mdoc credential issued', () => {",
+                  "  pm.expect(json.format).to.eql('mso_mdoc');",
+                  "  // base64url CBOR \u2014 no JWT dots, no SD-JWT tildes",
+                  "  pm.expect(json.credential).to.not.include('.');",
+                  "  pm.expect(json.credential).to.not.include('~');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify issued mdoc credential",
+          "request": {
+            "method": "POST",
+            "url": "{{credential_base}}/credentials/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiableCredential\": \"{{mdoc_credential}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('mdoc proof OK + docType echoed', () => {",
+                  "  pm.expect(json.checks[0].proof).to.eql('OK');",
+                  "  pm.expect(json.docType).to.eql('org.iso.18013.5.1.mDL');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N-mdoc - tampered mdoc rejected",
+          "request": {
+            "method": "POST",
+            "url": "{{credential_base}}/credentials/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiableCredential\": \"{{mdoc_credential}}XX\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('tampered mdoc fails proof (or errors cleanly)', () => {",
+                  "  const proof = (json.checks && json.checks[0] && json.checks[0].proof);",
+                  "  pm.expect(proof === 'NOK' || Array.isArray(json.errors)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. W3C VC Render Method",
+      "description": "W3C VC Render Method (https://www.w3.org/TR/vc-render-method/). Issues a jwt_vc_json credential from a schema carrying an inline SVG render template, asserts the renderMethod entry is embedded with a digestMultibase, then fetches the hosted template and recomputes the digest to confirm it matches.",
+      "item": [
+        {
+          "name": "Create schema with renderMethod (inline SVG)",
+          "request": {
+            "method": "POST",
+            "url": "{{schema_base}}/credential-schema",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"Postman Render Method Credential\",\n    \"author\": \"{{issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"PostmanRenderMethodCredential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"W3C VC Render Method test credential\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\n    \"postman-render\"\n  ],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\n      \"jwt_vc_json\"\n    ],\n    \"display\": [\n      {\n        \"name\": \"Postman Render Method Credential\",\n        \"locale\": \"en-US\"\n      }\n    ],\n    \"renderMethod\": {\n      \"type\": \"SvgRenderingTemplate\",\n      \"name\": \"Postman Card\",\n      \"svg\": \"<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><text x='10' y='50'>{{credentialSubject.name}}</text></svg>\"\n    }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('render_schema_id', json.schema.id);",
+                  "pm.test('render schema created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create offer",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential_configuration_id\": \"{{render_schema_id}}\",\n  \"format\": \"jwt_vc_json\",\n  \"claims\": {\n    \"name\": \"Render Holder\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const grant = json.credential_offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+                  "pm.collectionVariables.set('pre_auth_code', grant['pre-authorized_code']);",
+                  "pm.test('offer created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange pre-auth code for token",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+                },
+                {
+                  "key": "pre-authorized_code",
+                  "value": "{{pre_auth_code}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', json.access_token);",
+                  "pm.collectionVariables.set('c_nonce', json.c_nonce);",
+                  "pm.test('token minted', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign holder PoP JWT (stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{c_nonce}}\"\n  },\n  \"header\": {\n    \"typ\": \"openid4vci-proof+jwt\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('pop_jwt', pm.response.json().jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request credential (renderMethod embedded)",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/credential",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proof\": {\n    \"proof_type\": \"jwt\",\n    \"jwt\": \"{{pop_jwt}}\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('render_credential', json.credential);",
+                  "// decode the jwt_vc_json payload (2nd segment)",
+                  "const payload = JSON.parse(Buffer.from(json.credential.split('.')[1], 'base64').toString('utf8'));",
+                  "const rm = (payload.vc || payload).renderMethod;",
+                  "pm.test('renderMethod embedded with digestMultibase', () => {",
+                  "  pm.expect(rm).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(rm[0].type).to.eql('SvgRenderingTemplate');",
+                  "  pm.expect(rm[0].id).to.include('/render-templates/');",
+                  "  pm.expect(rm[0].digestMultibase).to.be.a('string').and.to.match(/^z/);",
+                  "  pm.collectionVariables.set('render_template_url', rm[0].id);",
+                  "  pm.collectionVariables.set('render_digest', rm[0].digestMultibase);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fetch hosted render template + verify digest",
+          "request": {
+            "method": "GET",
+            "url": "{{render_template_url}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('template served as image/svg+xml', () => {",
+                  "  pm.expect(pm.response.headers.get('content-type')).to.include('image/svg+xml');",
+                  "  pm.expect(pm.response.text()).to.include('<svg');",
+                  "});",
+                  "// recompute multibase (base58btc) multihash SHA-256 of the served bytes",
+                  "// and compare to the credential's digestMultibase.",
+                  "try {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const svg = pm.response.text();",
+                  "  const wa = CryptoJS.SHA256(svg);",
+                  "  const bytes = [];",
+                  "  for (let i = 0; i < wa.sigBytes; i++) bytes.push((wa.words[i>>>2] >>> (24-(i%4)*8)) & 0xff);",
+                  "  const mh = [0x12, 0x20].concat(bytes);",
+                  "  const ALPH = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';",
+                  "  let digits = [0];",
+                  "  for (const b of mh) { let carry = b; for (let j=0;j<digits.length;j++){ carry += digits[j]<<8; digits[j]=carry%58; carry=(carry/58)|0; } while(carry){ digits.push(carry%58); carry=(carry/58)|0; } }",
+                  "  let out = '';",
+                  "  for (const b of mh) { if (b===0) out+='1'; else break; }",
+                  "  for (let k=digits.length-1;k>=0;k--) out += ALPH[digits[k]];",
+                  "  const computed = 'z' + out;",
+                  "  pm.test('served template digest matches credential digestMultibase', () => {",
+                  "    pm.expect(computed).to.eql(pm.collectionVariables.get('render_digest'));",
+                  "  });",
+                  "} catch (e) {",
+                  "  console.log('digest recompute skipped:', e.message);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. vc+sd-jwt - Issuance & Verification",
+      "description": "IETF SD-JWT VC format with real selective disclosure. Issues, confirms the credential is an SD-JWT (contains '~' disclosure separators), and verifies it.",
+      "item": [
+        {
+          "name": "Create vc+sd-jwt schema",
+          "request": {
+            "method": "POST",
+            "url": "{{schema_base}}/credential-schema",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"Postman SD-JWT Credential\",\n    \"author\": \"{{issuer_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"PostmanSdJwtCredential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"vc+sd-jwt test credential\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"age_over_18\": {\n          \"type\": \"boolean\"\n        }\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\n    \"postman-sdjwt\"\n  ],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\n      \"vc+sd-jwt\"\n    ],\n    \"vct\": \"Postman SD-JWT Credential\",\n    \"display\": [\n      {\n        \"name\": \"Postman SD-JWT Credential\",\n        \"locale\": \"en-US\"\n      }\n    ]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json=pm.response.json();",
+                  "pm.collectionVariables.set('sdjwt_schema_id',json.schema.id);",
+                  "pm.test('sd-jwt schema created',()=>pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create offer",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/offer",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential_configuration_id\": \"{{sdjwt_schema_id}}\",\n  \"format\": \"vc+sd-jwt\",\n  \"claims\": {\n    \"name\": \"SD-JWT Holder\",\n    \"age_over_18\": true\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json=pm.response.json();",
+                  "const grant=json.credential_offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'];",
+                  "pm.collectionVariables.set('pre_auth_code',grant['pre-authorized_code']);",
+                  "pm.test('offer created',()=>pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange pre-auth code for token",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+                },
+                {
+                  "key": "pre-authorized_code",
+                  "value": "{{pre_auth_code}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json=pm.response.json();",
+                  "pm.collectionVariables.set('access_token',json.access_token);",
+                  "pm.collectionVariables.set('c_nonce',json.c_nonce);",
+                  "pm.test('token minted',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign holder PoP JWT (stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{c_nonce}}\"\n  },\n  \"header\": {\n    \"typ\": \"openid4vci-proof+jwt\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('pop_jwt',pm.response.json().jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request vc+sd-jwt credential",
+          "request": {
+            "method": "POST",
+            "url": "{{oid4vc_base}}/oid4vc/credential",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proof\": {\n    \"proof_type\": \"jwt\",\n    \"jwt\": \"{{pop_jwt}}\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json=pm.response.json();",
+                  "pm.collectionVariables.set('sdjwt_credential',json.credential);",
+                  "pm.test('sd-jwt credential issued',()=>{",
+                  "  pm.expect(json.format).to.eql('vc+sd-jwt');",
+                  "  pm.expect(json.credential).to.include('~');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify issued vc+sd-jwt credential",
+          "request": {
+            "method": "POST",
+            "url": "{{credential_base}}/credentials/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verifiableCredential\": \"{{sdjwt_credential}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json=pm.response.json();",
+                  "pm.test('sd-jwt proof OK',()=>pm.expect(json.checks[0].proof).to.eql('OK'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

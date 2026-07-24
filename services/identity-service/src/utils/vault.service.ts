@@ -51,4 +51,31 @@ export class VaultService {
     );
     return read.data;
   }
+
+  // Merges new key entries into an existing secret (or creates it).
+  // Used when adding an ES256/JWT key to a DID that already holds an Ed25519 key.
+  async mergePvtKey(secret: object, name: string, path?: string) {
+    const secretPath = path
+      ? path + `/${name}`
+      : `rcw/identity/private_keys/${name}`;
+    let existing: any = null;
+    let version: number | undefined;
+    try {
+      const read = await this.vault.readKVSecret(this.token, secretPath);
+      existing = read?.data;
+      version = read?.metadata?.version ?? read?.version;
+    } catch (err) {
+      // secret does not exist yet — fall through to create
+    }
+    try {
+      const merged = { ...(existing || {}), ...secret };
+      if (existing) {
+        return await this.vault.updateKVSecret(this.token, secretPath, merged, version);
+      }
+      return await this.vault.createKVSecret(this.token, secretPath, merged);
+    } catch (err) {
+      Logger.error(err);
+      throw new InternalServerErrorException('Error merging private key into vault');
+    }
+  }
 }
