@@ -2,13 +2,17 @@ import { Controller, Get, Param, Header, NotFoundException } from '@nestjs/commo
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loadConfig } from './config/configuration';
 import { SchemaClient } from './clients/schema.client';
+import { Oid4vciService } from './oid4vci/oid4vci.service';
 
 @ApiTags('Health')
 @Controller()
 export class AppController {
   private readonly config = loadConfig();
 
-  constructor(private readonly schema: SchemaClient) {}
+  constructor(
+    private readonly schema: SchemaClient,
+    private readonly oid4vci: Oid4vciService,
+  ) {}
 
   @ApiOperation({ summary: 'Liveness probe' })
   @Get('health')
@@ -50,5 +54,24 @@ export class AppController {
         [typeName]: `${this.config.publicUrl}/vocab#${encodeURIComponent(typeName)}`,
       },
     };
+  }
+
+  // SD-JWT VC Type Metadata (draft-ietf-oauth-sd-jwt-vc §11), served at the
+  // exact URL issuerMetadata() publishes as `vct` for schemas whose vct isn't
+  // already an absolute URI (see vct.util.ts normalizeVct()). Found live:
+  // walt.id's wallet resolves EVERY vct as a URL, so a bare display-name vct
+  // ("National Identity Credential") crashed it on the embedded space before
+  // this URI form + endpoint existed.
+  //
+  // Also served under the spec's `.well-known/vct` path-insertion form
+  // (draft-ietf-oauth-sd-jwt-vc §6.3.1: insert `/.well-known/vct` between the
+  // vct URI's authority and its path). Our vct is `<publicUrl>/vct/<slug>`,
+  // so that insertion lands at `/.well-known/vct/vct/<slug>` — found live:
+  // walt.id's `resolveVctUrl` fetches exactly that URL rather than the vct
+  // value directly, and 404'd until this route existed too.
+  @ApiOperation({ summary: 'SD-JWT VC Type Metadata for a normalized vct' })
+  @Get(['vct/:slug', '.well-known/vct/vct/:slug'])
+  vctMetadata(@Param('slug') slug: string) {
+    return this.oid4vci.getVctTypeMetadata(slug);
   }
 }

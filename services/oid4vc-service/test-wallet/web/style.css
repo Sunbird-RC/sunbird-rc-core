@@ -20,8 +20,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
 /* Sidebar */
-.wsidebar { width: 240px; flex: 0 0 240px; background: linear-gradient(180deg, var(--sidebar), var(--sidebar-2));
-  color: #cdd7ea; display: flex; flex-direction: column; padding: 20px 14px; position: sticky; top: 0; height: 100vh; }
+.wsidebar { width: 240px; background: linear-gradient(180deg, var(--sidebar), var(--sidebar-2));
+  color: #cdd7ea; display: flex; flex-direction: column; padding: 20px 14px;
+  position: fixed; top: 0; left: 0; bottom: 0; height: 100vh; overflow-y: auto; z-index: 10; }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 16px; padding: 4px 8px 16px; }
 .brand .logo { font-size: 22px; }
 .nav { display: flex; flex-direction: column; gap: 3px; }
@@ -37,7 +38,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#33d17a; margin-right:6px; vertical-align: middle; }
 
 /* Main */
-.wmain { flex: 1; padding: 0 0 40px; max-width: 1040px; }
+.wmain { flex: 1; margin-left: 240px; padding: 0 0 40px; max-width: 1040px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 22px 34px; position: sticky; top: 0;
   background: rgba(238,241,246,.85); backdrop-filter: blur(8px); z-index: 5; }
 .topbar h1 { margin: 0; font-size: 22px; }
@@ -77,7 +78,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .panel h3 { margin: 0 0 4px; font-size: 16px; }
 .panel .sub { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
 label.field { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 14px; }
-input[type=text] { width: 100%; margin-top: 6px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+input[type=text], input[type=password], input[type=email], input:not([type]) {
+  width: 100%; margin-top: 6px; padding: 11px 13px; border: 1px solid var(--border);
+  border-radius: 10px; font-size: 14px; background: #fff; color: var(--text); font-family: inherit;
+}
+input[type=text]:focus, input[type=password]:focus, input:not([type]):focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,110,246,.15); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; border: 0; border-radius: 10px;
   padding: 11px 18px; font-weight: 700; font-size: 14px; cursor: pointer; transition: filter .15s; white-space: nowrap; }
@@ -110,11 +115,28 @@ pre { background: #f4f6fa; border-radius: 8px; padding: 12px; overflow: auto; fo
 .sheet { background: var(--panel); border-radius: 18px; max-width: 460px; width: 100%; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.3); max-height: 88vh; overflow: auto; }
 .sheet h2 { margin: 0 0 6px; font-size: 19px; }
 .sheet .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.trust-badge { display: inline-block; font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin: 0 0 10px; }
+.trust-badge.trust-ok { background: #e3f6ea; color: #1a7f45; }
+.trust-badge.trust-warn { background: #fff4dd; color: #9a6400; }
+.trust-badge.trust-blocked { background: #fde2e2; color: #a11e1e; }
 .attrbox { background: #f4f6fa; border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
 .attrbox .a { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-weight: 600; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13.5px; }
 .kv .k { color: var(--muted); }
 .kv .v { font-weight: 600; word-break: break-word; }
+
+/* Auth gate */
+.auth-gate { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0d1b34, #1e3a6d); padding: 20px; }
+.auth-gate[hidden] { display: none; }
+.auth-card { background: var(--panel); border-radius: 18px; padding: 30px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.auth-brand { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+.auth-brand .logo { font-size: 26px; }
+.auth-sub { color: var(--muted); font-size: 13px; margin: 8px 0 18px; }
+.auth-tabs { display: flex; gap: 6px; background: #f0f3f8; border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+.auth-tabs button { flex: 1; border: 0; background: transparent; padding: 9px; border-radius: 8px; font-weight: 700; font-size: 13.5px; cursor: pointer; color: var(--muted); }
+.auth-tabs button.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow); }
+.auth-err { color: var(--danger); font-size: 13px; min-height: 18px; margin: 6px 0 10px; }
 
 /* Toast */
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0d1b34; color: #fff;
@@ -124,5 +146,6 @@ pre { background: #f4f6fa; border-radius: 8px; padding: 12px; overflow: auto; fo
 @media (max-width: 760px) {
   body { flex-direction: column; }
   .wsidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .wmain { margin-left: 0; }
   .nav { flex-direction: row; flex-wrap: wrap; } .side-foot { display: none; }
 }

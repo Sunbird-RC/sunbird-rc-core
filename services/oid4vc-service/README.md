@@ -1,7 +1,11 @@
 # oid4vc-service
 
-OpenID4VCI 1.0 (credential issuance) + OpenID4VP 1.0 (credential presentation)
-**protocol façade** for Sunbird RC.
+OpenID4VCI 1.0 (with a draft-13 compat mode, `DRAFT13_COMPAT_MODE`) + OpenID4VP
+1.0/draft-23 (credential presentation) **protocol façade** for Sunbird RC.
+OID4VP defaults to a signed request object (JAR) with a `did:`-prefixed
+`client_id`; set `OID4VP_LEGACY_CLIENT_ID_SCHEME=true` for the older,
+unsigned, `client_id_scheme`-as-a-separate-field shape some wallets (e.g.
+walt.id) still expect — see [§3.6](#36-verifier-creates-a-request).
 
 It speaks the wallet protocols on the outside and delegates everything else
 to the **existing, unchanged** services on the inside:
@@ -194,14 +198,31 @@ it; a replayed code returns `400 invalid_grant: bad or used code`.
 1. **Verifier → oid4vc-service**: `POST /vp/request` `{dcql_query}`
 2. **oid4vc-service → Verifier**: `{transaction_id, request_uri, qr_data}` (`openid4vp://...`)
 
-The request object is served as plain, unsigned JSON (`client_id` = the
-`response_uri`, with a separate `client_id_scheme: "redirect_uri"` field) —
-this matches the request-object convention real-world wallets (e.g. walt.id)
-expect today.
+By default the request object is a **signed JAR** (draft-23 / OID4VP 1.0):
+`client_id` is `did:<VERIFIER_DID>`, `iss`/`aud` are set, and it's signed via
+identity-service (`IdentityClient.signJwt`) — no key material lives in
+oid4vc-service itself. Two alternate modes, chosen via config or a per-request
+`{"signed": false}`:
+
+| Mode | `client_id` | Signing | When |
+|---|---|---|---|
+| `signed` (default) | `did:<VERIFIER_DID>` | JWS, `application/oauth-authz-req+jwt` | `OID4VP_SIGN_REQUEST` unset/`true` |
+| `unsigned` | `redirect_uri:<response_uri>` | none, plain JSON | `{"signed": false}` per request |
+| `legacy` | `<response_uri>` + separate `client_id_scheme: "redirect_uri"` | none, plain JSON | `OID4VP_LEGACY_CLIENT_ID_SCHEME=true` |
+
+The `redirect_uri` client_id scheme (`unsigned`/`legacy`) MUST NOT be signed
+per spec, so signing forces the `did:` prefix — the mode is fixed at
+`POST /vp/request` time, before `client_id` is baked into the QR deep link,
+rather than negotiated later on the GET.
+
+The `legacy` shape matches what walt.id's wallet parses today: it targets an
+older OID4VP draft where `client_id_scheme` is a separate field and rejected
+both a signed `did:` client_id and the prefixed `redirect_uri:` form during
+interop testing (see `oid4vp.service.ts`'s `buildRequestObject` comment).
 
 #### 3.7 Wallet fetches and answers the request
 3. **Wallet → oid4vc-service**: `GET /vp/request-object/:id`
-4. **oid4vc-service → Wallet**: plain JSON containing `nonce`, `state`, `dcql_query`, `client_id`, `response_uri`
+4. **oid4vc-service → Wallet**: a JWS (`application/oauth-authz-req+jwt`) for `signed`, or plain JSON containing `nonce`, `state`, `dcql_query`, `client_id`, `response_uri` for `unsigned`/`legacy`. The endpoint returns `406` if the wallet's `Accept` header excludes the transaction's actual representation.
 5. **Wallet → oid4vc-service**: `POST /vp/response` (`direct_post`) `{state, vp_token}`
 
 For `ldp_vc`/`jwt_vc_json`/`vc+sd-jwt`, `vp_token` is a JWT signed by the
@@ -242,6 +263,24 @@ claims satisfy exactly what the verifier asked for via DCQL.
 | `ISSUER_DID` | *(blank → auto-generated on boot)* | fallback issuer DID used for schemas that don't declare their own `author`. Should be pinned in production — an auto-generated ephemeral DID changes on every restart. |
 | `OID4VP_ENABLED` | `true` | mounts `/vp/*` routes; set `false` to run issuance-only |
 | `DRAFT13_COMPAT_MODE` | `false` | emit OID4VCI draft-13 shapes (Inji interop) |
+| `OID4VP_SIGN_REQUEST` | `true` | sign the OID4VP request object as a JAR (`did:` client_id). Ignored (forced off) when `OID4VP_LEGACY_CLIENT_ID_SCHEME=true`, since the `redirect_uri` client_id scheme must not be signed. |
+| `OID4VP_LEGACY_CLIENT_ID_SCHEME` | `false` | emit the pre-draft-22 shape (`client_id` = `response_uri`, separate `client_id_scheme: "redirect_uri"` field, unsigned) for wallets like walt.id that don't parse the prefixed `client_id` convention |
+| `VERIFIER_DID` | *(blank → falls back to the issuer DID **only if** that is a `did:web`)* | DID used to sign OID4VP request objects when `OID4VP_SIGN_REQUEST` is on. Must be resolvable **by wallets** — see the note below. |
+
+**Signing requires a wallet-resolvable DID.** When `OID4VP_SIGN_REQUEST` is on,
+the request object's `client_id` is a `did:` and the wallet must resolve that
+DID to verify the signature. The issuer DID is typically a **`did:rcw`** —
+that's the method in the documented `ISSUER_DID` setup step, and also what gets
+auto-provisioned when `ISSUER_DID` is blank — and a `did:rcw` is resolvable only
+from identity-service's own DB, so no third-party wallet can verify against it.
+`createRequest` therefore refuses to sign with a `did:rcw` (whether it came from
+`ISSUER_DID` or was auto-provisioned) and returns a `500` naming the fix, rather
+than emitting a signed request no wallet can verify.
+
+An explicitly-set `VERIFIER_DID` is treated as the operator's deliberate choice
+and used regardless of method. So for signing: set `VERIFIER_DID` to something
+wallets can resolve (a `did:web`), or set `OID4VP_SIGN_REQUEST=false`. The
+bundled `docker-compose.yml` dev stack opts out for exactly this reason.
 | `ENABLE_AUTH` | `false` | reserved for enabling auth on internal endpoints (see [§8](#8-production-deployment-guide)) |
 | `OFFER_TTL` | `600`s | offer session lifetime |
 | `NONCE_TTL` | `300`s | `c_nonce` lifetime (single-use regardless) |

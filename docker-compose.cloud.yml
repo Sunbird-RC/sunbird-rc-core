@@ -188,6 +188,16 @@ services:
       # Set true only if targeting MOSIP Inji Wallet (draft-13 shapes) — see
       # PRODUCTION_DEPLOYMENT.md §4. Default false = final OID4VCI/OID4VP 1.0.
       - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
+      # OID4VP request-object signing (JAR, draft-23) — ON by default, which
+      # is the spec-correct posture for production. Requires a VERIFIER_DID
+      # (or a did:web ISSUER_DID) that WALLETS can resolve; a did:rcw is NOT
+      # sufficient, and /vp/request fails loudly rather than emitting a
+      # request no wallet can verify. Set OID4VP_SIGN_REQUEST=false only as a
+      # deliberate interop concession, or OID4VP_LEGACY_CLIENT_ID_SCHEME=true
+      # for wallets stuck on the pre-draft-22 client_id_scheme shape (walt.id).
+      - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-true}
+      - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
+      - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
       - ENABLE_AUTH=${ENABLE_AUTH-false}
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3400/health || exit 1']

@@ -6,6 +6,7 @@
   "description": "Independent web + headless test wallet (holder) for the Sunbird RC oid4vc-service. Exercises OID4VCI issuance and OID4VP (DCQL) presentation for all four formats: ldp_vc, jwt_vc_json, vc+sd-jwt, mso_mdoc.",
   "scripts": {
     "e2e": "node test/e2e.mjs",
+    "test:unit": "node test/trust.spec.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

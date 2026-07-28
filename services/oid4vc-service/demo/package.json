@@ -1,14 +1,16 @@
 {
-  "name": "oid4vc-age-verification-demo",
-  "version": "1.0.0",
+  "name": "oid4vc-demo",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Age Verification use-case demo: mock National Identity Authority (Keycloak-authenticated issuer portal) + Age Verification (verifier) portal, using vc+sd-jwt selective disclosure over the Sunbird RC oid4vc-service.",
+  "description": "OID4VC demo portals: Keycloak-authenticated issuers (National Identity, Farmer Registry, Education institutions) + verifiers (Age, Rural Credit, Education) across all 4 credential formats, over the Sunbird RC oid4vc-service.",
   "scripts": {
     "setup-keycloak": "node keycloak/setup-keycloak.mjs",
-    "seed": "node seed-national-id.mjs",
-    "test": "node test-selective-disclosure.mjs",
-    "start": "node server.mjs"
+    "seed": "node seed-demo.mjs",
+    "start": "node server.mjs",
+    "test": "node test-usecases.mjs",
+    "test:account": "node test-wallet-account.mjs",
+    "test:uc1": "node test-e2e-oidc.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",

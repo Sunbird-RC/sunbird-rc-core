@@ -18,7 +18,7 @@
 // browser. base64url helpers (util.mjs) are pure encoding, no crypto.
 import { p256 } from '@noble/curves/p256';
 import { sha256 } from '@noble/hashes/sha2';
-import { b64urlFromString, bytesToB64url } from './util.mjs';
+import { b64urlFromString, bytesToB64url, b64urlToBytes } from './util.mjs';
 
 const ALG = 'ES256';
 
@@ -55,6 +55,17 @@ export async function createHolder() {
   // presentation-time holder DID are byte-identical (the holder-binding check).
   const did = `did:jwk:${b64urlFromString(JSON.stringify(publicJwk))}`;
   return { priv, publicJwk, privateJwk, did, alg: ALG };
+}
+
+// Reconstruct a holder from a previously-saved privateJwk (its `d` field is the
+// base64url of the 32-byte P-256 key). Deterministic — same key → same DID —
+// so a persisted identity is byte-identical across sessions/devices. This is
+// the counterpart to createHolder() that makes the holder DID stable.
+export function holderFromPrivateJwk(privateJwk) {
+  const priv = b64urlToBytes(privateJwk.d);
+  const { publicJwk, privateJwk: pj } = jwksFromPriv(priv);
+  const did = `did:jwk:${b64urlFromString(JSON.stringify(publicJwk))}`;
+  return { priv, publicJwk, privateJwk: pj, did, alg: ALG };
 }
 
 // OID4VCI proof-of-possession JWT.

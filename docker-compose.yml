@@ -320,6 +320,15 @@ services:
       - ISSUER_DID=${OID4VC_ISSUER_DID-}
       - OID4VP_ENABLED=${OID4VP_ENABLED-true}
       - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
+      # OID4VP request-object signing (JAR, draft-23). The service default is
+      # ON, but signing needs a VERIFIER_DID that WALLETS can resolve — a
+      # did:web. This local stack auto-provisions a did:rcw issuer DID, which
+      # only identity-service can resolve, so signing is opted OUT here to
+      # keep the out-of-box dev flow working. To exercise the signed path,
+      # set OID4VC_VERIFIER_DID to a did:web and OID4VP_SIGN_REQUEST=true.
+      - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-false}
+      - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
+      - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
       - ENABLE_AUTH=${ENABLE_AUTH-false}
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:3400/health || exit 1" ]

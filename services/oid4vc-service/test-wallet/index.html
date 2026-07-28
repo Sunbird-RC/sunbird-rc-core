@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="/web/style.css" />
   </head>
   <body>
+    <!-- Login / signup gate (shown until authenticated) -->
+    <div id="auth-gate" class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><span class="logo">👛</span> OID4VC Wallet</div>
+        <p class="auth-sub">Sign in to your wallet. Your credentials and identity key are stored securely to your account.</p>
+        <div class="auth-tabs">
+          <button id="tab-login" class="active">Log in</button>
+          <button id="tab-signup">Sign up</button>
+        </div>
+        <label class="field">Username <input id="auth-user" type="text" autocomplete="username" placeholder="username" /></label>
+        <label class="field">Password <input id="auth-pass" type="password" autocomplete="current-password" placeholder="password" /></label>
+        <div id="auth-err" class="auth-err"></div>
+        <button class="btn" id="auth-submit" style="width:100%">Log in</button>
+      </div>
+    </div>
+
     <aside class="wsidebar">
       <div class="brand"><span class="logo">👛</span> OID4VC Wallet</div>
       <nav class="nav">
@@ -18,8 +34,9 @@
       </nav>
       <div class="side-foot">
         <div class="identity">
-          <div class="lbl"><span class="dot"></span>Holder identity</div>
+          <div class="lbl"><span class="dot"></span><span id="side-user">account</span></div>
           <div class="did" id="side-did">generating…</div>
+          <button class="btn ghost sm" id="signout" style="margin-top:10px;width:100%">Sign out</button>
         </div>
       </div>
     </aside>
@@ -117,6 +134,7 @@
       <div class="sheet">
         <h2>Share request</h2>
         <p class="sub" id="consent-verifier">A verifier is requesting proof.</p>
+        <p class="trust-badge" id="consent-trust"></p>
         <p style="font-size:13.5px">Only the following will be shared — everything else stays private:</p>
         <div class="attrbox" id="consent-attrs"></div>
         <div class="actions">

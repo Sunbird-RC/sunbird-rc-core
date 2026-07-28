@@ -15,6 +15,13 @@ export class IssueCredentialDTO {
   // vc+sd-jwt only: top-level credentialSubject claims to make selectively
   // disclosable. Defaults to all subject claims except 'id'.
   disclosable?: string[];
+  // vc+sd-jwt only: explicit `vct` (SD-JWT VC Type). Defaults to the last
+  // entry of `credential.type` when omitted — see credential-format.service.ts
+  // signSdJwtVc(). Callers that publish a normalized (URI-form) vct in their
+  // own issuer metadata (e.g. oid4vc-service, see vct.util.ts) should pass the
+  // exact same string here so the issued credential's vct matches what a
+  // wallet resolved from metadata / DCQL vct_values.
+  vct?: string;
   // vc+sd-jwt / mso_mdoc: holder's public JWK for key binding
   // (cnf claim / deviceKeyInfo.deviceKey respectively).
   holderJwk?: Record<string, any>;

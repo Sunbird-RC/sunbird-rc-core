@@ -12,6 +12,9 @@ export interface Oid4vcConfig {
   draft13CompatMode: boolean;
   enableAuth: boolean;
   jwksUri: string;
+  vpSignRequest: boolean;
+  vpLegacyClientIdScheme: boolean;
+  verifierDid: string;
   ttl: {
     offer: number;
     nonce: number;
@@ -40,6 +43,20 @@ export const loadConfig = (): Oid4vcConfig => ({
   draft13CompatMode: process.env.DRAFT13_COMPAT_MODE === 'true',
   enableAuth: process.env.ENABLE_AUTH === 'true',
   jwksUri: process.env.JWKS_URI || '',
+  // OID4VP request-object mode. Legacy implies unsigned (the `redirect_uri`
+  // client_id scheme MUST NOT be used with a signed request object), so it
+  // overrides vpSignRequest regardless of how that flag is set.
+  vpSignRequest:
+    process.env.OID4VP_LEGACY_CLIENT_ID_SCHEME !== 'true' &&
+    process.env.OID4VP_SIGN_REQUEST !== 'false',
+  vpLegacyClientIdScheme: process.env.OID4VP_LEGACY_CLIENT_ID_SCHEME === 'true',
+  // Deliberately NOT falling back to ISSUER_DID here. ISSUER_DID is commonly a
+  // did:rcw (identity-service's own method — the documented setup step for it
+  // uses method "rcw"), which only identity-service can resolve, so no wallet
+  // could verify a request object signed with it. An explicit VERIFIER_DID is
+  // an operator's deliberate choice and is trusted as-is; the ISSUER_DID /
+  // auto-provisioned fallbacks are resolvability-checked in oid4vp.service.ts.
+  verifierDid: process.env.VERIFIER_DID || '',
   ttl: {
     offer: num(process.env.OFFER_TTL, 600),
     nonce: num(process.env.NONCE_TTL, 300),

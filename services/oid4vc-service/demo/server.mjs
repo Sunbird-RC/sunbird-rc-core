@@ -27,6 +27,12 @@ const REDIRECT_URI = `${SELF}/callback`;
 const VCT = 'National Identity Credential';
 const AUTH = `${KC_BASE}/auth`;
 const OIDC = `${AUTH}/realms/${KC_REALM}/protocol/openid-connect`;
+// Behind a reverse proxy the browser-facing URLs differ from the in-network
+// ones: redirects (auth/logout) must use the public bases, while token /
+// userinfo / admin calls stay on the internal ones.
+const KC_PUBLIC = process.env.KC_PUBLIC_BASE || KC_BASE;
+const OIDC_PUB = `${KC_PUBLIC}/auth/realms/${KC_REALM}/protocol/openid-connect`;
+const OID4VC_PUBLIC = process.env.OID4VC_PUBLIC || OID4VC_BASE;
 
 const app = express();
 const states = new Map(); // state -> true
@@ -62,32 +68,54 @@ async function kcAdminToken() {
   return (await r.json()).access_token;
 }
 
-async function nationalIdConfigId() {
+async function metaSupported() {
   const meta = await getJSON(`${OID4VC_BASE}/.well-known/openid-credential-issuer`);
-  const supported = meta.credential_configurations_supported || meta.credentials_supported || {};
-  const hit = Object.entries(supported).find(([, v]) => v.scope === VCT && v.format === 'vc+sd-jwt');
-  if (!hit) throw new Error(`"${VCT}" (vc+sd-jwt) not enabled on the issuer — run: npm run seed`);
-  return hit[0];
+  return meta.credential_configurations_supported || meta.credentials_supported || {};
+}
+// Resolve the credential_configuration_id for a given schema name + format.
+async function configIdFor(schemaName, format) {
+  const supported = await metaSupported();
+  const hit = Object.entries(supported).find(([, v]) => v.scope === schemaName && v.format === format);
+  return hit && hit[0];
+}
+
+// Maps each of a verifier's `typeNames` (human schema names, e.g. "National
+// Identity Credential") to the actual `vct` the issuer publishes for its
+// vc+sd-jwt config. Needed because DCQL's `vct_values` must match the `vct`
+// claim embedded in the presented credential — which oid4vc-service now
+// normalizes to an absolute URI (see vct.util.ts normalizeVct()) for any
+// schema whose vct isn't already one. Found live: the verifier was still
+// asking for the bare display name, so walt.id — holding a credential whose
+// real vct is the URI — reported "no credentials matching this presentation
+// request" even though the credential was issued and stored correctly.
+// Falls back to the bare name if no vc+sd-jwt config is found for that scope.
+async function resolveSdJwtVctValues(typeNames) {
+  const supported = await metaSupported();
+  const byScope = new Map();
+  for (const cfg of Object.values(supported)) {
+    if (cfg.format === 'vc+sd-jwt' && cfg.scope) byScope.set(cfg.scope, cfg.vct || cfg.scope);
+  }
+  return typeNames.map((name) => byScope.get(name) || name);
 }
 
 // --- Issuer portal OIDC ----------------------------------------------------
 app.get('/issuer/login', (req, res) => {
   // Start every login from a clean slate: end any existing Keycloak SSO session
   // first, then land on /issuer/authorize which does the real auth redirect.
-  // (Using prompt=login instead throws "already authenticated as different
-  // user — sign out first" on legacy Keycloak; a prior logout avoids that and
-  // lets you switch citizens seamlessly.)
-  const u = new URL(`${OIDC}/logout`);
+  // Carry the chosen issuer + credential format through the logout hop.
+  const issuer = req.query.issuer || 'national-id';
+  const format = req.query.format || 'vc+sd-jwt';
+  const u = new URL(`${OIDC_PUB}/logout`);
   u.searchParams.set('client_id', CLIENT_ID);
-  u.searchParams.set('redirect_uri', `${SELF}/issuer/authorize`);
+  u.searchParams.set('redirect_uri', `${SELF}/issuer/authorize?issuer=${encodeURIComponent(issuer)}&format=${encodeURIComponent(format)}`);
   res.redirect(u.toString());
 });
 
 // The actual OIDC authorization-code redirect (reached after the pre-logout).
-app.get('/issuer/authorize', (_req, res) => {
+app.get('/issuer/authorize', (req, res) => {
   const state = Math.random().toString(36).slice(2);
-  states.set(state, true);
-  const u = new URL(`${OIDC}/auth`);
+  states.set(state, { issuerId: req.query.issuer || 'national-id', format: req.query.format || 'vc+sd-jwt' });
+  const u = new URL(`${OIDC_PUB}/auth`);
   u.searchParams.set('client_id', CLIENT_ID);
   u.searchParams.set('redirect_uri', REDIRECT_URI);
   u.searchParams.set('response_type', 'code');
@@ -98,7 +126,7 @@ app.get('/issuer/authorize', (_req, res) => {
 
 // Explicit sign-out (sidebar) — ends the Keycloak session, back to /issuer.
 app.get('/issuer/logout', (_req, res) => {
-  const u = new URL(`${OIDC}/logout`);
+  const u = new URL(`${OIDC_PUB}/logout`);
   u.searchParams.set('client_id', CLIENT_ID);
   u.searchParams.set('redirect_uri', `${SELF}/issuer`);
   res.redirect(u.toString());
@@ -107,8 +135,13 @@ app.get('/issuer/logout', (_req, res) => {
 app.get('/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
-    if (!states.delete(state)) throw new Error('bad state');
-    // Exchange code for tokens
+    const st = states.get(state);
+    states.delete(state);
+    if (!st) throw new Error('bad state');
+    const issuer = ISSUERS.find((i) => i.id === st.issuerId) || ISSUERS[0];
+    const format = st.format || 'vc+sd-jwt';
+
+    // Exchange code for tokens + read the authenticated user's attributes.
     const tok = await (await fetch(`${OIDC}/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -116,30 +149,19 @@ app.get('/callback', async (req, res) => {
     })).json();
     const userinfo = await (await fetch(`${OIDC}/userinfo`, { headers: { authorization: `Bearer ${tok.access_token}` } })).json();
     const username = userinfo.preferred_username;
-
-    // Read the citizen's National Identity attributes from Keycloak (the
-    // "National Identity System" is the source of truth).
     const admin = await kcAdminToken();
     const users = await (await fetch(`${AUTH}/admin/realms/${KC_REALM}/users?username=${encodeURIComponent(username)}&exact=true`, { headers: { authorization: `Bearer ${admin}` } })).json();
     const attrs = users[0]?.attributes || {};
-    const dob = attrs.date_of_birth?.[0];
-    const claims = {
-      national_id: attrs.national_id?.[0] || 'NID-UNKNOWN',
-      full_name: attrs.full_name?.[0] || username,
-      date_of_birth: dob || '2000-01-01',
-      gender: attrs.gender?.[0] || 'U',
-      over_18: age(dob || '2000-01-01') >= 18,
-    };
 
-    // The National Identity Authority signs + offers the credential (OID4VCI).
-    const configId = await nationalIdConfigId();
-    const offer = await postJSON(`${OID4VC_BASE}/oid4vc/offer`, {
-      credential_configuration_id: configId,
-      format: 'vc+sd-jwt',
-      claims,
-    });
+    // Build the credential subject for THIS issuer from the user's attributes.
+    const claims = issuer.claims(attrs, username);
+
+    // Resolve the config id for the chosen schema + format, then offer it.
+    const configId = await configIdFor(issuer.schemaName, format);
+    if (!configId) throw new Error(`No config for "${issuer.schemaName}" (${format}) — run seed-demo.mjs`);
+    const offer = await postJSON(`${OID4VC_BASE}/oid4vc/offer`, { credential_configuration_id: configId, format, claims });
     const qrDataUrl = await QRCode.toDataURL(offer.qr_data, { width: 240, margin: 1 });
-    res.send(renderIssued(username, claims, offer.qr_data, qrDataUrl));
+    res.send(await renderIssuerPage(issuer.id, { issuer, username, claims, format, link: offer.qr_data, qrDataUrl }));
   } catch (e) {
     res.status(500).send(`<pre>Issuance failed: ${e.message}</pre><p><a href="/issuer">back</a></p>`);
   }
@@ -147,7 +169,7 @@ app.get('/callback', async (req, res) => {
 
 // verifier config for the browser page
 app.get('/verifier/config.js', (_req, res) => {
-  res.type('application/javascript').send(`window.OID4VC_BASE=${JSON.stringify(OID4VC_BASE)}; window.VCT=${JSON.stringify(VCT)};`);
+  res.type('application/javascript').send(`window.OID4VC_BASE=${JSON.stringify(OID4VC_PUBLIC)}; window.VCT=${JSON.stringify(VCT)};`);
 });
 
 // Server-side QR so the static pages need no QR library.
@@ -161,61 +183,173 @@ app.get('/qr', async (req, res) => {
 });
 
 // --- Extensible catalogs — add a card by appending an entry here ----------
+const ALL4 = ['ldp_vc', 'jwt_vc_json', 'vc+sd-jwt', 'mso_mdoc'];
+const av = (a, k, d) => (a[k]?.[0]) ?? d; // first value of a Keycloak attribute
+
+function academicClaims(a, u) {
+  return {
+    learner_id: av(a, 'learner_id', 'EDU-0000'),
+    full_name: av(a, 'full_name', u),
+    institution_name: av(a, 'institution_name', 'Institution'),
+    qualification: av(a, 'qualification', '-'),
+    programme: av(a, 'programme', '-'),
+    completion_date: av(a, 'completion_date', '2020-01-01'),
+    academic_result: av(a, 'academic_result', '-'),
+  };
+}
+
 const ISSUERS = [
-  {
-    id: 'national-id',
-    icon: '🏛️',
-    name: 'National Identity Authority',
-    badge: 'National Identity Credential · vc+sd-jwt',
-    desc: 'Authenticates you via the National Identity System (Keycloak) and issues your National Identity Credential to your wallet.',
+  { id: 'national-id', tab: 'National Identity', icon: '🏛️', group: 'National Identity', name: 'National Identity Authority',
+    schemaName: 'National Identity Credential',
+    desc: 'Authenticates you via the National Identity System (Keycloak) and issues your National Identity Credential.',
     attrs: ['National Identity Number', 'Full Name', 'Date of Birth', 'Gender', 'Over 18'],
-    loginUrl: '/issuer/login?issuer=national-id',
-  },
-  // Future issuers go here (each with its own Keycloak client + schema).
+    claims: (a, u) => { const dob = av(a, 'date_of_birth', '2000-01-01'); return {
+      national_id: av(a, 'national_id', 'NID-UNKNOWN'), full_name: av(a, 'full_name', u),
+      date_of_birth: dob, gender: av(a, 'gender', 'U'), over_18: age(dob) >= 18 }; } },
+
+  { id: 'farmer', tab: 'Farmer Registry', icon: '🌾', group: 'Agriculture · Farmer Registry', name: 'Farmer Registry Authority',
+    schemaName: 'Farmer Credential',
+    desc: 'Validates your identity + agricultural records and issues a Farmer Credential for loan processing.',
+    attrs: ['Farmer ID', 'Full Name', 'Gender', 'Land Area (acres)', 'Ownership Type', 'Land Record Ref', 'Primary Crop', 'Farm Location'],
+    claims: (a, u) => ({
+      farmer_id: av(a, 'farmer_id', 'FRM-0000'), full_name: av(a, 'full_name', u), gender: av(a, 'gender', 'U'),
+      land_area_acres: Number(av(a, 'land_area_acres', '0')), ownership_type: av(a, 'ownership_type', 'Owned'),
+      land_record_ref: av(a, 'land_record_ref', '-'), primary_crop: av(a, 'primary_crop', '-'), farm_location: av(a, 'farm_location', '-') }) },
+
+  { id: 'edu-secondary', tab: 'Secondary Board', icon: '🏫', group: 'Education · Institutions', name: 'State Secondary Education Board',
+    schemaName: 'Secondary School Certificate',
+    desc: 'Issues a Secondary School Certificate as an Academic Credential.',
+    attrs: ['Learner ID', 'Full Name', 'Institution', 'Qualification', 'Programme', 'Completion Date', 'Result'],
+    claims: academicClaims },
+  { id: 'edu-university', tab: 'University', icon: '🎓', group: 'Education · Institutions', name: 'State University',
+    schemaName: 'University Degree',
+    desc: 'Issues a University Degree as an Academic Credential.',
+    attrs: ['Learner ID', 'Full Name', 'Institution', 'Qualification', 'Programme', 'Completion Date', 'Result'],
+    claims: academicClaims },
+  { id: 'edu-pg', tab: 'PG Institute', icon: '🎓', group: 'Education · Institutions', name: 'National Postgraduate Institute',
+    schemaName: 'Postgraduate Degree',
+    desc: 'Issues a Postgraduate Degree as an Academic Credential.',
+    attrs: ['Learner ID', 'Full Name', 'Institution', 'Qualification', 'Programme', 'Completion Date', 'Result'],
+    claims: academicClaims },
 ];
 
+// Verifier catalog. request = claim names; the client builds format-specific
+// DCQL from vct / docType(+namespace) / typeNames.
 const VERIFIERS = [
-  {
-    id: 'age-over-18',
-    icon: '🔞',
-    name: 'Age Verification Portal',
-    badge: 'Requests: over_18 only',
-    desc: 'Prove you are over 18. Only the "Over 18" attribute is requested — date of birth and everything else stay private.',
-    dcql: { credentials: [{ id: 'age', format: 'vc+sd-jwt', meta: { vct_values: [VCT] }, claims: [{ path: ['over_18'] }] }] },
-    successKey: 'over_18',
-  },
-  // Future verification use-cases go here.
+  { id: 'age', tab: 'Age Verification', icon: '🔞', group: 'Identity', name: 'Age Verification Portal',
+    desc: 'Prove you are over 18. Only the "Over 18" attribute is requested — DOB and everything else stay private.',
+    vct: 'National Identity Credential', docType: null, namespace: null,
+    typeNames: ['National Identity Credential'], request: ['over_18'], successKey: 'over_18', formats: ['vc+sd-jwt'] },
+
+  { id: 'rural-credit', tab: 'Rural Credit', icon: '🏦', group: 'Agriculture', name: 'Rural Credit Portal',
+    desc: 'A bank verifying a farmer for an agricultural loan. Requests only land ownership + farm details — identity stays private.',
+    vct: 'Farmer Credential', docType: 'in.gov.farmer.1', namespace: 'in.gov.farmer.1',
+    typeNames: ['Farmer Credential'], request: ['land_area_acres', 'ownership_type', 'land_record_ref', 'primary_crop'], formats: ALL4 },
+
+  { id: 'education', tab: 'Education', icon: '🎓', group: 'Education', name: 'Education Verification Portal',
+    desc: 'An employer/university verifying a qualification. Requests only qualification details — not full learner identity.',
+    vct: 'Academic Credential', docType: 'edu.academic.1', namespace: 'edu.academic.1',
+    typeNames: ['Secondary School Certificate', 'University Degree', 'Postgraduate Degree'],
+    request: ['qualification', 'programme', 'academic_result', 'institution_name'], formats: ALL4 },
 ];
 
-function issuerCard(i) {
-  return `<div class="card"><div class="icon">${i.icon}</div>
-    <h3>${i.name}</h3><span class="badge sd">${i.badge}</span>
-    <p class="desc">${i.desc}</p>
-    <ul class="attrs">${i.attrs.map((a) => `<li>${a}</li>`).join('')}</ul>
-    <div class="spacer"></div>
-    <a class="btn" href="${i.loginUrl}">Login &amp; Get Credential →</a></div>`;
-}
-function verifierCard(v) {
-  return `<div class="card"><div class="icon">${v.icon}</div>
-    <h3>${v.name}</h3><span class="badge">${v.badge}</span>
-    <p class="desc">${v.desc}</p>
-    <div class="spacer"></div>
-    <button class="btn" data-verifier="${v.id}">Request proof →</button></div>`;
+const FMT_LABEL = { ldp_vc: 'ldp_vc (JSON-LD)', jwt_vc_json: 'jwt_vc_json', 'vc+sd-jwt': 'vc+sd-jwt ✓ SD', mso_mdoc: 'mso_mdoc ✓ SD' };
+
+// Right-hand column of an issuer tab: QR/status shown BESIDE the issuer info.
+function issuerRight(i, issued) {
+  if (issued && issued.issuer.id === i.id) {
+    const rows = Object.entries(issued.claims).map(([k, v]) => `<li>${k}: <b>${v}</b></li>`).join('');
+    const sd = issued.format === 'vc+sd-jwt' || issued.format === 'mso_mdoc';
+    return `<div class="qr-panel issued">
+      <div class="ok-badge">✓ Issued as ${issued.username}</div>
+      <img src="${issued.qrDataUrl}" alt="offer QR"/>
+      <p class="muted">Scan with your wallet, or copy the offer link:</p>
+      <textarea class="offer-link" readonly onclick="this.select()">${issued.link}</textarea>
+      <p class="muted">${sd ? 'Selectively disclosable at presentation.' : 'Whole credential shared at presentation.'}</p>
+      <a class="btn green" href="/verifier">Go to Verifier →</a></div>`;
+  }
+  return `<div class="qr-panel empty"><div class="qr-ph">🔐</div>
+    <p class="muted">Log in above to generate your credential offer — the QR appears here.</p></div>`;
 }
 
-app.get(['/issuer', '/issuer/'], (_req, res) => {
+// One issuer tab panel: issuer details (left) + QR/status (right, beside).
+function issuerPanel(i, formats, activeId, issued) {
+  const opts = (formats.length ? formats : ['vc+sd-jwt']).map((f) => `<option value="${f}"${issued && issued.issuer.id === i.id && issued.format === f ? ' selected' : ''}>${FMT_LABEL[f] || f}</option>`).join('');
+  return `<div class="tab-panel ${i.id === activeId ? 'active' : ''}" data-panel="${i.id}">
+    <div class="issuer-split">
+      <div class="issuer-info">
+        <div class="icon">${i.icon}</div><h3>${i.name}</h3>
+        <span class="badge sd">${i.schemaName}</span>
+        <p class="desc">${i.desc}</p>
+        <ul class="attrs">${i.attrs.map((a) => `<li>${a}</li>`).join('')}</ul>
+        <label class="fmt-label">Format <select class="fmt">${opts}</select></label>
+        <button class="btn" data-issuer="${i.id}">Login &amp; Get Credential →</button>
+      </div>
+      ${issuerRight(i, issued)}
+    </div></div>`;
+}
+// One verifier tab panel: verifier details (left) + QR/result (right, beside).
+// The right ".vp-out" is filled client-side by verifier/app.js.
+function verifierPanel(v, activeId) {
+  const opts = v.formats.map((f) => `<option value="${f}">${FMT_LABEL[f] || f}</option>`).join('');
+  return `<div class="tab-panel ${v.id === activeId ? 'active' : ''}" data-panel="${v.id}">
+    <div class="issuer-split">
+      <div class="issuer-info">
+        <div class="icon">${v.icon}</div><h3>${v.name}</h3>
+        <span class="badge">Requests: ${v.request.join(', ')}</span>
+        <p class="desc">${v.desc}</p>
+        <label class="fmt-label">Format <select class="fmt">${opts}</select></label>
+        <button class="btn" data-verifier="${v.id}">Request proof →</button>
+      </div>
+      <div class="qr-panel empty vp-out"><div class="qr-ph">📷</div>
+        <p class="muted">Click "Request proof" to generate a QR — scan it with your wallet; the result appears here.</p></div>
+    </div></div>`;
+}
+
+async function renderIssuerPage(activeId, issued) {
+  const supported = await metaSupported();
+  const fmtsFor = (name) => ALL4.filter((f) => Object.values(supported).some((v) => v.scope === name && v.format === f));
+  const tabs = ISSUERS.map((i) => `<button data-tab="${i.id}" class="${i.id === activeId ? 'active' : ''}">${i.tab || i.name}</button>`).join('');
+  const panels = ISSUERS.map((i) => issuerPanel(i, fmtsFor(i.schemaName), activeId, issued)).join('');
   const body = `<div class="page-head"><h1>Issuer Portal</h1>
-    <p>Select a credential issuer to authenticate and receive a verifiable credential in your wallet.</p></div>
-    <div class="grid">${ISSUERS.map(issuerCard).join('')}</div>`;
-  res.send(shell('issuer', 'Issuer Portal', body));
+    <p>Pick an issuer tab, choose a format, then authenticate. Your credential offer (QR) appears beside the issuer.</p></div>
+    <div class="tabs">${tabs}</div>
+    ${panels}
+    <script>
+      document.querySelectorAll('.tabs [data-tab]').forEach((b)=>{ b.onclick=()=>{
+        document.querySelectorAll('.tabs [data-tab]').forEach((x)=>x.classList.toggle('active', x===b));
+        document.querySelectorAll('.tab-panel').forEach((p)=>p.classList.toggle('active', p.dataset.panel===b.dataset.tab));
+      };});
+      document.querySelectorAll('[data-issuer]').forEach((b)=>{ b.onclick=()=>{
+        const fmt=b.closest('.tab-panel').querySelector('.fmt').value;
+        location.href='/issuer/login?issuer='+encodeURIComponent(b.dataset.issuer)+'&format='+encodeURIComponent(fmt);
+      };});
+    </script>`;
+  return shell('issuer', 'Issuer Portal', body);
+}
+
+app.get(['/issuer', '/issuer/'], async (_req, res) => {
+  res.send(await renderIssuerPage(ISSUERS[0].id, null));
 });
 
-app.get(['/verifier', '/verifier/'], (_req, res) => {
+app.get(['/verifier', '/verifier/'], async (_req, res) => {
+  const activeId = VERIFIERS[0].id;
+  const verifiers = await Promise.all(
+    VERIFIERS.map(async (v) => ({ ...v, sdJwtVctValues: await resolveSdJwtVctValues(v.typeNames) })),
+  );
+  const tabs = VERIFIERS.map((v) => `<button data-tab="${v.id}" class="${v.id === activeId ? 'active' : ''}">${v.tab || v.name}</button>`).join('');
+  const panels = VERIFIERS.map((v) => verifierPanel(v, activeId)).join('');
   const body = `<div class="page-head"><h1>Verifier Portal</h1>
-    <p>Select a verification service. It requests the minimum attributes needed — the wallet asks your consent and discloses only those.</p></div>
-    <div class="grid">${VERIFIERS.map(verifierCard).join('')}</div>
-    <div id="vp-panel"></div>
-    <script>window.OID4VC_BASE=${JSON.stringify(OID4VC_BASE)};window.VCT=${JSON.stringify(VCT)};window.VERIFIERS=${JSON.stringify(VERIFIERS)};</script>
+    <p>Pick a verification service tab, choose a format, then request proof. The QR &amp; result appear beside the verifier.</p></div>
+    <div class="tabs">${tabs}</div>
+    ${panels}
+    <script>
+      document.querySelectorAll('.tabs [data-tab]').forEach((b)=>{ b.onclick=()=>{
+        document.querySelectorAll('.tabs [data-tab]').forEach((x)=>x.classList.toggle('active', x===b));
+        document.querySelectorAll('.tab-panel').forEach((p)=>p.classList.toggle('active', p.dataset.panel===b.dataset.tab));
+      };});
+    </script>
+    <script>window.OID4VC_BASE=${JSON.stringify(OID4VC_PUBLIC)};window.VERIFIERS=${JSON.stringify(verifiers)};</script>
     <script src="/verifier/app.js"></script>`;
   res.send(shell('verifier', 'Verifier Portal', body));
 });
@@ -239,41 +373,11 @@ function shell(active, title, body) {
       <div class="sec">Session</div>
       <a href="/issuer/logout">🚪 Sign out (switch citizen)</a>
     </nav>
-    <div class="foot">Age Verification demo · vc+sd-jwt selective disclosure. Citizens: citizen.over18 / citizen.under18 (Passw0rd!).</div>
+    <div class="foot">OID4VC demo · Age / Rural Credit / Education use cases · all 4 formats.<br/>Users (Passw0rd!): citizen.over18/under18 · farmer.male/female · learner.secondary/graduate/postgraduate.</div>
   </aside>
   <main class="main">${body}</main></body></html>`;
 }
 
-function renderIssued(username, claims, link, qrDataUrl) {
-  const body = `
-  <div class="page-head">
-    <h1>Credential issued ✓</h1>
-    <p>Authenticated as <span class="pill">${username}</span> via the National Identity System (Keycloak).
-       &nbsp;<a href="/issuer/logout" style="color:var(--danger);font-weight:600">Log out / switch citizen →</a></p>
-  </div>
-  <div class="panel">
-    <span class="badge sd">National Identity Credential · vc+sd-jwt</span>
-    <div class="row">
-      <div>
-        <p class="muted">Issued to your wallet — every attribute is independently selectively-disclosable:</p>
-        <ul class="attrs">
-          <li>National Identity Number: <b>${claims.national_id}</b></li>
-          <li>Full Name: <b>${claims.full_name}</b></li>
-          <li>Date of Birth: <b>${claims.date_of_birth}</b></li>
-          <li>Gender: <b>${claims.gender}</b></li>
-          <li class="hl">Over 18: <b>${claims.over_18}</b></li>
-        </ul>
-        <a class="btn green" href="/verifier">Go to Age Verification Portal →</a>
-      </div>
-      <div class="qr">
-        <p class="muted">Scan with your wallet, or paste the link below:</p>
-        <img src="${qrDataUrl}" alt="offer QR"/>
-        <p class="muted" style="max-width:260px"><code>${link}</code></p>
-      </div>
-    </div>
-  </div>`;
-  return shell('issuer', 'Credential Issued', body);
-}
 
 app.listen(PORT, () => {
   console.log(`Age Verification demo on ${SELF}`);

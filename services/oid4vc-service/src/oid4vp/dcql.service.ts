@@ -1,5 +1,20 @@
 import { Injectable } from '@nestjs/common';
 
+// SD-JWT VC's IANA-registered format identifier was renamed from `vc+sd-jwt`
+// to `dc+sd-jwt` partway through the spec's drafts. Found live: walt.id's
+// DCQL parser (`id.walt.dcql.models.CredentialFormat`) is a strict enum that
+// only accepts `dc+sd-jwt` (or its `vc-sd_jwt` alias) and throws
+// SerializationException on anything else — but this codebase's OID4VCI side
+// still (correctly, for its own draft target) publishes `vc+sd-jwt` as the
+// credential format id. Treat both spellings as the same format for DCQL
+// matching purposes so either a query or a presented credential can use
+// either spelling without breaking the other side.
+const SD_JWT_FORMAT_ALIASES = new Set(['vc+sd-jwt', 'dc+sd-jwt']);
+function sameFormat(a: string, b: string): boolean {
+  if (a === b) return true;
+  return SD_JWT_FORMAT_ALIASES.has(a) && SD_JWT_FORMAT_ALIASES.has(b);
+}
+
 // Minimal DCQL (Digital Credentials Query Language, OID4VP 1.0) evaluator.
 // Covers the common case: credential-set queries by type/vct + claim-path
 // presence. Works over both ldp_vc (JSON-LD) and jwt_vc_json / vc+sd-jwt claim
@@ -72,7 +87,7 @@ export class DcqlService {
     cq: any,
     p: { types: string[]; vct?: string; docType?: string; format: string },
   ): boolean {
-    if (cq.format && cq.format !== p.format) return false;
+    if (cq.format && !sameFormat(cq.format, p.format)) return false;
     const meta = cq.meta || {};
     if (Array.isArray(meta.type_values)) {
       // type_values is an array of allowed type-arrays (OR of AND-sets).

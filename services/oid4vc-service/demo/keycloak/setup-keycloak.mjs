@@ -73,6 +73,9 @@ async function ensureClient(token) {
 
 async function ensureUser(token, u) {
   const list = await (await kc(token, 'GET', `/users?username=${u.username}&exact=true`)).json();
+  // u.attrs is a flat map of attribute -> value; wrap each value in an array
+  // (Keycloak stores multi-valued attributes).
+  const attributes = Object.fromEntries(Object.entries(u.attrs).map(([k, v]) => [k, [String(v)]]));
   const rep = {
     username: u.username,
     enabled: true,
@@ -80,12 +83,7 @@ async function ensureUser(token, u) {
     lastName: u.full_name.split(' ').slice(1).join(' ') || '.',
     email: `${u.username}@example.gov`,
     emailVerified: true,
-    attributes: {
-      national_id: [u.national_id],
-      full_name: [u.full_name],
-      date_of_birth: [u.date_of_birth],
-      gender: [u.gender],
-    },
+    attributes,
     credentials: [{ type: 'password', value: 'Passw0rd!', temporary: false }],
   };
   let id;
@@ -108,20 +106,37 @@ async function main() {
   console.log(`Configuring Keycloak at ${AUTH} (realm ${KC_REALM})`);
   const token = await adminToken();
   await ensureClient(token);
-  await ensureUser(token, {
-    username: 'citizen.over18',
-    national_id: 'NID-1000-0001',
-    full_name: 'Aarav Sharma',
-    date_of_birth: '2000-05-20',
-    gender: 'M',
-  });
-  await ensureUser(token, {
-    username: 'citizen.under18',
-    national_id: 'NID-2000-0002',
-    full_name: 'Diya Verma',
-    date_of_birth: '2010-05-20',
-    gender: 'F',
-  });
-  console.log('Keycloak setup complete. Logins: citizen.over18 / citizen.under18 (password: Passw0rd!)');
+
+  // Use Case 1 — Age Verification citizens
+  await ensureUser(token, { username: 'citizen.over18', full_name: 'Aarav Sharma',
+    attrs: { national_id: 'NID-1000-0001', full_name: 'Aarav Sharma', date_of_birth: '2000-05-20', gender: 'M' } });
+  await ensureUser(token, { username: 'citizen.under18', full_name: 'Diya Verma',
+    attrs: { national_id: 'NID-2000-0002', full_name: 'Diya Verma', date_of_birth: '2010-05-20', gender: 'F' } });
+
+  // Use Case 2 — Agriculture Rural Credit farmers
+  await ensureUser(token, { username: 'farmer.male', full_name: 'Ravi Kumar',
+    attrs: { farmer_id: 'FRM-1000-0001', full_name: 'Ravi Kumar', gender: 'M',
+      land_area_acres: '4.5', ownership_type: 'Owned', land_record_ref: 'LR-KA-77-2201',
+      primary_crop: 'Wheat', farm_location: 'Rampur, Karnataka' } });
+  await ensureUser(token, { username: 'farmer.female', full_name: 'Lakshmi Devi',
+    attrs: { farmer_id: 'FRM-2000-0002', full_name: 'Lakshmi Devi', gender: 'F',
+      land_area_acres: '2.0', ownership_type: 'Leased', land_record_ref: 'LR-KA-88-3302',
+      primary_crop: 'Paddy', farm_location: 'Shivpur, Karnataka' } });
+
+  // Use Case 3 — Education learners (each maps to one institution)
+  await ensureUser(token, { username: 'learner.secondary', full_name: 'Rohan Mehta',
+    attrs: { learner_id: 'EDU-1000-0001', full_name: 'Rohan Mehta', institution_name: 'State Secondary Education Board',
+      qualification: 'Secondary School Certificate', programme: 'Science', completion_date: '2019-05-15', academic_result: '82%' } });
+  await ensureUser(token, { username: 'learner.graduate', full_name: 'Priya Nair',
+    attrs: { learner_id: 'EDU-2000-0002', full_name: 'Priya Nair', institution_name: 'State University',
+      qualification: 'Bachelor of Science', programme: 'Computer Science', completion_date: '2022-06-30', academic_result: 'First Class' } });
+  await ensureUser(token, { username: 'learner.postgraduate', full_name: 'Arjun Rao',
+    attrs: { learner_id: 'EDU-3000-0003', full_name: 'Arjun Rao', institution_name: 'National Postgraduate Institute',
+      qualification: 'Master of Technology', programme: 'Artificial Intelligence', completion_date: '2024-06-30', academic_result: 'Distinction (CGPA 8.9)' } });
+
+  console.log('Keycloak setup complete. Users (password Passw0rd!):');
+  console.log('  UC1: citizen.over18, citizen.under18');
+  console.log('  UC2: farmer.male, farmer.female');
+  console.log('  UC3: learner.secondary, learner.graduate, learner.postgraduate');
 }
 main().catch((e) => { console.error('KEYCLOAK SETUP FAILED:', e.message); process.exit(1); });

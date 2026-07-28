@@ -14,6 +14,7 @@ import { TokenService } from './token.service';
 import { PopService } from './pop.service';
 import { loadConfig } from '../config/configuration';
 import { digestMultibase } from '../utils/multibase.util';
+import { normalizeVct, slugifyVct, isAbsoluteHttpUri } from './vct.util';
 
 const PREAUTH_GRANT = 'urn:ietf:params:oauth:grant-type:pre-authorized_code';
 
@@ -23,6 +24,10 @@ interface OfferSession {
   schemaId: string;
   schemaVersion: string;
   schemaName: string;
+  // vc+sd-jwt only: the SAME normalized vct published in issuer metadata
+  // (see vct.util.ts) — passed through to credentials-service at issuance so
+  // the issued credential's vct matches what a wallet resolved from metadata.
+  vct?: string;
   issuerDid: string;
   claims: Record<string, any>;
   preAuthCode: string;
@@ -85,7 +90,14 @@ export class Oid4vciService {
           cryptographic_binding_methods_supported: ['did:web', 'did:key', 'jwk'],
           credential_signing_alg_values_supported: isMdoc ? ['ES256'] : ['ES256', 'Ed25519Signature2020'],
           proof_types_supported: { jwt: { proof_signing_alg_values_supported: ['ES256'] } },
-          ...(format === 'vc+sd-jwt' ? { vct: cfg.vct } : {}),
+          // vct MUST be a URI if it contains a ':', and — found live against
+          // walt.id's wallet — some wallets resolve EVERY vct as a URL
+          // regardless of that spec carve-out, so a bare display name like
+          // "National Identity Credential" crashes them ("Illegal character
+          // in path" on the space). normalizeVct() turns any non-URI schema
+          // name into `<publicUrl>/vct/<slug>`, which vct.controller.ts then
+          // actually serves as SD-JWT VC Type Metadata.
+          ...(format === 'vc+sd-jwt' ? { vct: normalizeVct(cfg.vct, this.config.publicUrl) } : {}),
           display: cfg.display,
           ...(isMdoc
             ? {
@@ -118,6 +130,33 @@ export class Oid4vciService {
       return { ...base, credentials_supported: supported };
     }
     return { ...base, credential_configurations_supported: supported };
+  }
+
+  // SD-JWT VC Type Metadata (draft-ietf-oauth-sd-jwt-vc §11) for a vct we
+  // normalized into `<publicUrl>/vct/<slug>` (see vct.util.ts / issuerMetadata
+  // above). Per the spec, when vct is a plain HTTPS URI (no .well-known
+  // indirection), the URI itself is fetched directly for this document — so
+  // this handler serves the same slug the metadata already advertises.
+  // Multiple schemas can legitimately share one vct slug (same credential
+  // type, different issuers/versions) — the first vc+sd-jwt match is
+  // authoritative for display purposes, matching issuerMetadata()'s own
+  // per-name (not per-schemaId) `vct` derivation.
+  async getVctTypeMetadata(slug: string) {
+    const configs = await this.schema.getOid4vciConfigs();
+    const cfg = configs.find(
+      (c) =>
+        c.formats.includes('vc+sd-jwt') &&
+        !isAbsoluteHttpUri(c.vct) &&
+        slugifyVct(c.vct) === slug,
+    );
+    if (!cfg) {
+      throw new NotFoundException(`No vc+sd-jwt credential type found for vct slug '${slug}'`);
+    }
+    return {
+      vct: normalizeVct(cfg.vct, this.config.publicUrl),
+      name: cfg.name,
+      display: cfg.display,
+    };
   }
 
   // --- Offer ---------------------------------------------------------------
@@ -211,6 +250,7 @@ export class Oid4vciService {
       schemaId: cfg.schemaId,
       schemaVersion: cfg.version,
       schemaName: cfg.name,
+      vct: format === 'vc+sd-jwt' ? normalizeVct(cfg.vct, this.config.publicUrl) : undefined,
       // Sign as the schema's own author DID when it has one — falls back to
       // the single server-wide ISSUER_DID for schemas authored before this
       // field existed, or left blank. Every schema already requires an
@@ -440,6 +480,7 @@ export class Oid4vciService {
       tags: session.tags,
       format: session.format,
       holderJwk,
+      ...(session.format === 'vc+sd-jwt' ? { vct: session.vct } : {}),
       // mso_mdoc-only: the generic W3C `credential` object above is still
       // built (and still schema-validated against its flat
       // credentialSubject) for consistency with every other format, but the

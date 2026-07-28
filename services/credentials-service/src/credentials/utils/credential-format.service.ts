@@ -31,6 +31,7 @@ export class CredentialFormatService {
       holderJwk?: Record<string, any>;
       docType?: string;
       namespaces?: Record<string, Record<string, any>>;
+      vct?: string;
     } = {}
   ): Promise<SignResult> {
     switch (format) {
@@ -72,7 +73,7 @@ export class CredentialFormatService {
   private async signSdJwtVc(
     credInReq: W3CCredential,
     issuer: IssuerType,
-    opts: { disclosable?: string[]; holderJwk?: Record<string, any> }
+    opts: { disclosable?: string[]; holderJwk?: Record<string, any>; vct?: string }
   ): Promise<SignResult> {
     const subject = (credInReq.credentialSubject || {}) as Record<string, any>;
     // Flatten subject claims to top level for SD-JWT selective disclosure.
@@ -84,7 +85,7 @@ export class CredentialFormatService {
       ...(subject.id ? { sub: subject.id } : {}),
       iat: this.toEpoch(credInReq.issuanceDate),
       ...(credInReq.expirationDate ? { exp: this.toEpoch(credInReq.expirationDate) } : {}),
-      vct: (credInReq.type && credInReq.type[credInReq.type.length - 1]) || 'VerifiableCredential',
+      vct: opts.vct || (credInReq.type && credInReq.type[credInReq.type.length - 1]) || 'VerifiableCredential',
       jti: credInReq.id,
       ...subject,
       ...(opts.holderJwk ? { cnf: { jwk: opts.holderJwk } } : {}),

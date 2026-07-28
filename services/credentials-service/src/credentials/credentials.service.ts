@@ -464,6 +464,7 @@ export class CredentialsService {
           holderJwk: issueRequest.holderJwk,
           docType: issueRequest.docType,
           namespaces: issueRequest.namespaces,
+          vct: issueRequest.vct,
         }
       );
     } catch (err) {

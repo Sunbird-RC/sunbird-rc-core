@@ -22,6 +22,12 @@ export class CredentialsClient {
     holderJwk?: Record<string, any>;
     docType?: string;
     namespaces?: Record<string, Record<string, any>>;
+    // vc+sd-jwt only: overrides credentials-service's own vct derivation
+    // (which defaults to the last `credential.type` entry — a bare display
+    // name). Pass the same normalized (URI-form) vct published in issuer
+    // metadata — see vct.util.ts — so the issued credential's vct matches
+    // what a wallet resolves from metadata / uses in DCQL vct_values.
+    vct?: string;
   }): Promise<{ credential: any; format?: string }> {
     try {
       const res = await this.http.axiosRef.post(

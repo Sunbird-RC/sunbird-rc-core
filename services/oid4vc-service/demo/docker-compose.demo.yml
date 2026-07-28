@@ -1,0 +1,92 @@
+# Age Verification demo overlay for the cloud stack. Use together with the
+# base file:
+#   docker compose -f docker-compose.cloud.yml -f docker-compose.demo.yml up -d
+# Adds Keycloak (mock National Identity System) + the demo portal server, and
+# switches test-wallet to build from the synced source tree.
+services:
+  test-wallet:
+    image: sunbird-rc-oid4vc-test-wallet:demo
+    build: ./services/oid4vc-service/test-wallet
+
+  keycloak:
+    image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - ./imports:/opt/jboss/keycloak/imports
+    environment:
+      - DB_VENDOR=postgres
+      - DB_ADDR=db
+      - DB_PORT=5432
+      - DB_DATABASE=registry
+      - DB_USER=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER-admin}
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin123}
+      - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
+      # Behind nginx TLS: honour X-Forwarded-* and present the public /auth URL.
+      - PROXY_ADDRESS_FORWARDING=true
+      - KEYCLOAK_FRONTEND_URL=${DEMO_PUBLIC_URL}/auth
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9990/ || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Production-like wallet backend: accounts + persistence (stable holder DID,
+  # per-user credential store). Holder key stored encrypted (client-side).
+  wallet-backend:
+    image: sunbird-rc-oid4vc-wallet-backend:latest
+    build: ./services/oid4vc-service/wallet-backend
+    restart: unless-stopped
+    environment:
+      - PORT=4100
+      - PGHOST=db
+      - PGUSER=postgres
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - WALLET_DB=wallet
+      - WALLET_JWT_SECRET=${WALLET_JWT_SECRET:-change-me-in-prod}
+      # Trusted OID4VP verifier allowlist consumed by the browser wallet via
+      # GET /wallet-api/trusted-verifiers (see test-wallet/src/trust.mjs).
+      # clientId must match the demo verifier's oid4vc-service /vp/request
+      # client_id — a did: client_id if oid4vc-service signs requests
+      # (OID4VP_SIGN_REQUEST, the default), or a bare/redirect_uri: form with
+      # allowUnsigned:true if it runs in legacy/unsigned mode.
+      - WALLET_TRUSTED_VERIFIERS=${WALLET_TRUSTED_VERIFIERS-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:4100/wallet-api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  demo:
+    image: sunbird-rc-oid4vc-demo:latest
+    build: ./services/oid4vc-service/demo
+    restart: unless-stopped
+    environment:
+      - PORT=4000
+      - OID4VC_BASE=http://oid4vc-service:3400
+      - OID4VC_PUBLIC=${DEMO_PUBLIC_URL}
+      - KC_BASE=http://keycloak:8080
+      - KC_PUBLIC_BASE=${DEMO_PUBLIC_URL}
+      - SELF_BASE=${DEMO_PUBLIC_URL}
+      - WALLET_URL=${DEMO_PUBLIC_URL}/wallet/
+      - KC_ADMIN=${KEYCLOAK_ADMIN_USER-admin}
+      - KC_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin123}
+      - PORTAL_REDIRECT=${DEMO_PUBLIC_URL}/callback
+    depends_on:
+      oid4vc-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:4000/issuer || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5

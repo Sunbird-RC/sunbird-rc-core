@@ -7,8 +7,16 @@ export class CredentialStore {
 
   add(item) {
     // item: { format, raw, configId, issuer, docType?, claims?, label }
-    this.items.push({ id: this.items.length + 1, ...item });
+    // Preserve a backend-assigned id when present (persistent wallet); fall
+    // back to a local sequential id for the in-memory/headless case.
+    const id = item.id ?? this.items.length + 1;
+    this.items.push({ ...item, id });
     return this.items[this.items.length - 1];
+  }
+
+  // Replace all items (e.g. hydrate from the backend on login).
+  load(items) {
+    this.items = Array.isArray(items) ? [...items] : [];
   }
 
   all() {
