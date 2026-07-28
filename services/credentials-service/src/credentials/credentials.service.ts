@@ -462,6 +462,7 @@ export class CredentialsService {
         {
           disclosable: issueRequest.disclosable,
           holderJwk: issueRequest.holderJwk,
+          holderKid: issueRequest.holderKid,
           docType: issueRequest.docType,
           namespaces: issueRequest.namespaces,
           vct: issueRequest.vct,
