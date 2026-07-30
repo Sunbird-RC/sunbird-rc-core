@@ -20,6 +20,11 @@ export class CredentialsClient {
     format?: string;
     disclosable?: string[];
     holderJwk?: Record<string, any>;
+    // vc+sd-jwt only: when the wallet bound via a DID, its proof `kid` (a DID
+    // URL) must be echoed back as `cnf.kid` instead of binding by value with
+    // `cnf.jwk` — a conformant wallet only accepts `cnf.jwk` for a request it
+    // bound with a raw JWK, and rejects the credential otherwise.
+    holderKid?: string;
     docType?: string;
     namespaces?: Record<string, Record<string, any>>;
     // vc+sd-jwt only: overrides credentials-service's own vct derivation

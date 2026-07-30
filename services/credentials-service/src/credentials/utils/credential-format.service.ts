@@ -29,6 +29,7 @@ export class CredentialFormatService {
     opts: {
       disclosable?: string[];
       holderJwk?: Record<string, any>;
+      holderKid?: string;
       docType?: string;
       namespaces?: Record<string, Record<string, any>>;
       vct?: string;
@@ -58,13 +59,32 @@ export class CredentialFormatService {
 
   private async signJwtVc(credInReq: W3CCredential, issuer: IssuerType): Promise<SignResult> {
     const subject = credInReq.credentialSubject as { id?: string };
+    // W3C VC-JWT requires `nbf`/`exp` to represent vc.issuanceDate/
+    // vc.expirationDate exactly. `nbf` is integer seconds, but our dates are
+    // minted with millisecond precision (new Date().toISOString()), and strict
+    // holders compare `Date.parse(vc.issuanceDate) / 1000` — unfloored —
+    // against `nbf`. A credential carrying `...:12.345Z` therefore never
+    // matches nbf `…12` and is rejected outright ("JWT nbf and vc.issuanceDate
+    // do not match" in Credo). Embed whole-second dates in the `vc` claim so
+    // the two representations are equal by construction.
+    const nbf = this.toEpoch(credInReq.issuanceDate);
+    const exp = credInReq.expirationDate
+      ? this.toEpoch(credInReq.expirationDate)
+      : undefined;
+    const vc = {
+      ...credInReq,
+      issuanceDate: new Date(nbf * 1000).toISOString(),
+      ...(exp !== undefined
+        ? { expirationDate: new Date(exp * 1000).toISOString() }
+        : {}),
+    };
     const claims = {
       iss: (issuer as any)?.id || issuer,
       sub: subject?.id || undefined,
-      nbf: this.toEpoch(credInReq.issuanceDate),
-      ...(credInReq.expirationDate ? { exp: this.toEpoch(credInReq.expirationDate) } : {}),
+      nbf,
+      ...(exp !== undefined ? { exp } : {}),
       jti: credInReq.id,
-      vc: credInReq,
+      vc,
     };
     const jwt = await this.identityUtilsService.signJwt(issuer, claims, { typ: 'JWT' });
     return { signed: this.envelope(credInReq.id, `data:application/vc+jwt,${jwt}`), enveloped: jwt };
@@ -73,7 +93,12 @@ export class CredentialFormatService {
   private async signSdJwtVc(
     credInReq: W3CCredential,
     issuer: IssuerType,
-    opts: { disclosable?: string[]; holderJwk?: Record<string, any>; vct?: string }
+    opts: {
+      disclosable?: string[];
+      holderJwk?: Record<string, any>;
+      holderKid?: string;
+      vct?: string;
+    }
   ): Promise<SignResult> {
     const subject = (credInReq.credentialSubject || {}) as Record<string, any>;
     // Flatten subject claims to top level for SD-JWT selective disclosure.
@@ -88,7 +113,18 @@ export class CredentialFormatService {
       vct: opts.vct || (credInReq.type && credInReq.type[credInReq.type.length - 1]) || 'VerifiableCredential',
       jti: credInReq.id,
       ...subject,
-      ...(opts.holderJwk ? { cnf: { jwk: opts.holderJwk } } : {}),
+      // Key binding must be expressed the same way the wallet requested it.
+      // A DID-bound request (proof header carried a `kid`) has to be echoed as
+      // `cnf.kid`: a conformant holder only accepts `cnf.jwk` for a request it
+      // bound with a raw JWK, and otherwise rejects the credential outright
+      // (Credo: "Missing kmsKeyId for jwk with thumbprint … A credential was
+      // issued for a key that was not in the credential request"). Binding by
+      // value stays the fallback for inline-jwk proofs, which have no kid.
+      ...(opts.holderKid
+        ? { cnf: { kid: opts.holderKid } }
+        : opts.holderJwk
+          ? { cnf: { jwk: opts.holderJwk } }
+          : {}),
     };
     delete payload.id; // subject.id already mapped to sub
     const sdJwt = await this.identityUtilsService.signSdJwt(issuer, payload, disclosable, {});

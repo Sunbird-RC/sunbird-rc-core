@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
+import { resolveSelfContainedDidToJwk } from '../utils/self-contained-did.util';
 import { VaultService } from '../utils/vault.service';
 import { DidService } from '../did/did.service';
 import { Identity } from '@prisma/client';
@@ -95,7 +96,15 @@ export class JwtSignerService {
       ...(didDoc.verificationMethod || []),
       verificationMethod,
     ];
+    // `assertionMethod` covers signing credentials; `authentication` covers the
+    // DID authenticating *itself*, which is what signing an OpenID4VP request
+    // object (JAR) with a `did:` client_id is. Without the authentication
+    // entry, a conformant wallet resolves the DID, fails to find this key in
+    // that relationship, and rejects the request — Credo reports "Unable to
+    // locate verification method with id '<did>#jwt-key-1' in purposes
+    // authentication". This ES256 key is legitimately used for both purposes.
     didDoc.assertionMethod = [...(didDoc.assertionMethod || []), kid];
+    didDoc.authentication = [...(didDoc.authentication || []), kid];
 
     try {
       await this.prisma.identity.update({
@@ -237,8 +246,36 @@ export class JwtSignerService {
       }
 
       if (kbJwt) {
-        const cnfJwk = payload?.cnf?.jwk;
-        if (!cnfJwk) return { verified: false, error: 'KB-JWT present but no cnf.jwk in SD-JWT' };
+        // Key binding is expressed either by value (`cnf.jwk`) or by reference
+        // (`cnf.kid`, a DID URL) — a wallet that requested the credential with a
+        // DID-bound proof gets the latter. Resolve the reference back to a key:
+        // did:key/did:jwk are self-contained, anything else goes to the registry.
+        let cnfJwk = payload?.cnf?.jwk;
+        const cnfKid = payload?.cnf?.kid;
+        if (!cnfJwk && cnfKid) {
+          try {
+            cnfJwk = resolveSelfContainedDidToJwk(cnfKid);
+          } catch (err) {
+            return { verified: false, error: `cnf.kid unresolvable: ${err}` };
+          }
+          if (!cnfJwk) {
+            try {
+              const didDoc = await this.didService.resolveDID(cnfKid.split('#')[0]);
+              const vm = (didDoc.verificationMethod || []).find(
+                (m: any) => m.id === cnfKid && m.publicKeyJwk,
+              );
+              cnfJwk = vm?.publicKeyJwk;
+            } catch (err) {
+              return { verified: false, error: `cnf.kid not resolvable: ${err}` };
+            }
+          }
+        }
+        if (!cnfJwk) {
+          return {
+            verified: false,
+            error: 'KB-JWT present but SD-JWT has no resolvable cnf (jwk/kid)',
+          };
+        }
         try {
           const kbHeader = jose.decodeProtectedHeader(kbJwt);
           const key = await jose.importJWK(cnfJwk, (kbHeader.alg as string) || ES256);

@@ -99,16 +99,26 @@ export class Oid4vciService {
           // actually serves as SD-JWT VC Type Metadata.
           ...(format === 'vc+sd-jwt' ? { vct: normalizeVct(cfg.vct, this.config.publicUrl) } : {}),
           display: cfg.display,
+          // `credential_definition` is the W3C-format parameter (ldp_vc /
+          // jwt_vc_json). SD-JWT VC identifies its type with `vct` (set above)
+          // and mdoc with `doctype`, and neither may carry it: a strict wallet
+          // parses each configuration against its format's schema and discards
+          // the whole entry when an unexpected member is present — confirmed
+          // live, Credo dropped every vc+sd-jwt configuration, leaving
+          // `offeredCredentialConfigurations` empty and the offer unusable
+          // ("'credentialConfigurationIds' may not be empty").
           ...(isMdoc
             ? {
                 doctype: cfg.mdoc?.docType,
                 claims: { [cfg.mdoc?.namespace]: {} },
               }
-            : {
-                credential_definition: {
-                  type: ['VerifiableCredential', cfg.name],
-                },
-              }),
+            : format === 'vc+sd-jwt'
+              ? {}
+              : {
+                  credential_definition: {
+                    type: ['VerifiableCredential', cfg.name],
+                  },
+                }),
           // internal hint (not part of the spec response consumers care about)
           _schema: { id: cfg.schemaId, version: cfg.version, tags: cfg.tags },
         };
@@ -392,13 +402,23 @@ export class Oid4vciService {
       const txId = uuid();
       await this.store.set(
         `oid4vc:deferred:${txId}`,
-        { offerId, holderDid: popResult.holderDid, holderJwk: popResult.holderJwk },
+        {
+          offerId,
+          holderDid: popResult.holderDid,
+          holderJwk: popResult.holderJwk,
+          holderKid: popResult.holderKid,
+        },
         this.config.ttl.deferred,
       );
       return { transaction_id: txId, c_nonce: await this.issueNonce() };
     }
 
-    const credential = await this.issueForSession(session, popResult.holderDid, popResult.holderJwk);
+    const credential = await this.issueForSession(
+      session,
+      popResult.holderDid,
+      popResult.holderJwk,
+      popResult.holderKid,
+    );
     return { credential, c_nonce: await this.issueNonce(), format: session.format };
   }
 
@@ -415,7 +435,7 @@ export class Oid4vciService {
       // Still pending — spec: 202 with interval hint (handled in controller).
       return { pending: true, interval: 60 };
     }
-    const credential = await this.issueForSession(session, txn.holderDid, txn.holderJwk);
+    const credential = await this.issueForSession(session, txn.holderDid, txn.holderJwk, txn.holderKid);
     await this.store.del(`oid4vc:deferred:${txId}`);
     return { credential, format: session.format };
   }
@@ -433,6 +453,7 @@ export class Oid4vciService {
     session: OfferSession,
     holderDid?: string,
     holderJwk?: any,
+    holderKid?: string,
   ) {
     // credentialConfigurationId is now schemaId-based (see createOffer /
     // issuerMetadata) rather than name-based, so the readable VC type name
@@ -480,6 +501,7 @@ export class Oid4vciService {
       tags: session.tags,
       format: session.format,
       holderJwk,
+      holderKid,
       ...(session.format === 'vc+sd-jwt' ? { vct: session.vct } : {}),
       // mso_mdoc-only: the generic W3C `credential` object above is still
       // built (and still schema-validated against its flat

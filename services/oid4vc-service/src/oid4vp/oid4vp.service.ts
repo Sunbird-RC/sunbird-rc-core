@@ -17,6 +17,7 @@ import { DcqlService } from './dcql.service';
 import { loadConfig } from '../config/configuration';
 import * as jose from 'jose';
 import { buildSessionTranscript, verifyMdocPresentation } from './mdoc-presentation.util';
+import { resolveSelfContainedDidToJwk } from '../utils/self-contained-did.util';
 
 interface VpTxn {
   dcqlQuery: any;
@@ -341,22 +342,16 @@ export class Oid4vpService {
           let holderPublicJwk: any = vpHeader.jwk as any;
 
           // did:jwk wallets (e.g. walt.id) commonly sign with an inline `jwk`
-          // header and no `kid`/`iss`, or a self-contained `did:jwk:...` DID —
-          // neither is resolvable via identity-service's registry, which only
-          // knows its own DB plus did:web (see did.service.ts resolveDID: any
-          // other method 404s). did:jwk is deterministic by spec — the DID
-          // Document is just the base64url-decoded JWK embedded in the
-          // identifier itself — so resolve it locally instead of round-tripping
-          // to identity-service. Mirrors the same fallback already applied to
-          // the issuance-side PoP check in pop.service.ts.
-          if (!holderPublicJwk && entryHolderDid?.startsWith('did:jwk:')) {
-            try {
-              holderPublicJwk = JSON.parse(
-                Buffer.from(entryHolderDid.slice('did:jwk:'.length), 'base64url').toString('utf8'),
-              );
-            } catch {
-              throw new Error('malformed did:jwk holder DID');
-            }
+          // header and no `kid`/`iss`, or a self-contained `did:jwk:...` DID;
+          // Credo presents with the `did:key` it bound at issuance. None is
+          // resolvable via identity-service's registry, which only knows its own
+          // DB plus did:web (see did.service.ts resolveDID: any other method
+          // 404s). Both methods are deterministic by spec — the public key is
+          // embedded in the identifier — so resolve locally instead of
+          // round-tripping to identity-service. Mirrors the same fallback
+          // applied to the issuance-side PoP check in pop.service.ts.
+          if (!holderPublicJwk) {
+            holderPublicJwk = resolveSelfContainedDidToJwk(entryHolderDid);
           }
           if (!holderPublicJwk) {
             const holderDidDoc = await this.identity.resolveDID(entryHolderDid);

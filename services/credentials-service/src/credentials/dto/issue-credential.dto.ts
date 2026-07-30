@@ -25,6 +25,10 @@ export class IssueCredentialDTO {
   // vc+sd-jwt / mso_mdoc: holder's public JWK for key binding
   // (cnf claim / deviceKeyInfo.deviceKey respectively).
   holderJwk?: Record<string, any>;
+  // vc+sd-jwt only: the holder's proof `kid` (a DID URL) when it bound via a
+  // DID rather than an inline JWK. Bound as `cnf.kid` in preference to
+  // `cnf.jwk`, which conformant wallets only accept for jwk-bound requests.
+  holderKid?: string;
   // mso_mdoc only: has no W3C credentialSubject shape at all — claims are
   // organized under {namespace: {element: value}} instead. `credential` above
   // is still required (for its `id`/`type`/`issuer`), but its
