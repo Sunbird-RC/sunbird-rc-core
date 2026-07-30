@@ -18,13 +18,13 @@
 #        OID4VC_ISSUER_DID=<pinned DID — see step 3>
 #      (all other vars below have safe defaults for this topology)
 #   2. Vault ships unconfigured for production (file backend, manual unseal —
-#      see PRODUCTION_DEPLOYMENT.md §2.5 for hardening recommendations).
+#      see services/oid4vc-service/README.md §8 (Production Deployment Guide) for hardening recommendations).
 #      First run: `docker compose -f docker-compose.cloud.yml up -d vault`,
 #      then `vault operator init` / `vault operator unseal` against it
 #      (see setup_vault.sh / enable-v2.sh in the repo root for the pattern),
 #      and set VAULT_TOKEN from the resulting root/scoped token.
 #   3. Pin ISSUER_DID once identity is up (do NOT leave blank in production —
-#      see PRODUCTION_DEPLOYMENT.md §2.3):
+#      see services/oid4vc-service/README.md §8 (Production Deployment Guide)):
 #        curl -s -X POST http://<host>:3332/did/generate -H "Content-Type: application/json" \
 #          -d '{"content":[{"alsoKnownAs":["oid4vc-issuer-prod"],"services":[],"method":"rcw"}]}'
 #      then set OID4VC_ISSUER_DID to the returned `id` and restart oid4vc-service.
@@ -147,7 +147,7 @@ services:
       - ENABLE_AUTH=${ENABLE_AUTH-false}
       - QR_TYPE=${QR_TYPE-W3C_VC}
       # Recommended true in production — otherwise OID4VP's revocation check
-      # always trivially passes (see PRODUCTION_DEPLOYMENT.md §2.6).
+      # always trivially passes (see services/oid4vc-service/README.md §8 (Production Deployment Guide)).
       - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-true}
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3000/health || exit 1']
@@ -171,22 +171,24 @@ services:
     environment:
       - PORT=3400
       # MUST be the real externally-reachable HTTPS URL — embedded as
-      # iss/aud in minted tokens, JARs, and PoP checks (PRODUCTION_DEPLOYMENT.md §1.1).
+      # iss/aud in minted tokens, JARs, and PoP checks (services/oid4vc-service/README.md §8 (Production Deployment Guide)).
       - PUBLIC_URL=${OID4VC_PUBLIC_URL:?set OID4VC_PUBLIC_URL in .env to your real domain, e.g. https://issuer.example.com}
       - CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
       - IDENTITY_BASE_URL=http://identity:3332
       - SCHEMA_BASE_URL=http://credential-schema:3333
       - REDIS_URL=redis://redis:6379
       # redis required for any multi-replica/production deployment — see
-      # PRODUCTION_DEPLOYMENT.md §2.4.
+      # services/oid4vc-service/README.md §8 (Production Deployment Guide)
       - SESSION_STORE=redis
       # Must be pinned in production — see header comment step 3 and
-      # PRODUCTION_DEPLOYMENT.md §2.3. Left blank, a fresh ephemeral DID is
-      # generated on every restart, invalidating all previously-minted tokens.
+      # services/oid4vc-service/README.md §8 (Production Deployment Guide).
+      # Left blank, a fresh ephemeral DID is generated on every restart,
+      # invalidating all previously-minted tokens.
       - ISSUER_DID=${OID4VC_ISSUER_DID:?set OID4VC_ISSUER_DID in .env — see header comment step 3}
       - OID4VP_ENABLED=${OID4VP_ENABLED-true}
       # Set true only if targeting MOSIP Inji Wallet (draft-13 shapes) — see
-      # PRODUCTION_DEPLOYMENT.md §4. Default false = final OID4VCI/OID4VP 1.0.
+      # services/oid4vc-service/README.md §8 (Production Deployment Guide).
+      # Default false = final OID4VCI/OID4VP 1.0.
       - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
       # OID4VP request-object signing (JAR, draft-23) — ON by default, which
       # is the spec-correct posture for production. Requires a VERIFIER_DID
@@ -199,6 +201,16 @@ services:
       - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
       - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
       - ENABLE_AUTH=${ENABLE_AUTH-false}
+      - JWKS_URI=${JWKS_URI-}
+      # CORS defaults to allow-all (with a startup warning) for backward
+      # compatibility — set this to your actual frontend origin(s) in
+      # production. See services/oid4vc-service/README.md §8 (Production Deployment Guide)
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS-}
+      # No attestation/claims workflow is wired up — deferred_claim_id offers
+      # stay pending forever unless explicitly opted into. See
+      # services/oid4vc-service/README.md §8 (Production Deployment Guide)
+      - DEFERRED_CLAIMS_ALWAYS_READY=${DEFERRED_CLAIMS_ALWAYS_READY-false}
+      - INTERNAL_HTTP_TIMEOUT_MS=${INTERNAL_HTTP_TIMEOUT_MS-10000}
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3400/health || exit 1']
       interval: 10s
@@ -206,28 +218,14 @@ services:
       retries: 5
     # No `ports:` here — nginx (below) is the single public entrypoint.
     # Exposing 3400 directly bypasses whatever hardening (TLS, rate limiting,
-    # the /oid4vc/offer auth gap in PRODUCTION_DEPLOYMENT.md §2.1) sits in
+    # the /oid4vc/offer auth gap in services/oid4vc-service/README.md §8 (Production Deployment Guide)) sits in
     # nginx; only add a direct port mapping here for local debugging.
-
-  # Static holder/test wallet (Vite build served by nginx:alpine). Fronted by
-  # the gateway at /wallet/. Purely a Dev/QA holder UI — no secrets, no state.
-  test-wallet:
-    image: docker.io/snt1/sunbird-rc-oid4vc-test-wallet:${OID4VC_IMAGE_TAG-oid4vc}
-    platform: linux/amd64
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:80/ || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   nginx:
     image: ghcr.io/sunbird-rc/sunbird-rc-nginx
     restart: unless-stopped
     depends_on:
       oid4vc-service:
-        condition: service_healthy
-      test-wallet:
         condition: service_healthy
     volumes:
       # The published sunbird-rc-nginx image's baked-in config has NO

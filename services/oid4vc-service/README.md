@@ -21,8 +21,8 @@ session state.
 This document consolidates everything a new contributor or operator needs:
 architecture, supported formats (including `mso_mdoc` and W3C VC Render
 Method), the full API/sequence design, configuration reference, local
-deployment, manual testing, production hardening, wallet interoperability,
-and end-to-end verification evidence.
+deployment, manual testing, production hardening, and end-to-end
+verification evidence (including real-wallet interop results).
 
 ---
 
@@ -36,41 +36,13 @@ and end-to-end verification evidence.
 6. [Manual Testing Guide](#6-manual-testing-guide)
 7. [mso_mdoc & W3C VC Render Method](#7-mso_mdoc--w3c-vc-render-method)
 8. [Production Deployment Guide](#8-production-deployment-guide)
-9. [Wallet Interoperability](#9-wallet-interoperability)
-10. [End-to-End Verification Evidence](#10-end-to-end-verification-evidence)
+9. [End-to-End Verification Evidence](#9-end-to-end-verification-evidence)
 
 ---
 
 ## 1. Architecture
 
-```
- Wallet                oid4vc-service                 identity-service   credentials-service   credential-schema
-   |                        |                                |                    |                    |
-   |--GET issuer metadata-->|<--------- oid4vci-configs ----------------------------------------------->|
-   |                        |
-   |  (issuer) POST /oid4vc/offer  ---->  session stored (Redis/memory)
-   |<--- credential_offer (QR) ----------|
-   |
-   |--POST /oid4vc/token (pre-auth code)->|--- mints access token (ES256) ------------------->|
-   |<---------- access_token, c_nonce ----|
-   |
-   |--POST /oid4vc/credential (Bearer + PoP JWT)-->|
-   |                        |--verify PoP (holder DID/JWK)-->|
-   |                        |--POST /credentials/issue (format) -------------------------->|
-   |                        |                                |<--sign (Ed25519 / ES256 / COSE)--|
-   |<----- signed VC (format-appropriate envelope) ---------------------------------------|
-
- Verifier               oid4vc-service                                  Wallet
-   |--POST /vp/request (DCQL)-->|
-   |<--- request_uri, QR -------|
-   |                            |<--- GET /vp/request-object/:id --- Wallet
-   |                            |<--- POST /vp/response (vp_token) - Wallet
-   |                            |--verify holder/device sig, nonce, embedded VC(s)
-   |                            |  (credentials-service /verify or @auth0/mdl Verifier),
-   |                            |  status, holder-binding, DCQL satisfaction
-   |--GET /vp/status/:id ------>|
-   |<--- {verified, checks[]} --|
-```
+![OID4VC High-Level Design](docs/images/OID4VC-HLD.png)
 
 **Key services involved (T2 topology — no Java registry needed):**
 
@@ -466,7 +438,7 @@ onboarding and regression-checking after changes.
 > `*_base` variables with `--env-var` to point at a remote deployment).
 > mdoc *presentation* is not in the collection — it needs a CBOR
 > `DeviceResponse` a Postman sandbox can't build; that half is covered by
-> the e2e harness (§10).
+> the e2e harness ([§9](#9-end-to-end-verification-evidence)).
 
 ### 6.1 Health & discovery
 
@@ -788,86 +760,9 @@ issue via `oid4vciConfig` ([§4.3](#43-credential-schema)).
 
 ---
 
-## 9. Wallet Interoperability
+## 9. End-to-End Verification Evidence
 
-### 9.1 MOSIP Inji Wallet
-
-Two integration paths, not interchangeable:
-
-- **Path A — direct Credential Offer (Issuer-Initiated), pre-authorized_code.**
-  This is what `oid4vc-service` implements. MOSIP's `inji-vci-client`
-  libraries support this flow directly — scan a QR encoding
-  `openid-credential-offer://...`, no pre-registration needed.
-- **Path B — the published Inji Wallet app, via its Mimoto backend.** The
-  consumer app fetches a fixed issuer list from Mimoto
-  (`mimoto-issuers-config.json`); its example issuer config is built around
-  an `authorization_code` grant via a separate OIDC/OAuth server, which
-  `oid4vc-service` does not implement (it only supports pre-authorized_code
-  and is its own authorization server for that grant). Path A is the
-  supported, recommended target.
-
-**Steps (Path A):**
-1. Set `DRAFT13_COMPAT_MODE=true` and redeploy.
-2. Opt a schema into OID4VCI with `ldp_vc` or `jwt_vc_json`.
-3. Confirm draft-13 shaped metadata (`credentials_supported`, not
-   `credential_configurations_supported`).
-4. Create an offer, render its `qr_data` as a QR code, scan with the
-   Inji-compatible wallet/client.
-5. Confirm `GET /oid4vc/offer/:id` → `POST /oid4vc/token` →
-   `POST /oid4vc/credential` land from the wallet's IP, and the credential
-   appears in the wallet's UI.
-
-### 9.2 EUDI Reference Wallet
-
-The [EUDI reference wallet](https://github.com/eu-digital-identity-wallet)
-(part of the EU's ARF reference implementation) fits this codebase with no
-compat-mode flag and no intermediary backend:
-- Supports adding **any issuer by URL directly** (dynamic discovery against
-  `.well-known/openid-credential-issuer`), no static pre-registration.
-- Natively scans the same Credential Offer deep-link format
-  `oid4vc-service` produces.
-- Targets final OID4VCI/OID4VP (this service's default mode).
-- Uses **DCQL** on the presentation side, matching this implementation.
-
-The EU wallet ecosystem is built primarily around `mso_mdoc` and
-`vc+sd-jwt` — both are fully supported end-to-end by this service
-([§7](#7-mso_mdoc--w3c-vc-render-method)). Recommend testing with one of
-those two formats for this wallet rather than `ldp_vc`/`jwt_vc_json`.
-
-**One thing to verify per test:** the EUDI Android wallet's own
-documentation describes its presentation support as a specific OID4VP
-draft version, which may differ in a few request/response details from
-final 1.0 (e.g. encrypted vs. plain `direct_post`). Confirm this against
-your specific wallet build during the first test.
-
-**Steps:**
-1. Opt a schema into OID4VCI with `"oid4vciFormats": ["vc+sd-jwt"]` (or
-   `["mso_mdoc"]`).
-2. Confirm final-1.0 shaped metadata (default, no flag needed).
-3. Create an offer, scan the `qr_data` QR with the EUDI wallet app.
-4. For OID4VP: create a `POST /vp/request` DCQL query matching the
-   credential's disclosable claims, scan the resulting `qr_data`
-   (`openid4vp://...`), and confirm `GET /vp/status/:id` returns
-   `verified: true` with all six checks `OK`.
-
-### 9.3 walt.id Wallet
-
-[walt.id](https://walt.id/wallet) offers a hosted demo wallet
-(`wallet.demo.walt.id`) with no local deployment or intermediary backend —
-its credential-offer acceptance API takes the same
-`openid-credential-offer://...` deep link this service produces, with no
-issuer pre-registration required. It supports `jwt_vc_json` and
-`vc+sd-jwt` for issuance.
-
-**Known limitation:** walt.id's wallet currently implements Presentation
-Exchange (PEX) for presentations, not DCQL — since this service implements
-only DCQL, OID4VP/presentation testing against walt.id's wallet is not
-possible today. Use it for issuance testing only, and the EUDI reference
-wallet (§9.2) for presentation testing.
-
----
-
-## 10. End-to-End Verification Evidence
+### 9.1 Simulated (self-driven script) evidence
 
 A self-driven Node.js script (using `jose` and `@auth0/mdl`) exercised the
 complete issuance → verification → DCQL-gated presentation flow for all
@@ -918,3 +813,31 @@ Sample final status (`GET /vp/status/:id`) for each format:
 
 All four formats complete the full issuance → verification → DCQL-gated
 presentation flow correctly, end-to-end.
+
+### 9.2 Real-wallet interop evidence
+
+Beyond the simulated script above, the service has also been verified
+against real, independently-implemented wallet apps:
+
+- **[walt.id Wallet](https://walt.id/wallet)** — hosted demo wallet
+  (`wallet.demo.walt.id`), no local deployment or intermediary backend. Its
+  credential-offer acceptance API takes the same
+  `openid-credential-offer://...` deep link this service produces, with no
+  issuer pre-registration required.
+  - **Issuance (Holder role):** `jwt_vc_json` and `vc+sd-jwt` — credential
+    received into the wallet successfully.
+  - **Presentation (Holder role):** `vc+sd-jwt` — walt.id answered a
+    `POST /vp/request` DCQL query and `GET /vp/status/:id` returned
+    `verified: true` with all six checks `OK`.
+- **[Paradym Wallet](https://paradym.id)** — tested in the **OID4VP Holder
+  role only** (this service acting as Verifier); no OID4VCI/Issuer-role
+  testing was done against Paradym.
+  - **Presentation (Holder role):** `jwt_vc_json` and `vc+sd-jwt` — both
+    fully verified, `GET /vp/status/:id` returned `verified: true` with all
+    six checks `OK`.
+
+| Wallet | OID4VC Role Tested | Format(s) | Result |
+|---|---|---|---|
+| walt.id Wallet | Holder (OID4VCI issuance) | `jwt_vc_json`, `vc+sd-jwt` | ✅ credential received into wallet |
+| walt.id Wallet | Holder (OID4VP presentation) | `vc+sd-jwt` | ✅ **verified: true**, all 6 checks OK |
+| Paradym Wallet | Holder (OID4VP presentation) | `jwt_vc_json`, `vc+sd-jwt` | ✅ **verified: true**, all 6 checks OK |
