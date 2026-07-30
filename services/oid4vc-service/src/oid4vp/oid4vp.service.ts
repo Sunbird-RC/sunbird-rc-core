@@ -403,10 +403,14 @@ export class Oid4vpService {
             if (!proofOk) throw new Error('embedded VC signature invalid');
             if (!notRevoked) throw new Error('embedded VC revoked');
 
-            // holder binding: subject id must equal the VP signer
+            // holder binding: subject id must equal the VP signer. Fail closed
+            // (rather than skip) when the embedded VC carries no subject id at
+            // all — otherwise a credential with no credentialSubject.id/sub
+            // would silently report holderBinding: 'OK' with nothing actually
+            // compared.
             const subjectId = vc.claims?.id || vc.claims?.sub || vc.subjectId;
-            if (subjectId && subjectId !== entryHolderDid) {
-              throw new Error('holder binding failed: subject != presenter');
+            if (!subjectId || subjectId !== entryHolderDid) {
+              throw new Error('holder binding failed: missing or mismatched subject id');
             }
             presented.push({
               types: vc.types,
@@ -435,9 +439,14 @@ export class Oid4vpService {
           if (!proofOk) throw new Error('ldp_vc presentation invalid');
           checks.holderSignature = 'OK';
           checks.credentialSignatures = 'OK';
+          // This branch has no separate outer-VP holder signature distinct
+          // from the credential's own proof — the closest thing to a holder
+          // binding check available here is requiring a subject id to exist
+          // at all, rather than unconditionally reporting 'OK'.
+          const subject = entry.credentialSubject || {};
+          if (!subject.id) throw new Error('holder binding failed: missing subject id');
           checks.holderBinding = 'OK';
           checks.revocation = 'OK';
-          const subject = entry.credentialSubject || {};
           presented.push({ types: entry.type || ['VerifiableCredential'], format: 'ldp_vc', claims: subject });
         }
       }

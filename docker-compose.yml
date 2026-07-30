@@ -329,7 +329,6 @@ services:
       - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-false}
       - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
       - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
-      - ENABLE_AUTH=${ENABLE_AUTH-false}
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:3400/health || exit 1" ]
       interval: 10s

@@ -53,6 +53,7 @@ interface OfferSession {
 export class Oid4vciService {
   private readonly logger = new Logger(Oid4vciService.name);
   private readonly config = loadConfig();
+  private txCodeBypassWarned = false;
 
   constructor(
     @Inject(SESSION_STORE) private readonly store: SessionStore,
@@ -345,6 +346,13 @@ export class Oid4vciService {
       if (!pin) throw new BadRequestException('invalid_request: tx_code required');
       // NOTE: pin is compared to what the issuer distributed out-of-band; here
       // we accept any non-empty pin in dev. Wire real pin storage per deployment.
+      if (!this.txCodeBypassWarned) {
+        this.txCodeBypassWarned = true;
+        this.logger.warn(
+          'tx_code/user_pin is accepted without verification against an out-of-band-distributed ' +
+            'value — wire real PIN storage/comparison before relying on this for production issuance.',
+        );
+      }
     }
 
     const accessToken = await this.tokens.mintAccessToken({

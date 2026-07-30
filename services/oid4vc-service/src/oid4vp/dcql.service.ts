@@ -34,11 +34,19 @@ export class DcqlService {
       return { satisfied: false, matched: {}, reason: 'empty DCQL query' };
     }
     const matched: Record<string, any> = {};
+    // Tracks which `presented[]` entries have already satisfied a query, so a
+    // single presented credential can't be counted twice against two
+    // different credential queries in the same DCQL request.
+    const consumed = new Set<number>();
     for (const cq of credentialQueries) {
-      const candidate = presented.find((p) => this.matchesMeta(cq, p));
-      if (!candidate) {
+      const candidateIdx = presented.findIndex(
+        (p, idx) => !consumed.has(idx) && this.matchesMeta(cq, p),
+      );
+      if (candidateIdx === -1) {
         return { satisfied: false, matched, reason: `no credential matched query ${cq.id}` };
       }
+      consumed.add(candidateIdx);
+      const candidate = presented[candidateIdx];
       const requestedClaims = cq.claims || [];
       const disclosed: Record<string, any> = {};
       for (const claimQuery of requestedClaims) {

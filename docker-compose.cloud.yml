@@ -200,8 +200,6 @@ services:
       - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-true}
       - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
       - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
-      - ENABLE_AUTH=${ENABLE_AUTH-false}
-      - JWKS_URI=${JWKS_URI-}
       # CORS defaults to allow-all (with a startup warning) for backward
       # compatibility — set this to your actual frontend origin(s) in
       # production. See services/oid4vc-service/README.md §8 (Production Deployment Guide)

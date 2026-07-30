@@ -328,7 +328,13 @@ export class JwtSignerService {
         continue;
       }
       for (const vm of didDoc?.verificationMethod || []) {
-        if (vm?.publicKeyJwk) {
+        // Only JWT-signing keys (added by ensureES256Key/generateES256Key
+        // above, kid suffix '#jwt-key-1') belong in a JWKS meant for JWS
+        // verification — a DID's base signing key (e.g. mdoc's '#key-0'
+        // EC key, or an Ed25519/RSA LD-proof key) has publicKeyJwk too in
+        // the mdoc case, but has nothing to do with what a relying party
+        // fetching this endpoint needs.
+        if (vm?.publicKeyJwk && typeof vm.id === 'string' && vm.id.endsWith('#jwt-key-1')) {
           keys.push({ ...vm.publicKeyJwk, kid: vm.publicKeyJwk.kid || vm.id });
         }
       }

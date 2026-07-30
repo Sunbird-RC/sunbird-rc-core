@@ -10,8 +10,6 @@ export interface Oid4vcConfig {
   issuerDid: string;
   oid4vpEnabled: boolean;
   draft13CompatMode: boolean;
-  enableAuth: boolean;
-  jwksUri: string;
   vpSignRequest: boolean;
   vpLegacyClientIdScheme: boolean;
   verifierDid: string;
@@ -41,8 +39,6 @@ export const loadConfig = (): Oid4vcConfig => ({
   issuerDid: process.env.ISSUER_DID || '',
   oid4vpEnabled: process.env.OID4VP_ENABLED !== 'false',
   draft13CompatMode: process.env.DRAFT13_COMPAT_MODE === 'true',
-  enableAuth: process.env.ENABLE_AUTH === 'true',
-  jwksUri: process.env.JWKS_URI || '',
   // OID4VP request-object mode. Legacy implies unsigned (the `redirect_uri`
   // client_id scheme MUST NOT be used with a signed request object), so it
   // overrides vpSignRequest regardless of how that flag is set.

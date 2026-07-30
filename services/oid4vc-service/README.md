@@ -253,7 +253,6 @@ An explicitly-set `VERIFIER_DID` is treated as the operator's deliberate choice
 and used regardless of method. So for signing: set `VERIFIER_DID` to something
 wallets can resolve (a `did:web`), or set `OID4VP_SIGN_REQUEST=false`. The
 bundled `docker-compose.yml` dev stack opts out for exactly this reason.
-| `ENABLE_AUTH` | `false` | reserved for enabling auth on internal endpoints (see [§8](#8-production-deployment-guide)) |
 | `OFFER_TTL` | `600`s | offer session lifetime |
 | `NONCE_TTL` | `300`s | `c_nonce` lifetime (single-use regardless) |
 | `ACCESS_TOKEN_TTL` | `300`s | façade-minted access token lifetime |
@@ -706,11 +705,17 @@ content) for wallets to verify the template hasn't been tampered with. When
 
 ### 8.1 Hardening checklist
 
-- **Restrict `POST /oid4vc/offer` to internal callers only.** It's designed
-  to be called by the registry/issuer backend, not the public internet —
-  put it behind a network policy (internal CIDR allowlist, mTLS, or a
-  shared-secret header) rather than the same public nginx location as the
-  wallet-facing routes.
+- **Restrict `POST /oid4vc/offer` to internal callers only.** There is no
+  application-level authentication on this endpoint, by design — it's meant
+  to be called only by the registry/issuer backend (see the Java registry's
+  `OID4VCIService.createOfferSafely`), never by an end user or wallet, and it
+  is trusted to hand back a signed, wallet-loadable credential for whatever
+  `credential_configuration_id`/`claims` it's given. Enforcement is expected
+  entirely at the network/gateway layer: keep it off the public nginx
+  location used by the wallet-facing routes (`/oid4vc/offer/:id`, `/token`,
+  `/credential`, `/nonce`, `/deferred`, `/notification`, `/vp/*` all still
+  need to stay public) and put it behind an internal CIDR allowlist, mTLS, or
+  a shared-secret header instead.
 - **TLS + rate limiting on the public gateway.** OID4VCI/OID4VP both assume
   HTTPS in their metadata URLs and PoP/request-object audience checks. Add
   rate limiting at minimum on `/oid4vc/token`, `/oid4vc/credential`,
