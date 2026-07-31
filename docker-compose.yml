@@ -334,6 +334,45 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  admin-ui:
+    build: ./services/admin-ui
+    ports:
+      - '3500:3000'
+    environment:
+      - REGISTRY_BASE_URL=http://registry:8081
+      - CLAIM_MS_BASE_URL=http://claim-ms:8082
+      - CREDENTIAL_SCHEMA_BASE_URL=http://credential-schema:3333
+      - CREDENTIALS_BASE_URL=http://credential:3000
+      - IDENTITY_BASE_URL=http://identity:3332
+      - OID4VC_BASE_URL=http://oid4vc-service:3400
+      # Mirrors the same env vars the backend containers read above — one
+      # flip updates backend and admin-ui gating together.
+      - CLAIMS_ENABLED=${CLAIMS_ENABLED-false}
+      - FILESSTORAGE_ENABLED=${FILESSTORAGE_ENABLED-false}
+      - AUTHENTICATION_ENABLED=${AUTHENTICATION_ENABLED-false}
+      - IDGEN_ENABLED=${IDGEN_ENABLED-false}
+      - SIGNATURE_ENABLED=${SIGNATURE_ENABLED-false}
+      - ADMIN_UI_AUTH_ENABLED=${ADMIN_UI_AUTH_ENABLED-true}
+      - KEYCLOAK_ISSUER=${sunbird_sso_url-http://keycloak:8080/auth}/realms/${KEYCLOAK_REALM-sunbird-rc}
+      - KEYCLOAK_ADMIN_UI_CLIENT_SECRET=${KEYCLOAK_ADMIN_UI_CLIENT_SECRET-admin-ui-dev-secret-change-me}
+      - SESSION_SECRET=${ADMIN_UI_SESSION_SECRET-dev-only-change-me}
+    depends_on:
+      registry:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+      credential:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      claim-ms:
+        condition: service_started
+      # oid4vc-service intentionally NOT a hard dependency here: it's gated
+      # by a compose profile ("oid4vc"), not started by a plain `docker
+      # compose up`. admin-ui treats it as reachable-or-not via a live probe
+      # (lib/server/flags.ts), exactly like the boolean feature flags.
   file-storage:
     image: quay.io/minio/minio
     volumes:
@@ -428,6 +467,12 @@ services:
       retries: 10
   nginx:
     image: ghcr.io/sunbird-rc/sunbird-rc-nginx
+    # This mount is load-bearing, not cosmetic: without it, nginx runs
+    # entirely off the config baked into the published image, and any
+    # local edit to nginx/nginx.conf (e.g. the /admin/ location below)
+    # silently has zero effect.
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - '80:80'
     depends_on:
@@ -442,6 +487,8 @@ services:
       claim-ms:
         condition: service_started
       file-storage:
+        condition: service_started
+      admin-ui:
         condition: service_started
     healthcheck:
       test: ['CMD', 'curl', '-f', 'localhost:80']
