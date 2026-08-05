@@ -13,6 +13,11 @@ export interface Oid4vcConfig {
   vpSignRequest: boolean;
   vpLegacyClientIdScheme: boolean;
   verifierDid: string;
+  auth: {
+    enabled: boolean;
+    jwksUri: string;
+    issuers: string[];
+  };
   ttl: {
     offer: number;
     nonce: number;
@@ -53,6 +58,22 @@ export const loadConfig = (): Oid4vcConfig => ({
   // an operator's deliberate choice and is trusted as-is; the ISSUER_DID /
   // auto-provisioned fallbacks are resolvability-checked in oid4vp.service.ts.
   verifierDid: process.env.VERIFIER_DID || '',
+  // Keycloak bearer auth on POST /oid4vc/offer. Unset means OFF here, unlike
+  // identity-service/credential-schema whose guards treat unset as ON — this
+  // endpoint has always been open, so defaulting it closed would break every
+  // existing deployment on upgrade. Operators opt in explicitly.
+  auth: {
+    enabled: (process.env.ENABLE_AUTH || '').trim() === 'true',
+    jwksUri: (process.env.JWKS_URI || '').trim(),
+    // Accepted `iss` values, comma-separated. Empty means "derive the realm URL
+    // from JWKS_URI". A list is needed because Keycloak stamps `iss` with the
+    // URL the token was OBTAINED at, and a deployment fronting one realm with
+    // both a public and an in-cluster URL legitimately mints both spellings.
+    issuers: (process.env.AUTH_ISSUER || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  },
   ttl: {
     offer: num(process.env.OFFER_TTL, 600),
     nonce: num(process.env.NONCE_TTL, 300),

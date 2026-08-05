@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Header, NotFoundException } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loadConfig } from './config/configuration';
+import { KeycloakService } from './auth/keycloak.service';
 import { SchemaClient } from './clients/schema.client';
 import { Oid4vciService } from './oid4vci/oid4vci.service';
 
@@ -12,12 +13,21 @@ export class AppController {
   constructor(
     private readonly schema: SchemaClient,
     private readonly oid4vci: Oid4vciService,
+    private readonly keycloak: KeycloakService,
   ) {}
 
+  // Stays 200 even when Keycloak is down. Failing it would restart-loop the
+  // container and take the wallet-facing protocol routes — which need no
+  // Keycloak — down with it. The offer endpoint fails closed on its own, so a
+  // Keycloak outage is reported here rather than escalated.
   @ApiOperation({ summary: 'Liveness probe' })
   @Get('health')
-  health() {
-    return { status: 'UP', service: 'oid4vc-service' };
+  async health() {
+    return {
+      status: 'UP',
+      service: 'oid4vc-service',
+      keycloak: await this.keycloak.healthInfo(),
+    };
   }
 
   // Serves a schema's inline W3C VC Render Method SVG template

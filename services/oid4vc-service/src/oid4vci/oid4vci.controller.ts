@@ -7,9 +7,11 @@ import {
   Param,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
+import { KeycloakAuthGuard } from '../auth/auth.guard';
 import { Oid4vciService } from './oid4vci.service';
 
 // OID4VCI issuer-role endpoints, all under /oid4vc/*.
@@ -18,7 +20,13 @@ import { Oid4vciService } from './oid4vci.service';
 export class Oid4vciController {
   constructor(private readonly oid4vci: Oid4vciService) {}
 
+  // The only non-public route on this service: it mints a wallet-loadable
+  // credential for whatever claims it is handed. Guarded when ENABLE_AUTH=true;
+  // every other route below is a wallet-facing protocol endpoint and must stay
+  // open. See src/auth/auth.guard.ts.
   @ApiOperation({ summary: 'Create a credential offer (internal, called by issuer/registry)' })
+  @ApiBearerAuth()
+  @UseGuards(KeycloakAuthGuard)
   @Post('offer')
   createOffer(@Body() body: any) {
     return this.oid4vci.createOffer(body);

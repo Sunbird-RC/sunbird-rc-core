@@ -238,6 +238,89 @@ claims satisfy exactly what the verifier asked for via DCQL.
 | `OID4VP_SIGN_REQUEST` | `true` | sign the OID4VP request object as a JAR (`did:` client_id). Ignored (forced off) when `OID4VP_LEGACY_CLIENT_ID_SCHEME=true`, since the `redirect_uri` client_id scheme must not be signed. |
 | `OID4VP_LEGACY_CLIENT_ID_SCHEME` | `false` | emit the pre-draft-22 shape (`client_id` = `response_uri`, separate `client_id_scheme: "redirect_uri"` field, unsigned) for wallets like walt.id that don't parse the prefixed `client_id` convention |
 | `VERIFIER_DID` | *(blank → falls back to the issuer DID **only if** that is a `did:web`)* | DID used to sign OID4VP request objects when `OID4VP_SIGN_REQUEST` is on. Must be resolvable **by wallets** — see the note below. |
+| `ENABLE_AUTH` | `false` | require a Keycloak bearer token on `POST /oid4vc/offer` — see §4.1.1 |
+| `JWKS_URI` | *(blank)* | realm key set, e.g. `http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/certs`. **Required** when `ENABLE_AUTH=true` |
+| `AUTH_ISSUER` | *(blank → derived from `JWKS_URI`)* | comma-separated list of accepted token `iss` values |
+
+#### 4.1.1 Keycloak bearer auth on offer creation
+
+`POST /oid4vc/offer` mints a wallet-loadable credential from whatever
+`credential_configuration_id` and `claims` it is handed, and nginx publishes
+`/oid4vc` wholesale. `ENABLE_AUTH=true` puts a Keycloak realm token in front of
+it — the same `ENABLE_AUTH` / `JWKS_URI` pair identity-service and
+credential-schema already use, and the service-level analogue of the Java
+registry's `authentication_enabled`.
+
+```bash
+ENABLE_AUTH=true
+JWKS_URI=http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/certs
+```
+
+A token is accepted when it is signed by a key in that JWK set, is unexpired,
+and its `iss` is in `AUTH_ISSUER` (default: the realm URL derived from
+`JWKS_URI`). Anything else is `401` with a `WWW-Authenticate: Bearer` challenge.
+
+`aud` is **not** checked: Keycloak's default access token carries `aud: account`,
+so an audience rule would reject every ordinary realm token until each client
+grows a custom mapper. No role is required either, so both a staff user's token
+and a `client_credentials` service-account token work.
+
+**Set `AUTH_ISSUER` when one realm is reachable at two URLs.** Keycloak stamps
+`iss` with the URL the token was *obtained* at, so a deployment with a public
+gateway URL and an in-cluster URL mints two spellings for one realm. This is
+not hypothetical — on the nginx-fronted local stack, the same realm and the
+same `issuer-portal` client produce:
+
+| Token minted via | `iss` in the token |
+|---|---|
+| `KEYCLOAK_INTERNAL_URL` (what the portal BFF uses) | `http://keycloak:8080/auth/realms/sunbird-rc` |
+| the public URL through nginx | `http://localhost/auth/realms/sunbird-rc` |
+
+Derivation from `JWKS_URI` yields only one of them, so the other is rejected
+with `401`. List both:
+
+```bash
+AUTH_ISSUER=http://keycloak:8080/auth/realms/sunbird-rc,http://localhost/auth/realms/sunbird-rc
+```
+
+Note this is about token `iss` **values**, not reachable endpoints — the boot
+probe deliberately uses `JWKS_URI` instead, since an in-cluster `iss` need not
+resolve from wherever this service runs.
+
+**Only this one route is guarded.** Everything else here is a wallet-facing
+protocol endpoint that must stay open — `GET /oid4vc/offer/:id`,
+`/oid4vc/token`, `/nonce`, `/credential`, `/deferred`, `/notification`,
+`/.well-known/*`, `/vct/*`, `/contexts/*`, `/render-templates/*` and `/health`.
+Note that `/credential`, `/deferred` and `/notification` already carry a Bearer
+header holding *this service's own* access token, verified against the issuer
+DID by `TokenService` — a global guard would reject every wallet.
+`/vp/request` and `/vp/status/:id` are excluded too: `apps/verifier-app` is a
+static browser bundle that calls both with no token.
+
+**Startup behaviour.** With the flag on, the service probes
+`<issuer>/.well-known/openid-configuration` at boot, retrying for ~60s, and
+**exits non-zero** if Keycloak never answers — it cannot authorise anything
+without it. The retry is why the compose block has no
+`depends_on: keycloak`, which would otherwise delay every `--profile oid4vc`
+start by a minute even with auth off. Operators who prefer explicit ordering
+can add it.
+
+`GET /health` reports Keycloak but stays `200` when it is down — failing it
+would restart-loop the container and take the wallet-facing routes with it:
+
+```jsonc
+{ "status": "UP", "service": "oid4vc-service",
+  "keycloak": { "enabled": true, "status": "UP" } }
+// flag off:  "keycloak": { "enabled": false, "status": "UP", "reason": "ENABLE_AUTH=false" }
+```
+
+> **Known gap: the Java registry caller does not send a token.**
+> `OID4VCIService.createOfferSafely` posts to this endpoint with no
+> `Authorization` header, and it is `@Async` + fail-open — so with
+> `ENABLE_AUTH=true` **and** `oid4vc_enabled=true`, registry-triggered offers
+> stop working and the only symptom is a `WARN` in the registry log. The default
+> stack is unaffected because `oid4vc.enabled` defaults to `false` (§4.5). Turning
+> both on requires teaching that caller a `client_credentials` token first.
 
 **Signing requires a wallet-resolvable DID.** When `OID4VP_SIGN_REQUEST` is on,
 the request object's `client_id` is a `did:` and the wallet must resolve that
@@ -322,6 +405,12 @@ Per-schema OID4VCI opt-in is set via the schema payload's `oid4vciConfig`:
 | `oid4vc_enabled` | `false` | turns on the offer-creation hooks |
 | `oid4vc_offer_url` | `http://localhost:3400/oid4vc/offer` | must be the container/network-reachable URL, e.g. `http://oid4vc-service:3400/oid4vc/offer` |
 
+> **Incompatible with `ENABLE_AUTH=true` on oid4vc-service.**
+> `OID4VCIService.createOfferSafely` sends no `Authorization` header and
+> swallows failures, so the offers would stop being created with nothing but a
+> `WARN` in the registry log to show for it. Run one or the other until that
+> caller learns to fetch a `client_credentials` token. See §4.1.1.
+
 Also required (pre-existing V2 signing prerequisites): `signature_enabled=true`,
 `signature_provider=dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl`,
 and (for attestation-triggered issuance) `did_enabled=true`, `claims_enabled=true`.
@@ -366,7 +455,10 @@ SCHEMA_BASE_URL=http://credential-schema:3333
 CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
 SIGNING_ALGORITHM=Ed25519Signature2020
 WEB_DID_BASE_URL=http://localhost:3332
+# Bearer auth for the node services, including POST /oid4vc/offer (§4.1.1).
 ENABLE_AUTH=false
+JWKS_URI=
+AUTH_ISSUER=
 
 OID4VC_PUBLIC_URL=http://localhost:3400
 OID4VC_REDIS_URL=redis://redis:6379
@@ -398,7 +490,8 @@ docker ps --format '{{.Names}}\t{{.Status}}'   # expect all "healthy"
 ```bash
 docker compose --profile oid4vc up -d --build oid4vc-service
 curl -s http://localhost:3400/health
-# {"status":"UP","service":"oid4vc-service"}
+# {"status":"UP","service":"oid4vc-service",
+#  "keycloak":{"enabled":false,"status":"UP","reason":"ENABLE_AUTH=false"}}
 ```
 
 ### 5.6 Run without Docker (dev iteration)
@@ -705,17 +798,24 @@ content) for wallets to verify the template hasn't been tampered with. When
 
 ### 8.1 Hardening checklist
 
-- **Restrict `POST /oid4vc/offer` to internal callers only.** There is no
-  application-level authentication on this endpoint, by design — it's meant
-  to be called only by the registry/issuer backend (see the Java registry's
-  `OID4VCIService.createOfferSafely`), never by an end user or wallet, and it
-  is trusted to hand back a signed, wallet-loadable credential for whatever
-  `credential_configuration_id`/`claims` it's given. Enforcement is expected
-  entirely at the network/gateway layer: keep it off the public nginx
-  location used by the wallet-facing routes (`/oid4vc/offer/:id`, `/token`,
-  `/credential`, `/nonce`, `/deferred`, `/notification`, `/vp/*` all still
-  need to stay public) and put it behind an internal CIDR allowlist, mTLS, or
-  a shared-secret header instead.
+- **Restrict `POST /oid4vc/offer`.** It is trusted to hand back a signed,
+  wallet-loadable credential for whatever `credential_configuration_id` /
+  `claims` it's given, and the shipped nginx config publishes `/oid4vc`
+  wholesale — so left open, anyone who can reach the gateway can mint a
+  credential. **Set `ENABLE_AUTH=true` and `JWKS_URI` (§4.1.1)** so the endpoint
+  requires a Keycloak realm token. It is off by default only for backward
+  compatibility.
+
+  Application-level auth and network-level restriction are complementary, not
+  alternatives — a CIDR allowlist or mTLS in front of this route is still worth
+  having. Whichever you choose, the wallet-facing routes (`/oid4vc/offer/:id`,
+  `/token`, `/credential`, `/nonce`, `/deferred`, `/notification`, `/vp/*`)
+  must stay public; the guard already exempts them.
+
+  Note the Java registry's `OID4VCIService.createOfferSafely` sends no bearer
+  token and fails open, so `ENABLE_AUTH=true` together with
+  `oid4vc_enabled=true` silently stops registry-triggered offers. See the
+  callout in §4.1.1.
 - **TLS + rate limiting on the public gateway.** OID4VCI/OID4VP both assume
   HTTPS in their metadata URLs and PoP/request-object audience checks. Add
   rate limiting at minimum on `/oid4vc/token`, `/oid4vc/credential`,

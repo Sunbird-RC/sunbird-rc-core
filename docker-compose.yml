@@ -329,6 +329,18 @@ services:
       - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-false}
       - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
       - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
+      # Keycloak bearer auth on POST /oid4vc/offer. Same two vars the other
+      # node services read; JWKS_URI for this stack is
+      # http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/certs
+      #
+      # Deliberately NO `depends_on: keycloak`. Keycloak's healthcheck is
+      # 30s x 10 against a WildFly image that needs ~a minute, so waiting on it
+      # would slow every `--profile oid4vc` start even with auth off. When the
+      # flag IS on, the service retries Keycloak for ~60s at boot and exits if
+      # it never answers, which covers the ordering without the fixed cost.
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+      - JWKS_URI=${JWKS_URI}
+      - AUTH_ISSUER=${AUTH_ISSUER-}
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:3400/health || exit 1" ]
       interval: 10s

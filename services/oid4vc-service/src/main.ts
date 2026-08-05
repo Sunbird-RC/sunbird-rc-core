@@ -6,6 +6,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { KeycloakService } from './auth/keycloak.service';
 
 async function bootstrap() {
   // OID4VC token + direct_post endpoints use application/x-www-form-urlencoded;
@@ -29,12 +30,19 @@ async function bootstrap() {
   // ambient cookie/session auth — the only credential is a Bearer access token.
   app.enableCors();
 
+  // With ENABLE_AUTH=true this exits the process if Keycloak never answers:
+  // there is no point serving an offer endpoint we cannot authorise. No-op
+  // when the flag is off.
+  await app.get(KeycloakService).probeOrExit();
+
   const config = new DocumentBuilder()
     .setTitle('OID4VC Service')
     .setDescription('OpenID4VCI / OpenID4VP protocol facade for Sunbird RC')
     .setVersion(process.env.npm_package_version || '1.0.0')
     .addTag('OID4VCI')
     .addTag('OID4VP')
+    // Only POST /oid4vc/offer uses this, and only when ENABLE_AUTH=true.
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
@@ -43,4 +51,10 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   Logger.log(`🚀 oid4vc-service running on: http://0.0.0.0:${port}/`);
 }
-bootstrap();
+// A failed boot must be a clean non-zero exit, not an unhandled rejection —
+// the auth config is validated during startup and the container needs to see
+// the failure.
+bootstrap().catch((err) => {
+  Logger.error(`oid4vc-service failed to start: ${err?.message || err}`);
+  process.exit(1);
+});

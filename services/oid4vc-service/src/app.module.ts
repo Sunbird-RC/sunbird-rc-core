@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
 import { ClientsModule } from './clients/clients.module';
 import { Oid4vciModule } from './oid4vci/oid4vci.module';
@@ -13,6 +14,7 @@ const optionalModules = loadConfig().oid4vpEnabled ? [Oid4vpModule] : [];
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
     SessionModule,
     ClientsModule,
     Oid4vciModule,
