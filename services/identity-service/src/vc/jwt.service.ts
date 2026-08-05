@@ -100,9 +100,9 @@ export class JwtSignerService {
     // DID authenticating *itself*, which is what signing an OpenID4VP request
     // object (JAR) with a `did:` client_id is. Without the authentication
     // entry, a conformant wallet resolves the DID, fails to find this key in
-    // that relationship, and rejects the request — Credo reports "Unable to
-    // locate verification method with id '<did>#jwt-key-1' in purposes
-    // authentication". This ES256 key is legitimately used for both purposes.
+    // that relationship, and rejects the request with a "verification method
+    // not found in purpose 'authentication'" error. This ES256 key is
+    // legitimately used for both purposes.
     didDoc.assertionMethod = [...(didDoc.assertionMethod || []), kid];
     didDoc.authentication = [...(didDoc.authentication || []), kid];
 

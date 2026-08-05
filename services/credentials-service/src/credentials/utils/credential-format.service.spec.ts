@@ -1,10 +1,10 @@
 import { CredentialFormatService } from './credential-format.service';
 
-// A strict W3C VC-JWT holder (Credo, and the spec) requires `nbf` to represent
-// vc.issuanceDate exactly, comparing `Date.parse(vc.issuanceDate) / 1000`
-// — unfloored — against the integer `nbf`. Millisecond-precision dates make
-// that comparison impossible to satisfy, so the invariant is asserted here.
-const assertCredoJwtDateInvariant = (claims: any) => {
+// A strict W3C VC-JWT holder requires `nbf` to represent vc.issuanceDate
+// exactly, comparing `Date.parse(vc.issuanceDate) / 1000` — unfloored — against
+// the integer `nbf`. Millisecond-precision dates make that comparison
+// impossible to satisfy, so the invariant is asserted here.
+const assertStrictJwtDateInvariant = (claims: any) => {
   expect(Date.parse(claims.vc.issuanceDate) / 1000).toBe(claims.nbf);
   if (claims.vc.expirationDate) {
     expect(Date.parse(claims.vc.expirationDate) / 1000).toBe(claims.exp);
@@ -40,7 +40,7 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
 
     expect(claims.nbf).toBe(Math.floor(Date.parse('2026-07-28T07:30:12.345Z') / 1000));
     expect(claims.vc.issuanceDate).toBe('2026-07-28T07:30:12.000Z');
-    assertCredoJwtDateInvariant(claims);
+    assertStrictJwtDateInvariant(claims);
   });
 
   it('embeds a whole-second expirationDate matching exp', async () => {
@@ -50,7 +50,7 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
     const claims = claimsOf();
 
     expect(claims.vc.expirationDate).toBe('2027-01-01T00:00:00.000Z');
-    assertCredoJwtDateInvariant(claims);
+    assertStrictJwtDateInvariant(claims);
   });
 
   it('omits exp entirely when the credential does not expire', async () => {
@@ -63,7 +63,7 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
 
   it('holds the invariant for already-whole-second dates', async () => {
     await sign(credential({ issuanceDate: '2026-07-28T07:30:12Z' }));
-    assertCredoJwtDateInvariant(claimsOf());
+    assertStrictJwtDateInvariant(claimsOf());
   });
 
   it('does not mutate the caller’s credential', async () => {

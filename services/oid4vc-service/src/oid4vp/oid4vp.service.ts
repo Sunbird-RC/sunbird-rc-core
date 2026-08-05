@@ -49,21 +49,20 @@ export class Oid4vpService {
   ) {}
 
   // client_id / scheme history, condensed from live interop testing against
-  // walt.id's wallet:
-  //  1. Signed JAR with a `did:` client_id → walt.id: "UnsupportedPrefix -
-  //     Client ID prefix 'did' is not supported."
+  // wallets implementing OID4VP drafts of varying vintage:
+  //  1. Signed JAR with a `did:` client_id → rejected by wallets that don't
+  //     support the `did` client_id prefix scheme.
   //  2. Unsigned, OID4VP-1.0-final-style prefixed client_id
-  //     (`redirect_uri:${responseUri}`) → walt.id's own request parser threw
-  //     a raw JsonDecodingException trying to parse that string, because
-  //     walt.id targets an OLDER OID4VP draft where `client_id_scheme` is a
-  //     SEPARATE request parameter and `client_id` itself is unprefixed —
-  //     matching walt.id's own docs, which show `client_id_scheme=redirect_uri`
-  //     as a standalone field (final-1.0 dropped this field in favor of the
-  //     prefix-in-client_id convention walt.id doesn't yet implement).
+  //     (`redirect_uri:${responseUri}`) → rejected by wallets targeting an
+  //     OLDER OID4VP draft where `client_id_scheme` is a SEPARATE request
+  //     parameter and `client_id` itself is unprefixed (final-1.0 dropped
+  //     that field in favor of the prefix-in-client_id convention, which
+  //     such wallets don't yet implement).
   // Resolution: default to the spec-correct draft-23/1.0 shape (prefixed
-  // client_id, signed JAR via a `did:` client_id) and keep walt.id's exact
-  // working shape available behind OID4VP_LEGACY_CLIENT_ID_SCHEME — same
-  // compat-flag pattern as DRAFT13_COMPAT_MODE on the OID4VCI side.
+  // client_id, signed JAR via a `did:` client_id) and keep the older
+  // separate-`client_id_scheme` shape available behind
+  // OID4VP_LEGACY_CLIENT_ID_SCHEME — same compat-flag pattern as
+  // DRAFT13_COMPAT_MODE on the OID4VCI side.
   //
   // The redirect_uri client_id scheme MUST NOT be used with a signed request
   // object, so the mode (and therefore which client_id shape is emitted) has
@@ -219,9 +218,8 @@ export class Oid4vpService {
       // application/x-www-form-urlencoded (OID4VP §Response Mode
       // "direct_post"), so `vp_token` arrives as a JSON-encoded STRING, not a
       // pre-parsed object — Fastify's form parser has no notion of a nested
-      // JSON value. Found live: walt.id's actual POST body has
-      // `vp_token: '{"q":["..."]}'` (a string); JSON.parse it before treating
-      // it as the DCQL-keyed object.
+      // JSON value. A real wallet's POST body has `vp_token: '{"q":["..."]}'`
+      // (a string); JSON.parse it before treating it as the DCQL-keyed object.
       if (typeof vpToken === 'string') {
         try {
           vpToken = JSON.parse(vpToken);
@@ -232,11 +230,10 @@ export class Oid4vpService {
 
       // Per OID4VP §Response Parameters, `vp_token` is a JSON object keyed by
       // the DCQL credential query `id`, each value an array of Presentations
-      // — NOT a bare JWT or an array of JWTs. Found live: walt.id's actual
-      // response is `{ [queryId]: [presentation, ...] }`; the previous code
-      // treated the whole object as a single JWT-VP and threw "Invalid Token
-      // or Protected Header formatting" from jose before any per-credential
-      // parsing even started.
+      // — NOT a bare JWT or an array of JWTs. A real wallet's response is
+      // `{ [queryId]: [presentation, ...] }`; treating the whole object as a
+      // single JWT-VP instead throws a token/header parsing error before any
+      // per-credential parsing even starts.
       if (typeof vpToken !== 'object' || Array.isArray(vpToken)) {
         throw new Error(
           "vp_token must be a DCQL-keyed object of the form { [queryId]: [presentation, ...] }",
@@ -341,12 +338,12 @@ export class Oid4vpService {
           let entryHolderDid = holderKid ? holderKid.split('#')[0] : vpClaims.iss;
           let holderPublicJwk: any = vpHeader.jwk as any;
 
-          // did:jwk wallets (e.g. walt.id) commonly sign with an inline `jwk`
-          // header and no `kid`/`iss`, or a self-contained `did:jwk:...` DID;
-          // Credo presents with the `did:key` it bound at issuance. None is
-          // resolvable via identity-service's registry, which only knows its own
-          // DB plus did:web (see did.service.ts resolveDID: any other method
-          // 404s). Both methods are deterministic by spec — the public key is
+          // did:jwk wallets commonly sign with an inline `jwk` header and no
+          // `kid`/`iss`, or a self-contained `did:jwk:...` DID; others present
+          // with the `did:key` they bound at issuance. Neither is resolvable
+          // via identity-service's registry, which only knows its own DB plus
+          // did:web (see did.service.ts resolveDID: any other method 404s).
+          // Both methods are deterministic by spec — the public key is
           // embedded in the identifier — so resolve locally instead of
           // round-tripping to identity-service. Mirrors the same fallback
           // applied to the issuance-side PoP check in pop.service.ts.

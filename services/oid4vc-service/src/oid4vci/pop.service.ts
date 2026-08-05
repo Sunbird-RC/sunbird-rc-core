@@ -40,11 +40,11 @@ export class PopService {
         holderDid = header.kid.split('#')[0];
         // did:key/did:jwk encode the public key in the identifier itself, so
         // they resolve offline. identity-service's registry only knows its own
-        // DB plus did:web and 500s on anything else — and Credo binds with
-        // did:key whenever we advertise it in
+        // DB plus did:web and 500s on anything else — and standards-compliant
+        // wallets bind with did:key whenever we advertise it in
         // `cryptographic_binding_methods_supported` (raw-JWK binding is not
-        // permitted for jwt_vc_json), so without this every Credo-issued proof
-        // fails as `invalid_proof: Error resolving DID`.
+        // permitted for jwt_vc_json), so without this every such proof fails
+        // as `invalid_proof: Error resolving DID`.
         holderJwk = resolveSelfContainedDidToJwk(holderDid);
         if (!holderJwk) {
           const didDoc = await this.identity.resolveDID(holderDid);

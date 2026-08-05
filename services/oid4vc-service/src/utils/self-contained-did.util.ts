@@ -9,10 +9,10 @@ import * as jose from 'jose';
 // these methods must be resolved locally or every standards-first wallet that
 // binds with them fails with `Error resolving DID`.
 //
-// Credo (OpenWallet Foundation) binds with did:key whenever the issuer
+// Standards-compliant wallets bind with did:key whenever the issuer
 // advertises it in `cryptographic_binding_methods_supported`, and W3C
 // `jwt_vc_json` forbids raw-JWK binding, so did:key support is mandatory to
-// interoperate with it at all.
+// interoperate with them at all.
 
 // multicodec varint prefixes for public key types — https://github.com/multiformats/multicodec
 // (ed25519-pub 0xed, secp256k1-pub 0xe7, p256-pub 0x1200, p384-pub 0x1201, p521-pub 0x1202)

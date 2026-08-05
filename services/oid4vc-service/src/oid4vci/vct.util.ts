@@ -3,10 +3,8 @@
 // Per draft-ietf-oauth-sd-jwt-vc, `vct` is a StringOrURI (RFC 7519): an
 // arbitrary string is legal *unless* it contains a ':', in which case it MUST
 // be a URI. So a bare display name like "National Identity Credential" is
-// technically spec-legal — but found live against walt.id's wallet, which
-// resolves EVERY vct as a URL regardless: it builds
-// `http://localhost/.well-known/vct` + vct and throws
-// "Illegal character in path at index 40" on the first space.
+// technically spec-legal — but some wallets resolve EVERY vct as a URL
+// regardless, and fail with a URL-parsing error on the embedded space.
 //
 // Publishing an HTTPS URI instead is both the idiomatic choice (collision-
 // resistant per the spec's own guidance) and the interoperable one, since the

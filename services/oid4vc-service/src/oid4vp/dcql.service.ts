@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 
 // SD-JWT VC's IANA-registered format identifier was renamed from `vc+sd-jwt`
-// to `dc+sd-jwt` partway through the spec's drafts. Found live: walt.id's
-// DCQL parser (`id.walt.dcql.models.CredentialFormat`) is a strict enum that
-// only accepts `dc+sd-jwt` (or its `vc-sd_jwt` alias) and throws
-// SerializationException on anything else — but this codebase's OID4VCI side
-// still (correctly, for its own draft target) publishes `vc+sd-jwt` as the
-// credential format id. Treat both spellings as the same format for DCQL
-// matching purposes so either a query or a presented credential can use
-// either spelling without breaking the other side.
+// to `dc+sd-jwt` partway through the spec's drafts. Some wallets' DCQL
+// parsers are a strict enum that only accepts one spelling and reject the
+// other — but this codebase's OID4VCI side still (correctly, for its own
+// draft target) publishes `vc+sd-jwt` as the credential format id. Treat
+// both spellings as the same format for DCQL matching purposes so either a
+// query or a presented credential can use either spelling without breaking
+// the other side.
 const SD_JWT_FORMAT_ALIASES = new Set(['vc+sd-jwt', 'dc+sd-jwt']);
 function sameFormat(a: string, b: string): boolean {
   if (a === b) return true;
@@ -53,14 +52,14 @@ export class DcqlService {
         let path: string[] = claimQuery.path || [];
         // Per OID4VP DCQL, W3C VC-format (jwt_vc_json/ldp_vc) claim paths are
         // relative to the full credential and conventionally start with
-        // "credentialSubject" (real wallets, e.g. walt.id, send/expect this —
-        // found live: walt.id's own DCQL matcher resolves paths against the
-        // untouched VC JSON, so a bare `["name"]` path never matches while
-        // `["credentialSubject","name"]` does). `candidate.claims` here is
-        // already the pre-unwrapped credentialSubject object (see
-        // extractCredentials() in oid4vp.service.ts), so strip that leading
-        // segment before resolving — bare paths still work for callers that
-        // never included the prefix.
+        // "credentialSubject" (real wallets send/expect this — their DCQL
+        // matchers resolve paths against the untouched VC JSON, so a bare
+        // `["name"]` path never matches while `["credentialSubject","name"]`
+        // does). `candidate.claims` here is already the pre-unwrapped
+        // credentialSubject object (see extractCredentials() in
+        // oid4vp.service.ts), so strip that leading segment before
+        // resolving — bare paths still work for callers that never included
+        // the prefix.
         if (
           (candidate.format === 'jwt_vc_json' || candidate.format === 'ldp_vc') &&
           path[0] === 'credentialSubject'

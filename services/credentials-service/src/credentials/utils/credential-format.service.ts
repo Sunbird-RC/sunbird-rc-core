@@ -64,9 +64,10 @@ export class CredentialFormatService {
     // minted with millisecond precision (new Date().toISOString()), and strict
     // holders compare `Date.parse(vc.issuanceDate) / 1000` — unfloored —
     // against `nbf`. A credential carrying `...:12.345Z` therefore never
-    // matches nbf `…12` and is rejected outright ("JWT nbf and vc.issuanceDate
-    // do not match" in Credo). Embed whole-second dates in the `vc` claim so
-    // the two representations are equal by construction.
+    // matches nbf `…12` and is rejected outright as a mismatch between the
+    // JWT's `nbf` and the embedded `vc.issuanceDate`. Embed whole-second
+    // dates in the `vc` claim so the two representations are equal by
+    // construction.
     const nbf = this.toEpoch(credInReq.issuanceDate);
     const exp = credInReq.expirationDate
       ? this.toEpoch(credInReq.expirationDate)
@@ -116,9 +117,8 @@ export class CredentialFormatService {
       // Key binding must be expressed the same way the wallet requested it.
       // A DID-bound request (proof header carried a `kid`) has to be echoed as
       // `cnf.kid`: a conformant holder only accepts `cnf.jwk` for a request it
-      // bound with a raw JWK, and otherwise rejects the credential outright
-      // (Credo: "Missing kmsKeyId for jwk with thumbprint … A credential was
-      // issued for a key that was not in the credential request"). Binding by
+      // bound with a raw JWK, and otherwise rejects the credential outright as
+      // issued for a key that wasn't in the credential request. Binding by
       // value stays the fallback for inline-jwk proofs, which have no kid.
       ...(opts.holderKid
         ? { cnf: { kid: opts.holderKid } }

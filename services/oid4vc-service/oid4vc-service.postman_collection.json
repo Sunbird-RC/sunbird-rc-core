@@ -678,7 +678,7 @@
                 "exec": [
                   "// Plain unsigned JSON, not a JWT/JAR \u2014 client_id_scheme is served as",
                   "// a separate field (see oid4vp.service.ts createRequest()) rather than",
-                  "// a signed request object, for compatibility with wallets (e.g. walt.id)",
+                  "// a signed request object, for compatibility with wallets",
                   "// that target an older OID4VP draft.",
                   "const payload = pm.response.json();",
                   "pm.collectionVariables.set('vp_nonce', payload.nonce);",

@@ -33,11 +33,9 @@ describe('vct.util', () => {
       );
     });
 
-    // The bug this whole module exists to fix: found live against walt.id's
-    // wallet, which builds `http://localhost/.well-known/vct` + the raw vct
-    // and crashes on the embedded space ("Illegal character in path at index
-    // 40") because it resolves every vct as a URL regardless of RFC 7519's
-    // StringOrURI carve-out for colon-free strings.
+    // The bug this whole module exists to fix: some wallets resolve every
+    // vct as a URL regardless of RFC 7519's StringOrURI carve-out for
+    // colon-free strings, and crash on a bare display name's embedded space.
     it('turns a bare display name into a dereferenceable URI under publicUrl', () => {
       expect(normalizeVct('National Identity Credential', publicUrl)).toBe(
         'https://verifier.example/vct/national-identity-credential',

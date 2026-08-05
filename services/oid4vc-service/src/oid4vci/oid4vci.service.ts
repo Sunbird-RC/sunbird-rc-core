@@ -91,12 +91,11 @@ export class Oid4vciService {
           cryptographic_binding_methods_supported: ['did:web', 'did:key', 'jwk'],
           credential_signing_alg_values_supported: isMdoc ? ['ES256'] : ['ES256', 'Ed25519Signature2020'],
           proof_types_supported: { jwt: { proof_signing_alg_values_supported: ['ES256'] } },
-          // vct MUST be a URI if it contains a ':', and — found live against
-          // walt.id's wallet — some wallets resolve EVERY vct as a URL
-          // regardless of that spec carve-out, so a bare display name like
-          // "National Identity Credential" crashes them ("Illegal character
-          // in path" on the space). normalizeVct() turns any non-URI schema
-          // name into `<publicUrl>/vct/<slug>`, which vct.controller.ts then
+          // vct MUST be a URI if it contains a ':', and some wallets resolve
+          // EVERY vct as a URL regardless of that spec carve-out, so a bare
+          // display name like "National Identity Credential" crashes them on
+          // the embedded space. normalizeVct() turns any non-URI schema name
+          // into `<publicUrl>/vct/<slug>`, which vct.controller.ts then
           // actually serves as SD-JWT VC Type Metadata.
           ...(format === 'vc+sd-jwt' ? { vct: normalizeVct(cfg.vct, this.config.publicUrl) } : {}),
           display: cfg.display,
@@ -105,7 +104,7 @@ export class Oid4vciService {
           // and mdoc with `doctype`, and neither may carry it: a strict wallet
           // parses each configuration against its format's schema and discards
           // the whole entry when an unexpected member is present — confirmed
-          // live, Credo dropped every vc+sd-jwt configuration, leaving
+          // live, a real wallet dropped every vc+sd-jwt configuration, leaving
           // `offeredCredentialConfigurations` empty and the offer unusable
           // ("'credentialConfigurationIds' may not be empty").
           ...(isMdoc
@@ -480,10 +479,9 @@ export class Oid4vciService {
       // this session used jwt_vc_json, which never runs JSON-LD expansion at
       // all). A `@vocab` fallback plus an explicit type-name term fixes both
       // — but found live AGAIN: inlining that as a JSON object in @context
-      // crashes walt.id's wallet on receipt ("Element class ...JsonObject is
-      // not a JsonPrimitive"), since its parser assumes every @context entry
-      // is a plain URL string. So the mapping is served as a real document
-      // (AppController's `/contexts/:typeName`) and referenced by URL here.
+      // crashes wallets whose parser assumes every @context entry is a plain
+      // URL string. So the mapping is served as a real document (AppController's
+      // `/contexts/:typeName`) and referenced by URL here.
       '@context': [
         'https://www.w3.org/2018/credentials/v1',
         `${this.config.publicUrl}/contexts/${encodeURIComponent(typeName)}`,
