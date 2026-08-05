@@ -1,0 +1,373 @@
+# Self-contained localhost stack for testing the issuer portal end to end:
+# Keycloak login -> registry CRUD -> credential issuance -> scannable QR ->
+# wallet collection -> verification.
+#
+# Deliberately NOT the cloud compose with different values. Three things differ
+# in ways that matter for a laptop:
+#
+#  1. Vault runs in DEV mode — unsealed, with a known root token. The cloud file
+#     uses file storage, which must be manually initialised and unsealed before
+#     identity-service can sign anything; that is the single biggest obstacle to
+#     a one-command local stack.
+#  2. nginx binds port 80, so PUBLIC_URL has no port. A did:web with a port needs
+#     it percent-encoded (did:web:localhost%3A8080:…), and the portal's
+#     credential-type filter builds a plain `did:web:<host>:` prefix — so a
+#     ported URL silently hides every credential type.
+#  3. Postgres creates the four databases the services expect up front, rather
+#     than relying on them already existing.
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up -d
+#   ./scripts/bootstrap-local.sh
+#   open http://localhost/issuer-portal/
+#
+# Everything here is throwaway: fixed dev credentials, no persistence worth
+# keeping. Never point this file at anything real.
+
+name: sunbird-oid4vc-local
+
+services:
+  db:
+    image: postgres:14
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=registry
+    volumes:
+      # Creates the extra databases the Node services point at. Without this,
+      # Prisma fails at boot with "database ... does not exist" — the cloud
+      # deployment happens to have had them created by hand.
+      - ./scripts/local-init-db.sh:/docker-entrypoint-initdb.d/10-databases.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Dev mode: starts unsealed with a fixed root token, so nothing needs to
+  # initialise or unseal it. The bootstrap script mounts a kv-v2 engine at `kv`,
+  # which is the path VAULT_ROOT_PATH tells identity-service to use.
+  vault:
+    image: hashicorp/vault:1.13.3
+    platform: linux/amd64
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=local-root-token
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+      - VAULT_ADDR=http://127.0.0.1:8200
+    command: server -dev
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:8200/v1/sys/health?standbyok=true || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      # The same sign-in theme the server runs, so a design change is reviewable
+      # locally instead of only after a deploy. Read-only: Keycloak only reads a
+      # theme, and this one renders on the page where people type passwords.
+      - ./keycloak-themes/sunbird-issuer:/opt/jboss/keycloak/themes/sunbird-issuer:ro
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin123
+      - DB_VENDOR=h2
+      # Keycloak sits behind nginx and issues absolute redirect URLs; without
+      # this it builds them from the container's own address and the browser is
+      # sent somewhere it cannot reach.
+      - PROXY_ADDRESS_FORWARDING=true
+    healthcheck:
+      # Probes the container's own eth0 address, not loopback: this Keycloak
+      # binds to the interface address, so `localhost:8080` inside the container
+      # is refused even while it serves other containers perfectly well.
+      test:
+        - CMD-SHELL
+        - 'curl -fsS http://$$(hostname -i):8080/auth/realms/master >/dev/null || exit 1'
+      interval: 10s
+      timeout: 5s
+      retries: 40
+
+  identity:
+    image: docker.io/${OID4VC_FIX_ORG:-pallakartheekreddy}/sunbird-rc-identity-service:${OID4VC_FIX_TAG:-credo-fix4}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/identity
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=local-root-token
+      - VAULT_BASE_URL=http://vault:8200/v1/
+      - VAULT_ROOT_PATH=kv
+      - VAULT_TIMEOUT=10000
+      - VAULT_PROXY=false
+      - SIGNING_ALGORITHM=Ed25519Signature2020
+      - ENABLE_AUTH=false
+      # Bare host, NO scheme. identity-service's getDidPrefixForBaseUrl (see
+      # did.service.ts:63) strips only the literal "https://" and then
+      # percent-encodes any remaining colon — so "http://localhost" yields the
+      # malformed `did:web:http%3A::localhost:<uuid>`. A bare host gives the
+      # correct `did:web:localhost:<uuid>`.
+      #
+      # Caveat inherent to did:web on localhost: the method mandates https, so a
+      # strict external resolver will look for https://localhost/<uuid>/did.json
+      # and fail. identity-service resolves its own DIDs from its database and
+      # the portal's credential-type filter is a string prefix match, so the
+      # portal and issuance flows work regardless. Only third-party
+      # verification of the issuer DID needs the real HTTPS deployment.
+      - WEB_DID_BASE_URL=localhost
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3332/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  credential-schema:
+    image: docker.io/snt1/sunbird-rc-credential-schema:${SCHEMA_TAG:-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/credential_schema
+      - IDENTITY_BASE_URL=http://identity:3332
+      - ENABLE_AUTH=false
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3333/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  credential:
+    image: docker.io/${OID4VC_FIX_ORG:-pallakartheekreddy}/sunbird-rc-credentials-service:${OID4VC_FIX_TAG:-credo-fix4}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/credential
+      - IDENTITY_BASE_URL=http://identity:3332
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+      - CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
+      - ENABLE_AUTH=false
+      - QR_TYPE=W3C_VC
+      # Off locally: the status-list path logs a base64url error on every
+      # issuance and revocation isn't part of what this stack is for.
+      - STATUS_LIST_ENABLED=false
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3000/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  registry:
+    image: ghcr.io/sunbird-rc/sunbird-rc-core:${RELEASE_VERSION:-v2.0.3}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./registry-schemas:/home/sunbirdrc/config/public/_schemas
+    # The full 84-variable set, generated from docker-compose.yml's registry
+    # block. It has to be complete: the Java registry resolves EVERY ${...}
+    # placeholder while building its configuration beans, before any *_enabled
+    # flag is read, so a single missing one aborts startup with a message that
+    # names the property but not the feature it belongs to.
+    env_file:
+      - ./scripts/local-registry.env
+    environment:
+      # Auth OFF locally by default. The portal's own Keycloak login is
+      # unaffected and the BFF still forwards the staff token — this only stops
+      # the Java registry independently validating it, which removes a class of
+      # first-run failures (issuer mismatch, clock skew, the container resolving
+      # the realm URL differently to the browser).
+      # Set REGISTRY_AUTH_ENABLED=true to exercise that too.
+      - authentication_enabled=${REGISTRY_AUTH_ENABLED:-false}
+    healthcheck:
+      # wget, not curl: the registry image ships wget and nc but no curl, so a
+      # curl-based probe reports unhealthy forever while the service is fine.
+      test: ['CMD-SHELL', 'wget -q -O- http://localhost:8081/health >/dev/null || exit 1']
+      # Java under amd64 emulation takes several minutes to reach "Startup
+      # completed"; start_period keeps that from counting as failures.
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 240s
+
+  oid4vc-service:
+    # BUILT FROM SOURCE, not pulled. The published fork image predates the
+    # Keycloak self-service issuance, the real tx_code and GET /qr — running it
+    # here would test the old behaviour while appearing to test the new. This is
+    # the service whose changes the stack exists to exercise, so it is the one
+    # thing that must never come from a registry.
+    #
+    # No `platform` pin: this is pure Node, so it builds natively (arm64 on Apple
+    # silicon) and starts far faster than the emulated amd64 images around it.
+    build:
+      context: ./services/oid4vc-service
+    restart: unless-stopped
+    depends_on:
+      credential:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=3400
+      # No port, so did:web needs no percent-encoding — see the header note.
+      - PUBLIC_URL=http://localhost
+      - CREDENTIAL_SERVICE_BASE_URL=http://credential:3000
+      - IDENTITY_BASE_URL=http://identity:3332
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+      - REDIS_URL=redis://redis:6379
+      - SESSION_STORE=redis
+      # Written by bootstrap-local.sh once the issuer did:web has been minted.
+      - ISSUER_DID=${LOCAL_ISSUER_DID:-}
+      - ENABLE_AUTH=false
+      - CORS_ALLOWED_ORIGINS=http://localhost
+      # OID4VP signing needs a wallet-resolvable verifier DID; the bootstrap
+      # script sets this to the same did:web it mints for the issuer.
+      - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST:-false}
+      - VERIFIER_DID=${LOCAL_ISSUER_DID:-}
+      # --- wallet self-service issuance ---
+      - KEYCLOAK_PUBLIC_URL=http://localhost/auth
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080/auth
+      - KEYCLOAK_REALM=sunbird-rc
+      - KEYCLOAK_SUBJECT_CLAIM=farmerId
+      - REGISTRY_BASE_URL=http://registry:8081
+      # --- where a self-issued credential's claims come from -----------------
+      # oid4vc-service holds NO domain knowledge: it issues whatever credential
+      # types the schema registry publishes, over whatever entities a deployment
+      # declares here. These four variables are that declaration.
+      #
+      # Adding a credential type is normally nothing at all: a schema property
+      # resolves against a registry field of the same name, on the subject record
+      # or on any related record below, in this order.
+      - REGISTRY_SUBJECT_ENTITY=Farmer
+      - REGISTRY_SUBJECT_KEY=farmerId
+      # `Entity[:orderField[:asc|desc]]` — the sort makes "the holder's current
+      # record" deterministic, since a wallet cannot choose one.
+      - REGISTRY_RELATED_ENTITIES=LandParcel,Crop:year:desc,SeedDistribution:issuedOn:desc,Qualification:yearOfPassing:desc
+      # Only for attributes whose schema name genuinely differs from the registry
+      # field, e.g. the standard `birthdate` claim over a `dateOfBirth` column.
+      # `Entity.field` pins the source where a bare field name is ambiguous.
+      - REGISTRY_CLAIM_ALIASES={"primaryCrop":"Crop.cropName","birthdate":"dateOfBirth","fullName":"name","qualification":"Qualification.degree"}
+      # Enables age_over_NN for any NN. Empty disables age derivation rather than
+      # guessing which field is a date of birth.
+      - REGISTRY_BIRTHDATE_FIELD=dateOfBirth
+      # Left false so the verifier console's sample-issuance button keeps
+      # working; the portal sends a staff token regardless, so flipping this to
+      # true is a one-line way to exercise the gate.
+      - OFFER_REQUIRES_STAFF=${OFFER_REQUIRES_STAFF:-false}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3400/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  issuer-portal:
+    build:
+      context: ./apps/issuer-portal
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      oid4vc-service:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      - PORT=4100
+      - BASE_PATH=/issuer-portal
+      - PUBLIC_BASE_URL=http://localhost
+      # Browser-facing (redirects) vs in-cluster (token/userinfo/admin) —
+      # conflating these is the classic Keycloak-behind-a-gateway failure.
+      - KEYCLOAK_PUBLIC_URL=http://localhost/auth
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080/auth
+      - KEYCLOAK_REALM=sunbird-rc
+      - KEYCLOAK_CLIENT_ID=issuer-portal
+      - KEYCLOAK_CLIENT_SECRET=local-portal-secret
+      - SESSION_SECRET=local-session-secret-change-me
+      - REGISTRY_BASE_URL=http://registry:8081
+      - OID4VC_BASE_URL=http://oid4vc-service:3400
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+      # The SAME claim-source declaration oid4vc-service gets. The portal shows
+      # staff what will be issued before they issue it, and the service resolves
+      # the claims again at issuance for the wallet self-service path — if these
+      # two disagreed, the preview would be a lie. Keep them identical.
+      - KEYCLOAK_SUBJECT_CLAIM=farmerId
+      - REGISTRY_SUBJECT_ENTITY=Farmer
+      - REGISTRY_SUBJECT_KEY=farmerId
+      - REGISTRY_RELATED_ENTITIES=LandParcel,Crop:year:desc,SeedDistribution:issuedOn:desc,Qualification:yearOfPassing:desc
+      - REGISTRY_CLAIM_ALIASES={"primaryCrop":"Crop.cropName","birthdate":"dateOfBirth","fullName":"name","qualification":"Qualification.degree"}
+      - REGISTRY_BIRTHDATE_FIELD=dateOfBirth
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:4100/issuer-portal/healthz >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  verifier-app:
+    image: docker.io/${VERIFIER_APP_ORG:-pallakartheekreddy}/sunbird-rc-oid4vc-verifier-app:${VERIFIER_APP_TAG:-1.2.2}
+    platform: linux/amd64
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:80/ >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      oid4vc-service:
+        condition: service_healthy
+      issuer-portal:
+        condition: service_healthy
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      # Port 80 on purpose: it keeps PUBLIC_URL free of a port, which keeps
+      # did:web free of percent-encoding. See the header note.
+      - '80:80'
+    healthcheck:
+      # 127.0.0.1, not localhost: inside the container `localhost` resolves to
+      # [::1] first, and the server block only has `listen 80` (IPv4), so an
+      # otherwise-working gateway reports unhealthy with "connection refused".
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1/health >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 20

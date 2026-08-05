@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="State Board of Education">
+  <circle cx="32" cy="32" r="32" fill="#8c5a3d"/>
+  <path d="M32 20l19 8-19 8-19-8z" fill="#f5ede8"/>
+  <path d="M22 32v9c0 3 4.5 5 10 5s10-2 10-5v-9l-10 4z" fill="#e0cabd"/>
+  <path d="M48 30v10" stroke="#f5ede8" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="48" cy="42" r="2.6" fill="#f5ede8"/>
+</svg>

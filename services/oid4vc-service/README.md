@@ -18,6 +18,27 @@ It holds **no credential keys and no credential storage** — only its own
 OAuth/protocol signing key (delegated to identity-service) and short-lived
 session state.
 
+**This directory is APIs only — no user interface.** The browser applications that
+drive these endpoints live outside it, each a separately built and deployed
+container:
+
+| Application | Path |
+| --- | --- |
+| Issuer portal (staff console + holder view) | [`apps/issuer-portal`](../../apps/issuer-portal) |
+| Verifier console | [`apps/verifier-app`](../../apps/verifier-app) |
+| Demo wallet backend (accounts + credential store for the browser wallet at `/wallet/`) | [`apps/wallet-backend`](../../apps/wallet-backend) |
+
+It also carries **no domain-specific schema knowledge**. Which registry entities a
+credential's claims come from, and which token claim identifies the holder, are
+configuration (`REGISTRY_*`, `KEYCLOAK_SUBJECT_CLAIM` — see
+[§4](#4-configuration-reference)). None of them default to a field name: an
+unconfigured deployment gets an error naming the missing variable rather than a
+silent guess borrowed from another project.
+
+**The Sunbird registry itself is optional.** An issuing authority may keep its
+records in its own database and still issue through this service — see
+[Where a credential's claims come from](#where-a-credentials-claims-come-from-the-registry-is-optional).
+
 This document consolidates everything a new contributor or operator needs:
 architecture, supported formats (including `mso_mdoc` and W3C VC Render
 Method), the full API/sequence design, configuration reference, local
@@ -91,6 +112,142 @@ The `credential_configuration_id` passed is the entity's `vertexLabel` (e.g.
 for the claim-grant hook — this **must exactly match** the corresponding
 `credential-schema` record's `name` (or its `schemaId`, see
 [§4](#4-configuration-reference)), or offer creation 404s.
+
+### Where a credential's claims come from (the registry is optional)
+
+Issuing and record-keeping are separable. An authority may keep its holders and
+their records in **its own database** and never adopt the Sunbird registry, and
+still issue through this service. There are two paths, and only one of them
+involves a claim source at all:
+
+| Path | Who supplies the claims | Registry needed? |
+|---|---|---|
+| `POST /oid4vc/offer` (pre-authorized, or authorization_code) | the caller, in the request body | **No** — never was |
+| Wallet self-service: holder signs in, wallet calls `POST /oid4vc/credential` | a **claim source**, keyed to the holder's token | Only if the claim source *is* the registry |
+
+So the simplest integration for an authority with its own system needs nothing
+below: its backend authenticates the holder, reads its own tables, and calls
+`POST /oid4vc/offer` with the claims. Claim sources exist for the second path,
+where the holder authenticates to Keycloak from their wallet and this service must
+fetch their record itself.
+
+**Login is unaffected either way.** Authentication never involved the registry:
+the token is verified against Keycloak's JWKS and one claim is read out of it
+(`token.service.ts`). What links a login to a record is nothing more than an
+identifier string in that claim — `farmer_id: FRM-000123` — so pointing it at a
+different system of record changes only where the lookup goes:
+
+```
+1. holder scans, wallet opens Keycloak, they sign in       (unchanged)
+2. token: { sub: …, farmer_id: "FRM-000123" }              (unchanged)
+3. service verifies signature, extracts FRM-000123         (unchanged)
+4. asks the claim source for that subject's attributes     ← the only variable
+5. credential signed from the returned claims              (unchanged)
+```
+
+#### Selecting a claim source
+
+Per credential type, so one deployment serves authorities with different systems
+of record:
+
+```sh
+# An authority's own endpoint. The URL is the declaration — there is no
+# separate "type" variable, because `registry` is built in and every source
+# declared this way is an HTTP one.
+CLAIM_SOURCE_AGRI_URL=https://agri.example.gov/oid4vc/claims
+CLAIM_SOURCE_AGRI_TOKEN=<bearer>          # optional
+CLAIM_SOURCE_AGRI_TIMEOUT_MS=5000         # optional, default 5000
+
+# Which credential type uses it. Keys match a credential's schemaId or its
+# name, in that order — schemaId is unambiguous when two types share a name.
+CLAIM_SOURCE_MAP={"did:schema:44cac…":"agri"}
+
+# Everything not named above. `registry` | `none` | <a declared name>.
+CLAIM_SOURCE_DEFAULT=registry
+```
+
+`CLAIM_SOURCE_DEFAULT=none` with no `REGISTRY_BASE_URL` is a complete, valid
+deployment: self-service reports that a credential type is not issuable from a
+login, and `POST /oid4vc/offer` is unaffected. Setting nothing at all preserves the
+behaviour that predates claim sources — everything resolves from the registry.
+
+#### The contract an authority implements
+
+```
+POST <CLAIM_SOURCE_<NAME>_URL>
+  Authorization: Bearer <CLAIM_SOURCE_<NAME>_TOKEN>   (if configured)
+  {
+    "subjectId": "FRM-000123",
+    "subjectClaim": "farmer_id",
+    "credentialConfigurationId": "did:schema:44cac…",
+    "credentialName": "Farmer Land Holding SdJwt",
+    "attributes": ["name", "landAreaAcres", "primaryCrop"]
+  }
+
+200  { "claims": { "name": "Ravi Kumar", "landAreaAcres": 4.5 } }
+     — a bare object of fields is also accepted, so returning your row works
+404  no such holder → reported to the wallet as a provisioning gap
+5xx / timeout → reported as the authority's system being unreachable
+```
+
+Four things worth knowing before implementing it:
+
+- **`subjectId` comes from the verified access token**, never from the wallet's
+  request. A holder cannot ask for another holder's record.
+- **Undeclared fields are dropped, not copied.** The response is filtered through
+  the credential type's own `properties`, so extra keys are ignored. A buggy — or
+  compromised — endpoint cannot add claims the schema never defined.
+- **Field names need not match exactly.** The response goes through the same
+  resolver the registry path uses, so case and separators are ignored
+  (`land_area_acres` matches `landAreaAcres`), `REGISTRY_CLAIM_ALIASES` applies,
+  and `age_over_NN` is derived from `REGISTRY_BIRTHDATE_FIELD` if present.
+  Returning your raw row usually just works.
+- **Required attributes that are absent are named** back to the holder, rather
+  than failing opaquely during signing.
+
+**HTTPS is required** (loopback excepted, for local development). There is no
+override. A claim source is another organisation's system, so the call leaves this
+network carrying a holder's identifier out and their personal data back — a
+different trust boundary from `REGISTRY_BASE_URL=http://registry:8081`, which is a
+sibling service whose traffic never leaves the cluster.
+
+#### Getting holders into Keycloak
+
+The claim source answers *what we know about this person*; Keycloak still answers
+*who they are*. So an authority's holders must exist in the realm with the subject
+claim set (`KEYCLOAK_SUBJECT_CLAIM`, e.g. `farmer_id: FRM-000123`). The issuer
+portal's "link login" does this for registry-backed holders, but it links to a
+*registry record*, so an own-database authority needs one of:
+
+| Route | When it fits |
+|---|---|
+| **Keycloak Admin API** | The authority's own onboarding creates the user and sets the attribute — about 15 lines, and what the portal itself does |
+| **User federation** | They already run LDAP/AD; map their holder id to the attribute and users appear without a sync |
+| **Identity brokering** | Holders sign in through the authority's own IdP, with the id arriving as a mapped claim |
+
+#### Testing your endpoint
+
+Unit-level behaviour (success, 404, timeout, HTTPS refusal, field filtering) is
+covered by `src/claims/claim-source.spec.ts`, which runs a real HTTP server — start
+there, and add a case mirroring your response shape. To exercise a real endpoint
+end to end:
+
+1. Serve your endpoint over HTTPS. For a self-signed certificate, mount it into
+   the container and set `NODE_EXTRA_CA_CERTS=/path/ca.pem`, or the TLS handshake
+   fails before your handler is reached.
+2. Point one credential type at it, leaving the rest on the registry:
+   `CLAIM_SOURCE_MYORG_URL=…` plus `CLAIM_SOURCE_MAP={"<schemaId>":"myorg"}`.
+3. Create an `authorization_code` offer for that type, then collect it with a real
+   wallet. Confirm from your endpoint's own log that it was called with the
+   `subjectId` you expect, and that the issued credential carries your values.
+4. Check `oid4vc-service`'s log for `Claims resolved by '<name>' for <subjectId>`.
+   Claim values are deliberately never logged.
+
+> **Note on the issuer portal.** Its "what will be issued" preview reads the
+> registry directly, so for a credential type backed by an external claim source
+> that preview is not meaningful — the credential is resolved from the authority's
+> own system at issuance. Treat the portal's staff CRUD and preview as registry
+> features; an own-database authority manages records in its own system.
 
 ---
 
@@ -238,6 +395,26 @@ claims satisfy exactly what the verifier asked for via DCQL.
 | `OID4VP_SIGN_REQUEST` | `true` | sign the OID4VP request object as a JAR (`did:` client_id). Ignored (forced off) when `OID4VP_LEGACY_CLIENT_ID_SCHEME=true`, since the `redirect_uri` client_id scheme must not be signed. |
 | `OID4VP_LEGACY_CLIENT_ID_SCHEME` | `false` | emit the pre-draft-22 shape (`client_id` = `response_uri`, separate `client_id_scheme: "redirect_uri"` field, unsigned) for wallets like walt.id that don't parse the prefixed `client_id` convention |
 | `VERIFIER_DID` | *(blank → falls back to the issuer DID **only if** that is a `did:web`)* | DID used to sign OID4VP request objects when `OID4VP_SIGN_REQUEST` is on. Must be resolvable **by wallets** — see the note below. |
+| `OFFER_REQUIRES_STAFF` | `false` | require a staff role on `POST /oid4vc/offer`. **Left off, that endpoint is unauthenticated and accepts caller-supplied claims** — anyone who can reach it can mint a credential asserting anything about anyone. |
+| `OFFER_STAFF_ROLE` | `issuer-staff` | realm role that satisfies the gate above. Configurable because the role name lives in the deployment's realm, not here. The configured name **replaces** the default rather than adding to it. |
+| `KEYCLOAK_SUBJECT_CLAIM` | *(blank — no default)* | token claim carrying the holder's registry key. **Required for wallet self-service issuance**; deliberately undefaulted, since a field name belongs to the deployment. Unset, self-service fails with an error naming this variable. |
+| `CREDENTIAL_SIGNING_ALGS_JOSE` | `ES256,EdDSA` | advertised in `credential_signing_alg_values_supported` for `vc+sd-jwt`. JWA algorithm names. |
+| `CREDENTIAL_SIGNING_ALGS_LDP` | `ES256,Ed25519Signature2020` | same, for `ldp_vc` / `jwt_vc_json`. Linked-Data **cryptosuite** names — a different value space from the JOSE list above, which is why the two are separate. |
+| `CREDENTIAL_SIGNING_ALGS_MDOC` | `ES256` | same, for `mso_mdoc`. |
+| `PROOF_SIGNING_ALGS` | `ES256` | advertised in `proof_types_supported.jwt`; the wallet key-proof algorithms accepted. |
+| `REGISTRY_BASE_URL` | *(blank)* | Sunbird registry, when it is a claim source. **Optional** — see [Where a credential's claims come from](#where-a-credentials-claims-come-from-the-registry-is-optional). Unset, `POST /oid4vc/offer` still works in full. |
+| `CLAIM_SOURCE_<NAME>_URL` | — | An authority's own claims endpoint. Its presence declares a source named `<name>`; **must be HTTPS** (loopback excepted). |
+| `CLAIM_SOURCE_<NAME>_TOKEN` | *(none)* | Bearer token for that endpoint, if it requires one. |
+| `CLAIM_SOURCE_<NAME>_TIMEOUT_MS` | `5000` | Bounded because a wallet is blocked on the call; not retried. |
+| `CLAIM_SOURCE_MAP` | `{}` | JSON, credential `schemaId` **or** name → claim source name. schemaId wins, and is unambiguous when two types share a name. |
+| `CLAIM_SOURCE_DEFAULT` | `registry` | For types not in the map. `none` means such types are issuable only through `POST /oid4vc/offer`. |
+
+**Why the algorithm lists are declared, not derived.** Credentials are signed by
+credentials-service using the key behind each schema's `author` DID, so this
+service cannot inspect the key it is advertising for. The values are therefore a
+statement by the operator: an issuer holding Ed25519 keys should say so here
+rather than have this service guess. Set them per value space — publishing an LD
+cryptosuite name as an SD-JWT `alg` gives a JOSE wallet nothing it can act on.
 
 **Signing requires a wallet-resolvable DID.** When `OID4VP_SIGN_REQUEST` is on,
 the request object's `client_id` is a `did:` and the wallet must resolve that
@@ -253,6 +430,11 @@ An explicitly-set `VERIFIER_DID` is treated as the operator's deliberate choice
 and used regardless of method. So for signing: set `VERIFIER_DID` to something
 wallets can resolve (a `did:web`), or set `OID4VP_SIGN_REQUEST=false`. The
 bundled `docker-compose.yml` dev stack opts out for exactly this reason.
+
+**Lifetimes:**
+
+| Env var | Default | Purpose |
+|---|---|---|
 | `OFFER_TTL` | `600`s | offer session lifetime |
 | `NONCE_TTL` | `300`s | `c_nonce` lifetime (single-use regardless) |
 | `ACCESS_TOKEN_TTL` | `300`s | façade-minted access token lifetime |

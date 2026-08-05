@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "SeedDistribution": {
+      "$ref": "#/definitions/SeedDistribution"
+    }
+  },
+  "required": ["SeedDistribution"],
+  "title": "SeedDistribution",
+  "definitions": {
+    "SeedDistribution": {
+      "$id": "#/properties/SeedDistribution",
+      "type": "object",
+      "title": "Seed distribution",
+      "required": ["farmerId", "seedType", "quantityKg", "issuedOn"],
+      "properties": {
+        "farmerId": {
+          "type": "string",
+          "title": "Farmer ID"
+        },
+        "seedType": {
+          "type": "string",
+          "title": "Seed type"
+        },
+        "variety": {
+          "type": "string",
+          "title": "Variety"
+        },
+        "quantityKg": {
+          "type": "number",
+          "title": "Quantity (kg)",
+          "minimum": 0
+        },
+        "issuedOn": {
+          "type": "string",
+          "format": "date",
+          "title": "Issued on"
+        },
+        "subsidyScheme": {
+          "type": "string",
+          "title": "Subsidy scheme"
+        },
+        "distributionCentre": {
+          "type": "string",
+          "title": "Distribution centre"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": [],
+    "indexFields": ["farmerId", "issuedOn"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

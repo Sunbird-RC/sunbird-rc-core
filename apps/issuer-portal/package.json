@@ -1,0 +1,30 @@
+{
+  "name": "oid4vc-issuer-portal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n bff,web -c magenta,cyan \"npm:dev:bff\" \"npm:dev:web\"",
+    "dev:web": "vite",
+    "dev:bff": "node --watch bff/server.mjs",
+    "dev:mock": "cross-env PORTAL_MOCK=1 npm run dev",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/open-sans": "^5.3.0",
+    "@fontsource/rubik": "^5.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.11"
+  }
+}

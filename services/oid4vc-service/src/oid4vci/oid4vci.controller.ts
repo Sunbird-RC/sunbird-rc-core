@@ -18,10 +18,14 @@ import { Oid4vciService } from './oid4vci.service';
 export class Oid4vciController {
   constructor(private readonly oid4vci: Oid4vciService) {}
 
-  @ApiOperation({ summary: 'Create a credential offer (internal, called by issuer/registry)' })
+  @ApiOperation({
+    summary:
+      'Create a credential offer (internal, called by the issuer portal). ' +
+      'Requires the OFFER_STAFF_ROLE realm role when OFFER_REQUIRES_STAFF=true.',
+  })
   @Post('offer')
-  createOffer(@Body() body: any) {
-    return this.oid4vci.createOffer(body);
+  createOffer(@Body() body: any, @Headers('authorization') auth?: string) {
+    return this.oid4vci.createOffer(body, auth);
   }
 
   @ApiOperation({ summary: 'Dereference a credential offer (wallet)' })

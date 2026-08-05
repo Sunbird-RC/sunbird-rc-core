@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Crop": {
+      "$ref": "#/definitions/Crop"
+    }
+  },
+  "required": ["Crop"],
+  "title": "Crop",
+  "definitions": {
+    "Crop": {
+      "$id": "#/properties/Crop",
+      "type": "object",
+      "title": "Crop cycle",
+      "required": ["farmerId", "cropName", "season", "year"],
+      "properties": {
+        "farmerId": {
+          "type": "string",
+          "title": "Farmer ID"
+        },
+        "landRecordRef": {
+          "type": "string",
+          "title": "Land record reference",
+          "description": "Optional — which parcel this cycle was sown on."
+        },
+        "cropName": {
+          "type": "string",
+          "title": "Crop"
+        },
+        "season": {
+          "type": "string",
+          "title": "Season",
+          "enum": ["Kharif", "Rabi", "Zaid"]
+        },
+        "year": {
+          "type": "integer",
+          "title": "Year",
+          "minimum": 1900
+        },
+        "areaSownAcres": {
+          "type": "number",
+          "title": "Area sown (acres)",
+          "minimum": 0
+        },
+        "expectedYieldQuintals": {
+          "type": "number",
+          "title": "Expected yield (quintals)",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": [],
+    "indexFields": ["farmerId", "year"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

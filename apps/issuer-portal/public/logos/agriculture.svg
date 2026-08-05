@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Department of Agriculture">
+  <circle cx="32" cy="32" r="32" fill="#4a7c59"/>
+  <path d="M32 50V26" stroke="#eef4ee" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 30c0-6 4-11 9-13 1 7-3 13-9 13zM32 30c0-6-4-11-9-13-1 7 3 13 9 13z" fill="#eef4ee"/>
+  <path d="M32 40c0-5 3-9 8-11 1 6-3 11-8 11zM32 40c0-5-3-9-8-11-1 6 3 11 8 11z" fill="#cfe3d3"/>
+</svg>

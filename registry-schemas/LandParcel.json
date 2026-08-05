@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "LandParcel": {
+      "$ref": "#/definitions/LandParcel"
+    }
+  },
+  "required": ["LandParcel"],
+  "title": "LandParcel",
+  "definitions": {
+    "LandParcel": {
+      "$id": "#/properties/LandParcel",
+      "type": "object",
+      "title": "Land parcel",
+      "required": ["farmerId", "landRecordRef", "landAreaAcres"],
+      "properties": {
+        "farmerId": {
+          "type": "string",
+          "title": "Farmer ID",
+          "description": "Owning farmer. A farmer may hold several parcels; issuance flattens the parcel chosen by staff into the credential."
+        },
+        "landRecordRef": {
+          "type": "string",
+          "title": "Land record reference",
+          "description": "Reference in the authoritative land record system, e.g. a survey or khasra number."
+        },
+        "farmLocation": {
+          "type": "string",
+          "title": "Farm location",
+          "description": "Village or revenue-circle description of where the parcel sits."
+        },
+        "landAreaAcres": {
+          "type": "number",
+          "title": "Land area (acres)",
+          "minimum": 0
+        },
+        "ownershipType": {
+          "type": "string",
+          "title": "Ownership type",
+          "enum": ["Owned", "Leased", "Sharecropped", "Inherited"]
+        },
+        "surveyedOn": {
+          "type": "string",
+          "format": "date",
+          "title": "Surveyed on"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": ["landRecordRef"],
+    "indexFields": ["farmerId"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

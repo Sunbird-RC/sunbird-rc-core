@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Qualification": {
+      "$ref": "#/definitions/Qualification"
+    }
+  },
+  "required": ["Qualification"],
+  "title": "Qualification",
+  "definitions": {
+    "Qualification": {
+      "$id": "#/properties/Qualification",
+      "type": "object",
+      "title": "Qualification",
+      "required": ["farmerId", "degree", "institution"],
+      "properties": {
+        "farmerId": {
+          "type": "string",
+          "title": "Holder ID",
+          "description": "The holder this qualification belongs to. Named `farmerId` for consistency with the other child entities, which all join on that key — the portal labels it with the owning issuer's own holder noun."
+        },
+        "degree": {
+          "type": "string",
+          "title": "Qualification",
+          "description": "Award as it should appear on the credential, e.g. B.Sc. Agriculture."
+        },
+        "institution": {
+          "type": "string",
+          "title": "Institution",
+          "description": "Awarding college, university or board."
+        },
+        "yearOfPassing": {
+          "type": "number",
+          "title": "Year of passing"
+        },
+        "grade": {
+          "type": "string",
+          "title": "Grade or class",
+          "description": "e.g. First Class, 8.4 CGPA, 76%."
+        },
+        "enrolmentNumber": {
+          "type": "string",
+          "title": "Enrolment number",
+          "description": "Registration number at the awarding institution."
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": [],
+    "indexFields": ["farmerId"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

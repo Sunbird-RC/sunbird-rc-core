@@ -1,0 +1,109 @@
+# Server overlay for the multi-issuer portal.
+#
+# Add it as the LAST -f, after whatever overlays the deployment already uses, e.g.
+#
+#   docker compose -f docker-compose.cloud.yml -f docker-compose.demo.yml \
+#     -f docker-compose.authcode.yml -f docker-compose.authsrv.yml \
+#     -f docker-compose.issuers.yml up -d oid4vc-service issuer-portal
+#
+# ADDITIVE ON PURPOSE: it touches two services and nothing else. Roll back by
+# dropping this one -f flag; every other file is untouched.
+#
+# The two images are pinned literally rather than through OID4VC_FIX_ORG /
+# OID4VC_FIX_TAG, because those variables are SHARED with `identity` and
+# `credential` in the base cloud file — exporting them to pick up this build also
+# repoints those services at tags that do not exist.
+#
+# The registry needs no override: docker-compose.cloud.yml already mounts
+# ./registry-schemas into it. The new entities arrive as FILES in that directory
+# and take effect when the registry restarts.
+#
+# ---------------------------------------------------------------------------
+# WHY THE ENVIRONMENT AND THE IMAGE MUST SHIP TOGETHER
+# ---------------------------------------------------------------------------
+# oid4vc-service no longer hard-codes which registry entities a credential's
+# claims come from — that is declared here instead, so adding a credential type
+# needs no code change. The consequence is that the service now REQUIRES
+# REGISTRY_SUBJECT_ENTITY and REGISTRY_SUBJECT_KEY: without them, wallet
+# self-service issuance fails with "registry claim sources are not configured".
+#
+# Pulling the new image under the old environment therefore BREAKS the login-gated
+# flow that already works in production. Deploy both or neither.
+#
+# The two services must also agree with each other: the portal previews what will
+# be issued and the service resolves it again at issuance, so a mismatch would make
+# that preview a lie. The two blocks below are deliberately identical.
+#
+# Environment is written as a LIST, matching docker-compose.cloud.yml. Compose
+# merges the two files per variable either way, but keeping one form makes the
+# result obvious to whoever reads `config` output next.
+# ---------------------------------------------------------------------------
+
+services:
+  # Sign-in theme. Mounted read-only: Keycloak only ever reads a theme, and a
+  # writable mount would let a container compromise edit what every user sees at
+  # the moment they type a password.
+  #
+  # NOTE: applying this recreates the container, which changes its IP. The gateway
+  # resolves upstreams once at startup, so nginx MUST be restarted afterwards or it
+  # serves 502 against the old address — observed, not theoretical.
+  keycloak:
+    volumes:
+      - ./keycloak-themes/sunbird-issuer:/opt/jboss/keycloak/themes/sunbird-issuer:ro
+
+  oid4vc-service:
+    # Pinned HERE rather than through OID4VC_FIX_ORG / OID4VC_FIX_TAG. Those
+    # variables are shared with `identity` and `credential` in the base cloud file,
+    # so exporting them to select this image also repoints those — verified: the
+    # deploy failed pulling a non-existent
+    # pallakartheekreddy/sunbird-rc-identity-service:issuers-1.
+    image: docker.io/pallakartheekreddy/sunbird-rc-oid4vc-service:issuers-1
+    environment:
+      # A schema property resolves against a registry field of the SAME NAME — on
+      # the subject record first, then each related entity in the order listed.
+      # Only genuinely different names need an alias.
+      - REGISTRY_SUBJECT_ENTITY=Farmer
+      - REGISTRY_SUBJECT_KEY=farmerId
+      # `Entity[:orderField[:asc|desc]]`. The sort is what makes "the holder's
+      # current record" deterministic, since a wallet cannot choose one.
+      - REGISTRY_RELATED_ENTITIES=LandParcel,Crop:year:desc,SeedDistribution:issuedOn:desc,Qualification:yearOfPassing:desc
+      # `Entity.field` pins the source where a bare field name is ambiguous.
+      - REGISTRY_CLAIM_ALIASES={"primaryCrop":"Crop.cropName","birthdate":"dateOfBirth","fullName":"name","qualification":"Qualification.degree"}
+      # Enables age_over_NN for any NN. Empty disables age derivation rather than
+      # guessing which field holds a date of birth.
+      - REGISTRY_BIRTHDATE_FIELD=dateOfBirth
+      #
+      # ---------------------------------------------------------------------
+      # OPTIONAL: an authority that keeps its records in its OWN database
+      # ---------------------------------------------------------------------
+      # Nothing above is required for such an authority — the registry is one
+      # claim source among others, not a precondition for issuing. To point ONE
+      # credential type at an endpoint the authority hosts itself, leaving every
+      # other type resolving from the registry:
+      #
+      #   - CLAIM_SOURCE_AGRI_URL=https://agri.example.gov/oid4vc/claims
+      #   - CLAIM_SOURCE_AGRI_TOKEN=<bearer>
+      #   - CLAIM_SOURCE_MAP={"<schemaId or credential name>":"agri"}
+      #   - CLAIM_SOURCE_DEFAULT=registry
+      #
+      # The URL must be https: that call leaves this network carrying a holder's
+      # identifier out and their personal data back, which is a different trust
+      # boundary from REGISTRY_BASE_URL=http://registry:8081 above.
+      #
+      # Contract, holder provisioning and how to test it:
+      # services/oid4vc-service/README.md — "Where a credential's claims come from"
+
+  issuer-portal:
+    image: docker.io/pallakartheekreddy/sunbird-rc-oid4vc-issuer-portal:0.4.1
+    environment:
+      # KEYCLOAK_SUBJECT_CLAIM is deliberately NOT set here. The reference
+      # deployment's realm spells that attribute `farmer_id`, and its own overlay
+      # already configures it; setting `farmerId` from this file would win on merge
+      # and silently break every existing holder link. REGISTRY_SUBJECT_KEY below
+      # is a different thing — the registry FIELD name, which is `farmerId` in the
+      # entity schema regardless of how the token claim is spelled.
+      - REGISTRY_SUBJECT_ENTITY=Farmer
+      - REGISTRY_SUBJECT_KEY=farmerId
+      - REGISTRY_RELATED_ENTITIES=LandParcel,Crop:year:desc,SeedDistribution:issuedOn:desc,Qualification:yearOfPassing:desc
+      - REGISTRY_CLAIM_ALIASES={"primaryCrop":"Crop.cropName","birthdate":"dateOfBirth","fullName":"name","qualification":"Qualification.degree"}
+      - REGISTRY_BIRTHDATE_FIELD=dateOfBirth

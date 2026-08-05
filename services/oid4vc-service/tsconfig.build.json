@@ -1,4 +1,8 @@
 {
   "extends": "./tsconfig.json",
+  // The browser consoles used to live inside this directory and had to be
+  // excluded here, or `nest build` compiled React with the service's CommonJS,
+  // no-JSX settings and failed with hundreds of TS17004s. They now live in
+  // top-level `apps/`, so no exclusion is needed — this service is APIs only.
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }

@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Issuer": {
+      "$ref": "#/definitions/Issuer"
+    }
+  },
+  "required": ["Issuer"],
+  "title": "Issuer",
+  "definitions": {
+    "Issuer": {
+      "$id": "#/properties/Issuer",
+      "type": "object",
+      "title": "Issuer",
+      "required": ["issuerId", "name", "holderLabel"],
+      "properties": {
+        "issuerId": {
+          "type": "string",
+          "title": "Issuer ID",
+          "description": "Registry-wide unique key for this issuing authority, e.g. ISS-FARMER."
+        },
+        "name": {
+          "type": "string",
+          "title": "Issuer name",
+          "description": "Displayed to staff in the portal and used as the credential's display issuer."
+        },
+        "description": {
+          "type": "string",
+          "title": "Description"
+        },
+        "category": {
+          "type": "string",
+          "title": "Category",
+          "enum": ["Agriculture", "Identity", "Education", "Health", "Other"]
+        },
+        "did": {
+          "type": "string",
+          "title": "Issuer DID",
+          "description": "The did:web this authority signs with. Recorded for display and audit only — the signing DID actually used is the `author` of the bound credential schema, so that a schema and its signer can never disagree."
+        },
+        "credentialConfigId": {
+          "type": "string",
+          "title": "Credential configuration ID",
+          "description": "OID4VCI credential_configuration_id this issuer issues. Discovered from credential-schema; empty means the issuer exists but cannot issue yet."
+        },
+        "credentialName": {
+          "type": "string",
+          "title": "Credential name",
+          "description": "Display name of the bound credential type. Denormalised so the issuer list renders without a call per issuer; re-read from credential-schema whenever the binding changes."
+        },
+        "holderLabel": {
+          "type": "string",
+          "title": "Holder label",
+          "description": "What this issuer calls the people it issues to — Farmer, Citizen, Student. Drives every noun in the portal's holder screens."
+        },
+        "holderIdPrefix": {
+          "type": "string",
+          "title": "Holder ID prefix",
+          "description": "Prefix for generated holder IDs, e.g. FRM gives FRM-000101. Kept short and upper-case."
+        },
+        "recordEntities": {
+          "type": "string",
+          "title": "Supporting record types",
+          "description": "Comma-separated registry entities holding this issuer's supporting records, e.g. `LandParcel,Crop,SeedDistribution`. The portal renders one tab per entry, so an issuer whose credential needs no supporting records leaves this empty."
+        },
+        "logoUrl": {
+          "type": "string",
+          "title": "Logo URL",
+          "description": "Image shown as this authority's logo. May be a path served by the portal (/issuer-portal/logos/x.svg) or an absolute http(s) URL. The emoji `icon` is the fallback when this is empty or the image fails to load."
+        },
+        "url": {
+          "type": "string",
+          "title": "Website",
+          "description": "The authority's public homepage, linked from its card. http(s) only — any other scheme is refused when rendering, since this string reaches an anchor href."
+        },
+        "icon": {
+          "type": "string",
+          "title": "Icon",
+          "description": "A single emoji, used when no logo URL is set or the logo cannot be loaded."
+        },
+        "accent": {
+          "type": "string",
+          "title": "Accent colour",
+          "description": "Hex colour used for this issuer's card and header, so staff can tell at a glance which issuer they are working in."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "enum": ["Active", "Draft"],
+          "description": "Draft issuers are listed but cannot issue — used while a credential schema is still being prepared."
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": ["issuerId"],
+    "indexFields": ["category", "status"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

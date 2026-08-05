@@ -1,0 +1,751 @@
+{
+  "info": {
+    "_postman_id": "b7f3c0de-9a41-4d7e-9c62-0a1f5d3e77aa",
+    "name": "Sunbird RC - Authority & Credential Type Onboarding",
+    "description": "Create a new issuing **authority** (a resolvable `did:web`) and a new\n**credential type** (a schema), then prove the type works end to end.\n\nRun folders 0 → 5 in order. Test scripts chain the variables, so nothing\nneeds copying by hand.\n\n### Why a schema is all you create\n\nThe SD-JWT VC Type Metadata at `GET /vct/<slug>` is **generated**, not stored:\n`oid4vci.service.ts getVctTypeMetadata()` finds the published, OID4VCI-enabled\nschema whose slugified `vct` matches the slug and synthesises\n`{ vct, name, display }` from it. Create the schema and the endpoint appears.\n\n### Things that silently break a new type\n\n1. `serviceEndpoint` missing from the DID `services` entry — wallets reject the\n   DID document (`identity.client.ts:31` omits it, so mint DIDs with this\n   collection rather than letting the service auto-provision one).\n2. `vct` given as an absolute URL — `normalizeVct()` passes it through and then\n   nothing serves it. Use a plain display name.\n3. The inner `schema` object must carry **all seven** of `$id`, `$schema`,\n   `description`, `type`, `properties`, `required`, `additionalProperties`\n   (`credential-schema/schema.json`). `description` is the one usually\n   forgotten: it fails with `must have required property 'description'`.\n4. `status` not `PUBLISHED`, or `oid4vciEnabled` not `true` — both are filtered\n   on, so the type never reaches issuer metadata.\n5. `vc+sd-jwt` missing from `oid4vciFormats` — no `/vct/<slug>` document.\n6. Two types sharing a name — identical slugs collide and the first wins.\n7. A `required` property not supplied at offer time — opaque `500 Error issuing\n   credential`; the real ajv reason only appears in the credentials-service log.\n8. `did:rcw` authors cannot be verified by wallets (`unsupportedDidMethod`).\n   Only `did:web` works.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "https://98.70.36.106.sslip.io"
+    },
+    {
+      "key": "authority_did",
+      "value": ""
+    },
+    {
+      "key": "authority_uuid",
+      "value": ""
+    },
+    {
+      "key": "schema_id",
+      "value": ""
+    },
+    {
+      "key": "config_id",
+      "value": ""
+    },
+    {
+      "key": "type_name",
+      "value": ""
+    },
+    {
+      "key": "vct_slug",
+      "value": ""
+    },
+    {
+      "key": "qr_data",
+      "value": ""
+    },
+    {
+      "key": "qr_image_url",
+      "value": ""
+    },
+    {
+      "key": "transaction_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health & discovery",
+      "item": [
+        {
+          "name": "Issuer metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/.well-known/openid-credential-issuer",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                ".well-known",
+                "openid-credential-issuer"
+              ]
+            },
+            "description": "Every published, OID4VCI-enabled schema appears here as one configuration per format."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"credential_issuer present\", () => pm.expect(b.credential_issuer).to.be.a(\"string\"));",
+                  "console.log(\"configurations:\", Object.keys(b.credential_configurations_supported || {}).length);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Authorization server metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/.well-known/openid-configuration",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                ".well-known",
+                "openid-configuration"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"pre-authorized_code grant supported\", () =>",
+                  "  pm.expect(pm.response.json().grant_types_supported).to.include(",
+                  "    \"urn:ietf:params:oauth:grant-type:pre-authorized_code\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "All OID4VCI schema configs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/credential-schema/oid4vci-configs",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema",
+                "oid4vci-configs"
+              ]
+            },
+            "description": "The source issuer metadata is built from. `author` is the issuing authority DID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const list = pm.response.json();",
+                  "pm.test(\"is a list\", () => pm.expect(list).to.be.an(\"array\"));",
+                  "const authors = [...new Set(list.map(c => c.author || \"(none)\"))];",
+                  "console.log(\"distinct authorities:\", authors.length);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Create the authority (did:web)",
+      "item": [
+        {
+          "name": "Generate authority DID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/did/generate",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "did",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": [\n    {\n      \"alsoKnownAs\": [],\n      \"services\": [\n        {\n          \"id\": \"oid4vc\",\n          \"type\": \"OID4VCService\",\n          \"serviceEndpoint\": \"{{base}}/oid4vc\"\n        }\n      ],\n      \"method\": \"web\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mints the DID that becomes the credential `issuer`. One per authority —\nreuse it as the `author` of every type that authority issues.\n\n`serviceEndpoint` is mandatory: a service entry without it yields a DID\ndocument conformant wallets reject."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const doc = Array.isArray(b) ? b[0] : b;",
+                  "pm.test(\"a did:web was minted\", () => pm.expect(doc.id).to.match(/^did:web:/));",
+                  "pm.test(\"service carries a serviceEndpoint\", () =>",
+                  "  pm.expect(((doc.service || [])[0] || {}).serviceEndpoint).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"authority_did\", doc.id);",
+                  "pm.collectionVariables.set(\"authority_uuid\", doc.id.split(\":\").pop());",
+                  "console.log(\"authority_did =\", doc.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Authority DID resolves publicly",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/{{authority_uuid}}/did.json",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "{{authority_uuid}}",
+                "did.json"
+              ]
+            },
+            "description": "did:web resolution: `did:web:host:uuid` dereferences to `https://host/uuid/did.json`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const doc = pm.response.json();",
+                  "pm.test(\"document id equals the DID\", () =>",
+                  "  pm.expect(doc.id).to.eql(pm.collectionVariables.get(\"authority_did\")));",
+                  "// #jwt-key-1 is created lazily on first JWT signing, so it may be absent here.",
+                  "console.log(\"verification methods:\", (doc.verificationMethod || []).map(v => v.id.split(\"#\")[1]).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Create the credential type",
+      "item": [
+        {
+          "name": "Create schema (edit this body)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/credential-schema",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"name\": \"Farmer Registry Credential\",\n    \"author\": \"{{authority_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"FarmerRegistryCredential-1.0\",\n      \"type\": \"object\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"Registry record identifying a farmer and their land holding\",\n      \"required\": [\"name\",\"farmerId\"],\n      \"properties\": {\n              \"name\": {\n                      \"type\": \"string\",\n                      \"description\": \"Full name of the farmer\"\n              },\n              \"farmerId\": {\n                      \"type\": \"string\",\n                      \"description\": \"Registry identifier\"\n              },\n              \"landHoldingHectares\": {\n                      \"type\": \"number\",\n                      \"description\": \"Land held, in hectares\"\n              }\n      },\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"farmer-registry\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"vc+sd-jwt\", \"jwt_vc_json\", \"ldp_vc\"],\n    \"vct\": \"Farmer Registry Credential\",\n    \"display\": [{ \"name\": \"Farmer Registry Credential\", \"locale\": \"en-US\" }]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "The credential type. `author` is filled from step 1.\n\nChange `name`, `$id`, `required` and `properties` for your type. Keep\n`status`, `oid4vciEnabled` and `vc+sd-jwt` exactly as they are, and keep\n`vct` a plain display name rather than a URL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const id = b.schema && b.schema.id;",
+                  "pm.test(\"schema created with an id\", () => pm.expect(id).to.be.a(\"string\"));",
+                  "pm.test(\"published\", () => pm.expect(b.status).to.eql(\"PUBLISHED\"));",
+                  "pm.test(\"authored by our authority DID\", () =>",
+                  "  pm.expect(b.schema.author).to.eql(pm.collectionVariables.get(\"authority_did\")));",
+                  "if (id) {",
+                  "  pm.collectionVariables.set(\"schema_id\", id);",
+                  "  // Multi-format schemas expose <schemaId>_<format> configuration ids",
+                  "  // (oid4vci.service.ts:81); a single-format schema uses the bare id.",
+                  "  pm.collectionVariables.set(\"config_id\", id + \"_vc+sd-jwt\");",
+                  "  const name = b.schema.name || \"\";",
+                  "  // Same rule as vct.util.ts slugifyVct().",
+                  "  const slug = name.normalize(\"NFKD\").replace(/[\\u0300-\\u036f]/g, \"\")",
+                  "    .toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-+|-+$/g, \"\");",
+                  "  pm.collectionVariables.set(\"type_name\", name);",
+                  "  pm.collectionVariables.set(\"vct_slug\", slug);",
+                  "  console.log(\"schema_id =\", id, \"| vct_slug =\", slug);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Guard: no other type shares this name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/credential-schema/oid4vci-configs",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema",
+                "oid4vci-configs"
+              ]
+            },
+            "description": "Identical names slugify to the same `vct`, and `/vct/<slug>` then resolves to whichever matches first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const name = pm.collectionVariables.get(\"type_name\");",
+                  "const same = pm.response.json().filter(c => c.name === name);",
+                  "pm.test(\"exactly one type carries this name\", () => pm.expect(same.length).to.eql(1));",
+                  "if (same.length > 1) console.warn(\"slug collision on /vct/\" + pm.collectionVariables.get(\"vct_slug\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Verify the type surfaced",
+      "item": [
+        {
+          "name": "New type in schema configs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/credential-schema/oid4vci-configs",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema",
+                "oid4vci-configs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const id = pm.collectionVariables.get(\"schema_id\");",
+                  "const cfg = pm.response.json().find(c => c.schemaId === id);",
+                  "pm.test(\"type is listed\", () => pm.expect(cfg).to.be.an(\"object\"));",
+                  "pm.test(\"author is our authority\", () =>",
+                  "  pm.expect(cfg.author).to.eql(pm.collectionVariables.get(\"authority_did\")));",
+                  "pm.test(\"offers vc+sd-jwt\", () => pm.expect(cfg.formats).to.include(\"vc+sd-jwt\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuration ids in issuer metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/.well-known/openid-credential-issuer",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                ".well-known",
+                "openid-credential-issuer"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const keys = Object.keys(pm.response.json().credential_configurations_supported || {});",
+                  "const want = pm.collectionVariables.get(\"config_id\");",
+                  "pm.test(\"vc+sd-jwt configuration id is published\", () => pm.expect(keys).to.include(want));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generated Type Metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/vct/{{vct_slug}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "vct",
+                "{{vct_slug}}"
+              ]
+            },
+            "description": "Nothing created this document — it is synthesised from the schema.\nA 404 here means `vc+sd-jwt` is missing from `oid4vciFormats`, or `vct`\nwas supplied as an absolute URL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"vct is the canonical URI\", () =>",
+                  "  pm.expect(b.vct).to.eql(pm.collectionVariables.get(\"base\") + \"/vct/\" + pm.collectionVariables.get(\"vct_slug\")));",
+                  "pm.test(\"name matches the schema\", () =>",
+                  "  pm.expect(b.name).to.eql(pm.collectionVariables.get(\"type_name\")));",
+                  "pm.test(\"has display metadata\", () => pm.expect(b.display).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Issue to a wallet",
+      "item": [
+        {
+          "name": "Create credential offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/oid4vc/offer",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "oid4vc",
+                "offer"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential_configuration_id\": \"{{config_id}}\",\n  \"format\": \"vc+sd-jwt\",\n  \"claims\": {\n    \"name\": \"Asha Devi\",\n    \"farmerId\": \"FR-000123\",\n    \"landHoldingHectares\": 1.5\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Every `required` property of the schema must appear in `claims`, or this\nsucceeds and the *credential endpoint* later fails with an opaque 500.\n\nOpen `qr_image_url` from the console in a browser and scan it with a wallet.\nOffers are single-use and expire after 10 minutes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"offer uri returned\", () => pm.expect(b.qr_data).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"qr_data\", b.qr_data);",
+                  "const img = pm.collectionVariables.get(\"base\") + \"/qr?data=\" + encodeURIComponent(b.qr_data);",
+                  "pm.collectionVariables.set(\"qr_image_url\", img);",
+                  "console.log(\"Scan this:\", img);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Request a presentation",
+      "item": [
+        {
+          "name": "Create presentation request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/vp/request",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "vp",
+                "request"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signed\": true,\n  \"dcql_query\": {\n    \"credentials\": [\n      {\n        \"id\": \"cred\",\n        \"format\": \"dc+sd-jwt\",\n        \"meta\": {\n          \"vct_values\": [\"{{base}}/vct/{{vct_slug}}\"]\n        },\n        \"claims\": [\n          { \"path\": [\"farmerId\"] }\n        ]\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`signed: true` is required for Credo-based wallets: they fetch the request\nobject as `application/oauth-authz-req+jwt` and an unsigned one answers 406.\n\nDCQL spells SD-JWT VC `dc+sd-jwt` while the *credential* format is\n`vc+sd-jwt`. `meta.vct_values` is mandatory. Claim paths are flat for\nSD-JWT — no `credentialSubject` wrapper."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"transaction created\", () => pm.expect(b.transaction_id).to.be.a(\"string\"));",
+                  "pm.test(\"client_id is a resolvable did:web\", () =>",
+                  "  pm.expect(b.qr_data).to.include(\"client_id=did%3Aweb%3A\"));",
+                  "pm.collectionVariables.set(\"transaction_id\", b.transaction_id);",
+                  "const img = pm.collectionVariables.get(\"base\") + \"/qr?data=\" + encodeURIComponent(b.qr_data);",
+                  "pm.collectionVariables.set(\"qr_image_url\", img);",
+                  "console.log(\"Scan this:\", img);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request object is a signed JAR",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/vp/request-object/{{transaction_id}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "vp",
+                "request-object",
+                "{{transaction_id}}"
+              ]
+            },
+            "description": "A 406 here means the request was created unsigned — wallets will refuse it."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"served as a signed JAR\", () =>",
+                  "  pm.expect(pm.response.headers.get(\"content-type\")).to.include(\"application/oauth-authz-req+jwt\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll verification status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/vp/status/{{transaction_id}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "vp",
+                "status",
+                "{{transaction_id}}"
+              ]
+            },
+            "description": "`pending` until a wallet posts the presentation; then `verified` or `failed`.\nTransactions expire after 5 minutes (`VP_TXN_TTL`), after which this 404s."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"transaction still exists\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log(\"status:\", b.status);",
+                  "if (b.status === \"pending\") {",
+                  "  console.log(\"Scan the QR from the previous request, approve it, then run this again.\");",
+                  "} else {",
+                  "  pm.test(\"verified\", () => pm.expect(b.verified).to.be.true);",
+                  "  pm.test(\"every check passed\", () =>",
+                  "    pm.expect(Object.values(b.checks || {}).every(v => v === \"OK\")).to.be.true);",
+                  "  console.log(\"disclosed:\", JSON.stringify(b.claims));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Type templates",
+      "description": "Ready-to-run bodies for other authorities. Each assumes step 1 has set `authority_did` — mint a separate DID per authority and re-run step 1 before using one of these.",
+      "item": [
+        {
+          "name": "National Identity Authority — National ID Credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/credential-schema",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"name\": \"National ID Credential\",\n    \"author\": \"{{authority_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"NationalIdCredential-1.0\",\n      \"type\": \"object\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"Foundational identity credential issued by the national identity authority\",\n      \"required\": [\"name\",\"nationalId\",\"dateOfBirth\"],\n      \"properties\": {\n              \"name\": {\n                      \"type\": \"string\"\n              },\n              \"nationalId\": {\n                      \"type\": \"string\",\n                      \"description\": \"Unique national identifier\"\n              },\n              \"dateOfBirth\": {\n                      \"type\": \"string\",\n                      \"format\": \"date\"\n              },\n              \"address\": {\n                      \"type\": \"string\"\n              }\n      },\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"national-identity\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"vc+sd-jwt\", \"jwt_vc_json\", \"ldp_vc\"],\n    \"vct\": \"National ID Credential\",\n    \"display\": [{ \"name\": \"National ID Credential\", \"locale\": \"en-US\" }]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const id = b.schema && b.schema.id;",
+                  "pm.test(\"schema created with an id\", () => pm.expect(id).to.be.a(\"string\"));",
+                  "pm.test(\"published\", () => pm.expect(b.status).to.eql(\"PUBLISHED\"));",
+                  "pm.test(\"authored by our authority DID\", () =>",
+                  "  pm.expect(b.schema.author).to.eql(pm.collectionVariables.get(\"authority_did\")));",
+                  "if (id) {",
+                  "  pm.collectionVariables.set(\"schema_id\", id);",
+                  "  // Multi-format schemas expose <schemaId>_<format> configuration ids",
+                  "  // (oid4vci.service.ts:81); a single-format schema uses the bare id.",
+                  "  pm.collectionVariables.set(\"config_id\", id + \"_vc+sd-jwt\");",
+                  "  const name = b.schema.name || \"\";",
+                  "  // Same rule as vct.util.ts slugifyVct().",
+                  "  const slug = name.normalize(\"NFKD\").replace(/[\\u0300-\\u036f]/g, \"\")",
+                  "    .toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-+|-+$/g, \"\");",
+                  "  pm.collectionVariables.set(\"type_name\", name);",
+                  "  pm.collectionVariables.set(\"vct_slug\", slug);",
+                  "  console.log(\"schema_id =\", id, \"| vct_slug =\", slug);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "State Secondary Education Board — Class X Marksheet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "content-type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/credential-schema",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "credential-schema"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"name\": \"Class X Marksheet Credential\",\n    \"author\": \"{{authority_did}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"ClassXMarksheetCredential-1.0\",\n      \"type\": \"object\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"Secondary school examination result issued by the state education board\",\n      \"required\": [\"name\",\"rollNumber\",\"yearOfPassing\"],\n      \"properties\": {\n              \"name\": {\n                      \"type\": \"string\"\n              },\n              \"rollNumber\": {\n                      \"type\": \"string\"\n              },\n              \"yearOfPassing\": {\n                      \"type\": \"string\"\n              },\n              \"percentage\": {\n                      \"type\": \"number\"\n              },\n              \"board\": {\n                      \"type\": \"string\"\n              }\n      },\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"education\",\"marksheet\"],\n  \"status\": \"PUBLISHED\",\n  \"oid4vciConfig\": {\n    \"oid4vciEnabled\": true,\n    \"oid4vciFormats\": [\"vc+sd-jwt\", \"jwt_vc_json\", \"ldp_vc\"],\n    \"vct\": \"Class X Marksheet Credential\",\n    \"display\": [{ \"name\": \"Class X Marksheet Credential\", \"locale\": \"en-US\" }]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const id = b.schema && b.schema.id;",
+                  "pm.test(\"schema created with an id\", () => pm.expect(id).to.be.a(\"string\"));",
+                  "pm.test(\"published\", () => pm.expect(b.status).to.eql(\"PUBLISHED\"));",
+                  "pm.test(\"authored by our authority DID\", () =>",
+                  "  pm.expect(b.schema.author).to.eql(pm.collectionVariables.get(\"authority_did\")));",
+                  "if (id) {",
+                  "  pm.collectionVariables.set(\"schema_id\", id);",
+                  "  // Multi-format schemas expose <schemaId>_<format> configuration ids",
+                  "  // (oid4vci.service.ts:81); a single-format schema uses the bare id.",
+                  "  pm.collectionVariables.set(\"config_id\", id + \"_vc+sd-jwt\");",
+                  "  const name = b.schema.name || \"\";",
+                  "  // Same rule as vct.util.ts slugifyVct().",
+                  "  const slug = name.normalize(\"NFKD\").replace(/[\\u0300-\\u036f]/g, \"\")",
+                  "    .toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-+|-+$/g, \"\");",
+                  "  pm.collectionVariables.set(\"type_name\", name);",
+                  "  pm.collectionVariables.set(\"vct_slug\", slug);",
+                  "  console.log(\"schema_id =\", id, \"| vct_slug =\", slug);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

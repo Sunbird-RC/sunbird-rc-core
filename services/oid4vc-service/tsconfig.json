@@ -18,5 +18,8 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true
-  }
+  },
+  // Mirrors tsconfig.build.json so editors and a bare `tsc -p tsconfig.json`
+  // agree with the build about what belongs to this service.
+  "exclude": ["node_modules", "dist"]
 }

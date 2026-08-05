@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Farmer": {
+      "$ref": "#/definitions/Farmer"
+    }
+  },
+  "required": ["Farmer"],
+  "title": "Farmer",
+  "definitions": {
+    "Farmer": {
+      "$id": "#/properties/Farmer",
+      "type": "object",
+      "title": "Farmer",
+      "required": ["farmerId", "name"],
+      "properties": {
+        "farmerId": {
+          "type": "string",
+          "title": "Farmer ID",
+          "description": "Registry-wide unique holder identifier, e.g. FRM-000123."
+        },
+        "issuerId": {
+          "type": "string",
+          "title": "Issuer",
+          "description": "Which Issuer this holder belongs to. Every issuer's holders share this one entity ON PURPOSE: the wallet self-service chain is keyed end to end on `farmerId` (Keycloak user attribute -> access token claim -> registry lookup in oid4vc-service), and splitting holders across per-issuer entities would break a flow that is verified working from a real wallet. The entity name is therefore historical; the portal calls these records whatever the owning issuer's `holderLabel` says. A record with no issuerId is shown as unassigned rather than hidden."
+        },
+        "name": {
+          "type": "string",
+          "title": "Full name"
+        },
+        "gender": {
+          "type": "string",
+          "title": "Gender",
+          "enum": ["Female", "Male", "Other"]
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date",
+          "title": "Date of birth"
+        },
+        "mobile": {
+          "type": "string",
+          "title": "Mobile number"
+        },
+        "district": {
+          "type": "string",
+          "title": "District"
+        },
+        "state": {
+          "type": "string",
+          "title": "State"
+        },
+        "keycloakSub": {
+          "type": "string",
+          "title": "Keycloak subject",
+          "description": "Immutable Keycloak user id (`sub`) of the citizen this record belongs to. Written by the issuer portal when the record is linked to a login; the wallet's self-service issuance resolves the caller's token to a record through the mirrored `farmerId` user attribute, and this field is the reverse index."
+        },
+        "keycloakUsername": {
+          "type": "string",
+          "title": "Keycloak username",
+          "description": "Human-readable login, for portal display only. Never used for identity matching — usernames and emails change."
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": ["farmerId"],
+    "indexFields": ["keycloakSub", "district", "issuerId"],
+    "ownershipAttributes": [],
+    "roles": ["issuer-staff"],
+    "inviteRoles": ["anonymous"],
+    "enableLogin": false,
+    "credentialTemplate": {}
+  }
+}

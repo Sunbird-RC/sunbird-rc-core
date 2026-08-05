@@ -3,3 +3,10 @@ dist
 coverage
 .env
 *.log
+
+# The Dockerfile does `COPY . .`, so anything not needed to compile the service
+# ends up in the build context and invalidates its cache on every edit. Docs and
+# API collections change far more often than source does.
+docs
+*.postman_collection.json
+.DS_Store

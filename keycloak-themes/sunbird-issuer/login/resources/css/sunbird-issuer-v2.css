@@ -1,0 +1,288 @@
+/**
+ * Sign-in styling for the issuer deployment.
+ *
+ * Restyles the stock Keycloak 14 login markup rather than replacing its
+ * templates — see theme.properties for why. Every selector below targets an
+ * element the stock template already emits:
+ *
+ *   .login-pf-page        the page
+ *   #kc-header-wrapper    the realm's displayNameHtml (our brand lockup)
+ *   .card-pf              the sign-in card
+ *   #kc-page-title        "Sign in to <realm>"
+ *   .form-group           one label + field
+ *   .pf-c-form-control    inputs
+ *   #kc-login             the submit button
+ *
+ * Palette matches the issuer portal, so signing in does not feel like leaving the
+ * product. Decoration is done with gradients rather than images: an image would be
+ * another file to mount, another cache to bust, and another thing to 404.
+ */
+
+:root {
+  --sb-brand: #a95236;
+  --sb-brand-dark: #97452c;
+  --sb-ink: #22333a;
+  --sb-muted: #5f6f74;
+  --sb-faint: #7d8b8f;
+  --sb-line: #e2e7e6;
+  --sb-line-strong: #cdd6d6;
+  --sb-card: #ffffff;
+  --sb-page: #f8f7f2;
+}
+
+/* ---------- page ---------- */
+
+/* Keycloak's own background image and dark overlay are removed: the stock theme
+   ships a full-bleed photo that fights with a light card. */
+.login-pf body,
+body.login-pf {
+  background: none !important;
+}
+
+.login-pf-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* header + card as one centred group */
+  height: 100vh;
+  padding: 40px 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 88% 6%, rgba(255, 219, 115, 0.22) 0%, rgba(255, 219, 115, 0) 55%),
+    radial-gradient(90% 80% at 4% 0%, rgba(169, 82, 54, 0.09) 0%, rgba(169, 82, 54, 0) 58%),
+    linear-gradient(180deg, #fffef8 0%, var(--sb-page) 100%);
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--sb-ink);
+}
+
+/*
+ * Dot motifs in opposite corners, echoing the reference layout without copying
+ * its colours or geometry: a repeating radial-gradient masked by a second
+ * gradient so the field fades out instead of ending on a hard edge.
+ *
+ * pointer-events: none matters — these sit above the page box, and without it the
+ * bottom-right field would swallow clicks near the footer.
+ */
+.login-pf-page::before,
+.login-pf-page::after {
+  content: '';
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(169, 82, 54, 0.8) 2.6px, transparent 2.7px);
+  background-size: 22px 22px;
+}
+.login-pf-page::before {
+  top: 0;
+  left: 0;
+  -webkit-mask-image: radial-gradient(circle at 0 0, #000 10%, transparent 78%);
+  mask-image: radial-gradient(circle at 0 0, #000 10%, transparent 78%);
+}
+.login-pf-page::after {
+  right: 0;
+  bottom: 0;
+  -webkit-mask-image: radial-gradient(circle at 100% 100%, #000 10%, transparent 78%);
+  mask-image: radial-gradient(circle at 100% 100%, #000 10%, transparent 78%);
+}
+@media (max-width: 700px) {
+  /* On a phone the card fills the viewport; the motifs would only crowd it. */
+  .login-pf-page::before,
+  .login-pf-page::after { display: none; }
+}
+
+/* ---------- brand lockup ---------- */
+/* Content comes from the realm's displayNameHtml, so the markup lives in realm
+   settings and this only positions it. */
+#kc-header {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: 0 0 22px;
+}
+#kc-header-wrapper {
+  padding: 0;
+  color: var(--sb-ink);
+  /* No font-size:0 here. It would hide the plain realm-name fallback too, so
+     clearing displayNameHtml would leave an empty header rather than a plain
+     name — a worse failure than an unstyled one. */
+  font-size: 14px;
+  letter-spacing: normal;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+}
+.sb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 15px;
+}
+.sb-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 17px;
+  box-shadow: 0 8px 18px -9px rgba(169, 82, 54, 0.75);
+}
+.sb-brand-text { text-align: left; line-height: 1.15; }
+.sb-brand-text b {
+  display: block;
+  font-family: 'Rubik', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.sb-brand-text i {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-faint);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* ---------- card ---------- */
+.login-pf-page .card-pf {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 34px 34px 30px;
+  border: 1px solid var(--sb-line);
+  border-radius: 20px;
+  background: var(--sb-card);
+  box-shadow: 0 22px 50px -22px rgba(34, 62, 70, 0.26), 0 2px 6px rgba(34, 51, 58, 0.05);
+}
+
+.login-pf-header { margin-bottom: 22px; }
+
+/* "Sign in to <realm>" — the realm name is noise here, but it is inside the same
+   text node, so it cannot be removed from CSS. Kept, and made calm. */
+#kc-page-title {
+  margin: 0;
+  color: var(--sb-ink);
+  font-family: 'Rubik', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+/* ---------- fields ---------- */
+#kc-form-login .form-group { margin-bottom: 18px; }
+
+.login-pf-page label,
+.pf-c-form__label,
+.pf-c-form__label-text {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--sb-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.login-pf-page input[type='text'],
+.login-pf-page input[type='password'],
+.login-pf-page input[type='email'],
+.pf-c-form-control {
+  width: 100%;
+  height: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-line-strong);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+  color: var(--sb-ink);
+  font-size: 14.5px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.login-pf-page input[type='text']:focus,
+.login-pf-page input[type='password']:focus,
+.login-pf-page input[type='email']:focus,
+.pf-c-form-control:focus {
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(169, 82, 54, 0.16);
+  outline: none;
+}
+.login-pf-page input::placeholder { color: #a9b4b7; }
+
+/* ---------- button ---------- */
+.login-pf-page #kc-form-buttons { margin-top: 24px; }
+.login-pf-page .btn-primary,
+.login-pf-page input[type='submit'],
+.pf-c-button.pf-m-primary {
+  width: 100%;
+  height: auto;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-family: 'Rubik', sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: 0 12px 24px -14px rgba(169, 82, 54, 0.8);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.login-pf-page .btn-primary:hover,
+.login-pf-page input[type='submit']:hover,
+.pf-c-button.pf-m-primary:hover { background: var(--sb-brand-dark); }
+.login-pf-page .btn-primary:active,
+.login-pf-page input[type='submit']:active { transform: translateY(1px); }
+
+/* ---------- options row ---------- */
+#kc-form-options,
+.login-pf-settings { margin-top: 2px; font-size: 13px; }
+#kc-form-options label { display: inline; margin: 0 0 0 6px; font-weight: 400; }
+.login-pf-page a { color: var(--sb-brand); }
+.login-pf-page a:hover { color: var(--sb-brand-dark); }
+
+/* ---------- messages ---------- */
+/* Keycloak's alert markup varies between "kc-feedback" and PatternFly alerts
+   depending on the path, so both are covered. */
+.alert,
+.pf-c-alert,
+#kc-content .kc-feedback-text {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.alert-error,
+.pf-m-danger,
+.alert.alert-error { background: #fbf0ed; color: #9c3b28; }
+.alert-warning, .pf-m-warning { background: #fbf7e6; color: #7a6510; }
+.alert-success, .pf-m-success { background: #eef5f0; color: #3a7355; }
+.alert-info, .pf-m-info { background: #fdf1ea; color: #9a4a30; }
+/* The stock theme puts a large pficon glyph in front of alert text. */
+.alert .pficon, .pf-c-alert__icon { display: none; }
+
+/* ---------- footer ---------- */
+/* Reassurance that the redirect landed somewhere legitimate, which is the one
+   thing a sign-in page interrupting an OAuth flow has to communicate. */
+#kc-content-wrapper::after {
+  content: 'Secured by Sunbird RC';
+  display: block;
+  margin: 26px auto 0;
+  color: var(--sb-faint);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* Legacy Keycloak renders the language picker as a floating list; make it match. */
+#kc-locale ul { border-radius: 10px; }
+#kc-locale-dropdown a { color: var(--sb-muted); }

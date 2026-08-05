@@ -77,7 +77,12 @@ services:
       retries: 5
 
   identity:
-    image: docker.io/snt1/sunbird-rc-identity-service:${OID4VC_IMAGE_TAG-oid4vc}
+    # Patched fork image. OID4VC_FIX_ORG/OID4VC_FIX_TAG are deliberately kept
+    # separate from the tag the unpatched services use: only identity,
+    # credential and oid4vc-service carry local fixes, and a single shared
+    # OID4VC_IMAGE_TAG (read by six services) has twice retagged services that
+    # have no fork image and broken the stack.
+    image: docker.io/${OID4VC_FIX_ORG:-snt1}/sunbird-rc-identity-service:${OID4VC_FIX_TAG:-oid4vc}
     # amd64-only image (Prisma 4.8.1 has no arm64-musl query engine — same
     # constraint documented in docker-compose.override.yml). Most cloud VMs
     # are amd64 by default; this makes that explicit rather than relying on
@@ -128,7 +133,8 @@ services:
       retries: 5
 
   credential:
-    image: docker.io/snt1/sunbird-rc-credentials-service:${OID4VC_IMAGE_TAG-oid4vc}
+    # Patched fork image — see the note on `identity` above.
+    image: docker.io/${OID4VC_FIX_ORG:-snt1}/sunbird-rc-credentials-service:${OID4VC_FIX_TAG:-oid4vc}
     platform: linux/amd64
     restart: unless-stopped
     depends_on:
@@ -156,7 +162,8 @@ services:
       retries: 5
 
   oid4vc-service:
-    image: docker.io/snt1/sunbird-rc-oid4vc-service:${OID4VC_IMAGE_TAG-oid4vc}
+    # Patched fork image — see the note on `identity` above.
+    image: docker.io/${OID4VC_FIX_ORG:-snt1}/sunbird-rc-oid4vc-service:${OID4VC_FIX_TAG:-oid4vc}
     platform: linux/amd64
     restart: unless-stopped
     depends_on:
@@ -209,6 +216,31 @@ services:
       # services/oid4vc-service/README.md §8 (Production Deployment Guide)
       - DEFERRED_CLAIMS_ALWAYS_READY=${DEFERRED_CLAIMS_ALWAYS_READY-false}
       - INTERNAL_HTTP_TIMEOUT_MS=${INTERNAL_HTTP_TIMEOUT_MS-10000}
+      # --- Wallet self-service issuance ---------------------------------
+      # Setting KEYCLOAK_PUBLIC_URL turns this on. Issuer metadata then
+      # advertises the realm as an authorization server, so a wallet runs
+      # authorization_code + PKCE against Keycloak directly and presents the
+      # resulting token here; this service implements no /authorize of its own.
+      # Claims for those requests come from the registry record named by the
+      # token, never from the request body — which is what makes a holder able
+      # to obtain only their OWN credential.
+      # Leave unset to keep the pre-authorized_code-only behaviour.
+      - KEYCLOAK_PUBLIC_URL=${OID4VC_KEYCLOAK_PUBLIC_URL-}
+      - KEYCLOAK_INTERNAL_URL=${OID4VC_KEYCLOAK_INTERNAL_URL-http://keycloak:8080/auth}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM-sunbird-rc}
+      # Token claim carrying the holder's registry key. Written onto the
+      # Keycloak user by the issuer portal's "link login" action.
+      - KEYCLOAK_SUBJECT_CLAIM=${KEYCLOAK_SUBJECT_CLAIM-farmerId}
+      # Optional `aud` check. Keycloak's default access token has aud=account,
+      # so leave blank unless a dedicated audience mapper is configured.
+      - KEYCLOAK_AUDIENCE=${KEYCLOAK_AUDIENCE-}
+      - REGISTRY_BASE_URL=${OID4VC_REGISTRY_BASE_URL-http://registry:8081}
+      # POST /oid4vc/offer trusts caller-supplied claims, so while this is
+      # false ANYONE who can reach it can mint a credential about anyone (the
+      # service logs a warning at first use). Set true — together with
+      # KEYCLOAK_PUBLIC_URL — to require the issuer-staff realm role.
+      # Default false so existing callers keep working.
+      - OFFER_REQUIRES_STAFF=${OFFER_REQUIRES_STAFF-false}
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3400/health || exit 1']
       interval: 10s
@@ -219,11 +251,116 @@ services:
     # the /oid4vc/offer auth gap in services/oid4vc-service/README.md §8 (Production Deployment Guide)) sits in
     # nginx; only add a direct port mapping here for local debugging.
 
+  # Sunbird RC registry — schema-driven entity CRUD, and the system of record
+  # for the data credentials are issued FROM (farmers, land parcels, crops,
+  # seed distributions). Issuance reads these records; it no longer trusts
+  # caller-supplied claims.
+  #
+  # elasticsearch and kafka are deliberately absent from this topology, so
+  # search falls back to the native (Postgres) provider and events are off.
+  # Both are opt-in upstream, so this is configuration, not a patch.
+  registry:
+    # v2.0.3 is the newest tag actually published on ghcr — v2.0.4 does not
+    # exist, and defaulting to it made the service unpullable.
+    image: ghcr.io/sunbird-rc/sunbird-rc-core:${RELEASE_VERSION:-v2.0.3}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Entity definitions. Adding a JSON file here and restarting is all it
+      # takes to expose a new entity's CRUD API — no image rebuild.
+      - ./registry-schemas:/home/sunbirdrc/config/public/_schemas
+    environment:
+      # The `db` container already provisions this database (POSTGRES_DB above).
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=${POSTGRES_PASSWORD}
+      - event_enabled=false
+      - search_providerName=dev.sunbirdrc.registry.service.NativeSearchService
+      - elastic_search_enabled=false
+      # Keycloak is the single identity provider for the portal, the wallet and
+      # this registry — the whole point of the design. Roles are read from the
+      # realm_access.roles claim of the presented bearer token.
+      - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
+      - sunbird_sso_url=http://keycloak:8080/auth
+      - OAUTH2_RESOURCES_0_URI=http://keycloak:8080/auth/realms/${KEYCLOAK_REALM-sunbird-rc}
+      - OAUTH2_RESOURCES_0_PROPERTIES_ROLES_PATH=realm_access.roles
+      - authentication_enabled=${REGISTRY_AUTH_ENABLED-true}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8081/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  test-wallet:
+    image: docker.io/snt1/sunbird-rc-oid4vc-test-wallet:${OID4VC_IMAGE_TAG-oid4vc}
+    platform: linux/amd64
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:80/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OID4VP verifier console (Vite/React build served by nginx:alpine). Fronted
+  # by the gateway at /verifier-app/. The browser talks to oid4vc-service
+  # same-origin; this container holds no secrets and keeps no state.
+  verifier-app:
+    image: docker.io/${VERIFIER_APP_ORG:-pallakartheekreddy}/sunbird-rc-oid4vc-verifier-app:${VERIFIER_APP_TAG:-1.0.0}
+    platform: linux/amd64
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:80/ >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Issuer portal — staff-facing CRUD over the registry plus credential
+  # issuance. Unlike verifier-app this is NOT a pure static bundle: it ships a
+  # backend-for-frontend because the Keycloak client is confidential and its
+  # secret must never reach the browser. The BFF also holds the session cookie
+  # and proxies registry/oid4vc calls, so no token is exposed to page scripts.
+  issuer-portal:
+    image: docker.io/${ISSUER_PORTAL_ORG:-pallakartheekreddy}/sunbird-rc-oid4vc-issuer-portal:${ISSUER_PORTAL_TAG:-0.1.0}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      oid4vc-service:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    environment:
+      - PORT=4100
+      - PUBLIC_BASE_URL=${OID4VC_PUBLIC_URL}
+      - BASE_PATH=/issuer-portal
+      # Browser-facing Keycloak URL (redirects) vs in-cluster URL (token and
+      # userinfo calls). They differ, and conflating them is the classic
+      # Keycloak-behind-a-gateway failure: the redirect must be public, the
+      # back-channel must not leave the compose network.
+      - KEYCLOAK_PUBLIC_URL=${OID4VC_PUBLIC_URL}/auth
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080/auth
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM-sunbird-rc}
+      - KEYCLOAK_CLIENT_ID=${ISSUER_PORTAL_CLIENT_ID-issuer-portal}
+      - KEYCLOAK_CLIENT_SECRET=${ISSUER_PORTAL_CLIENT_SECRET:?set ISSUER_PORTAL_CLIENT_SECRET in .env}
+      - SESSION_SECRET=${ISSUER_PORTAL_SESSION_SECRET:?set ISSUER_PORTAL_SESSION_SECRET in .env}
+      - REGISTRY_BASE_URL=http://registry:8081
+      - OID4VC_BASE_URL=http://oid4vc-service:3400
+      - SCHEMA_BASE_URL=http://credential-schema:3333
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:4100/healthz >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   nginx:
     image: ghcr.io/sunbird-rc/sunbird-rc-nginx
     restart: unless-stopped
     depends_on:
       oid4vc-service:
+        condition: service_healthy
+      test-wallet:
         condition: service_healthy
     volumes:
       # The published sunbird-rc-nginx image's baked-in config has NO
@@ -232,6 +369,9 @@ services:
       - ./nginx/nginx.cloud.conf:/etc/nginx/conf.d/default.conf:ro
       # TLS material for the 443 listener (self-signed today; see conf comment).
       - ./nginx/certs:/etc/nginx/certs:ro
+      # ACME HTTP-01 webroot + Let's Encrypt store, for a real certificate.
+      - ./nginx/acme-webroot:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       # 80 = plain HTTP (API + wallet for the 3 JOSE formats). 443 = HTTPS,
       # required for the browser wallet's mso_mdoc (WebCrypto secure context).
