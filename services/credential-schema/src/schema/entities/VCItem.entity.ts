@@ -34,4 +34,6 @@ export class VCItem implements VerifiableCredentialSchema {
   createdBy: string;
   updatedBy: string;
   deprecatedId: string;
+  @ApiPropertyOptional({ type: JSON, description: 'OID4VCI opt-in config' })
+  oid4vciConfig: Prisma.JsonValue;
 }

@@ -239,6 +239,14 @@ certificate:
   templateFolderPath: ${template_folder_path:public/_schemas/templates/}
   enableExternalTemplates: ${enable_external_templates:false}
 
+# OID4VCI wallet-offer hook. Off by default: when disabled the registry never
+# calls oid4vc-service and behaves exactly as before. When enabled, after a
+# credential is issued the registry creates a wallet offer (best-effort — a
+# failure here never fails entity creation or claim grant).
+oid4vc:
+  enabled: ${oid4vc_enabled:false}
+  offerUrl: ${oid4vc_offer_url:http://localhost:3400/oid4vc/offer}
+
 # This audit configuration will enable audit logging in the system, use audit_frame.json to create a schema for database /elastic storage.
 #  data_store can have following values
 #   * FILE     : Store the audit log in files.
