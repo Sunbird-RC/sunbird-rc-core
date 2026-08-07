@@ -25,24 +25,43 @@ export class StatusListService {
 
   // Reserve the next free index in the issuer's status list, creating the list
   // (and its signed StatusList credential) on first use.
+  //
+  // Allocation is a compare-and-swap loop rather than a plain read-then-write:
+  // two concurrent callers reading the same `lastCredentialIdx` must not both
+  // walk away believing they own it. `updateMany`'s `where` re-checks
+  // `lastCredentialIdx` still equals what we just read, so only one of two
+  // racing callers' updates actually matches a row (count === 1); the loser
+  // retries and reads whatever index the winner left behind.
+  //
+  // Rollover (list full) and first-ever allocation for an issuer both loop
+  // back through this same CAS instead of returning an index directly — that
+  // was the other half of the bug: returning `index: 0` right after
+  // `createNewList()` (which itself sets `lastCredentialIdx: 0`) without ever
+  // bumping the counter meant the *next* call read 0 again and handed out the
+  // same index twice.
   async allocateIndex(
     issuer: string
   ): Promise<{ statusListCredential: string; index: number }> {
-    let info = await this.prisma.revocationLists.findUnique({ where: { issuer } });
-    if (!info) {
-      const created = await this.createNewList(issuer);
-      info = created;
+    for (;;) {
+      const info = await this.prisma.revocationLists.findUnique({ where: { issuer } });
+      if (!info) {
+        await this.createNewList(issuer);
+        continue;
+      }
+      const index = info.lastCredentialIdx;
+      if (index >= LIST_LENGTH - 1) {
+        await this.createNewList(issuer);
+        continue;
+      }
+      const result = await this.prisma.revocationLists.updateMany({
+        where: { issuer, lastCredentialIdx: index },
+        data: { lastCredentialIdx: index + 1 },
+      });
+      if (result.count === 1) {
+        return { statusListCredential: info.latestRevocationListId, index };
+      }
+      // Lost the race — someone else already advanced the counter. Retry.
     }
-    const index = info.lastCredentialIdx;
-    if (index >= LIST_LENGTH - 1) {
-      const created = await this.createNewList(issuer);
-      return { statusListCredential: created.latestRevocationListId, index: 0 };
-    }
-    await this.prisma.revocationLists.update({
-      where: { issuer },
-      data: { lastCredentialIdx: index + 1 },
-    });
-    return { statusListCredential: info.latestRevocationListId, index };
   }
 
   buildCredentialStatus(statusListCredential: string, index: number) {

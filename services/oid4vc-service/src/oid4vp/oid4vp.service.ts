@@ -17,7 +17,11 @@ import { DcqlService } from './dcql.service';
 import { loadConfig } from '../config/configuration';
 import * as jose from 'jose';
 import { buildSessionTranscript, verifyMdocPresentation } from './mdoc-presentation.util';
-import { resolveSelfContainedDidToJwk } from '../utils/self-contained-did.util';
+import {
+  resolveSelfContainedDidToJwk,
+  isSelfContainedDid,
+  jwkPublicKeyEquals,
+} from '../utils/self-contained-did.util';
 
 interface VpTxn {
   dcqlQuery: any;
@@ -347,6 +351,24 @@ export class Oid4vpService {
           // embedded in the identifier — so resolve locally instead of
           // round-tripping to identity-service. Mirrors the same fallback
           // applied to the issuance-side PoP check in pop.service.ts.
+          //
+          // An inline `jwk` header is self-asserted; if `kid`/`iss` also
+          // claims a holder DID, that DID's actual key — not the header —
+          // must be trusted. Verify the two agree for self-contained DIDs;
+          // reject an inline jwk alongside any registry-resolved DID method
+          // outright, since its real key can only come from resolution.
+          // Otherwise the holder-binding check below (subjectId ===
+          // entryHolderDid) compares the embedded VC's subject against a DID
+          // the presenter never actually proved control of.
+          if (holderPublicJwk && entryHolderDid) {
+            if (isSelfContainedDid(entryHolderDid)) {
+              if (!jwkPublicKeyEquals(resolveSelfContainedDidToJwk(entryHolderDid), holderPublicJwk)) {
+                throw new Error('holder DID does not match inline jwk header');
+              }
+            } else {
+              throw new Error('inline jwk header not permitted alongside a registry-resolved holder DID');
+            }
+          }
           if (!holderPublicJwk) {
             holderPublicJwk = resolveSelfContainedDidToJwk(entryHolderDid);
           }

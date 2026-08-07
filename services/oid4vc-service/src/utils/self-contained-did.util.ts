@@ -120,3 +120,12 @@ export function resolveSelfContainedDidToJwk(did?: string): jose.JWK | undefined
   if (did.startsWith('did:key:')) return resolveDidKey(did);
   return undefined;
 }
+
+// Structural equality of two JWKs' public key material (ignores metadata like
+// `kid`/`use`/`alg`). Used to confirm a self-asserted inline `jwk` header
+// actually matches what a self-contained DID (did:key/did:jwk) in `kid`/`iss`
+// resolves to, rather than trusting the header and the DID independently.
+export function jwkPublicKeyEquals(a?: jose.JWK, b?: jose.JWK): boolean {
+  if (!a || !b) return false;
+  return (['kty', 'crv', 'x', 'y', 'n', 'e'] as const).every((f) => a[f] === b[f]);
+}

@@ -36,9 +36,17 @@ export class MemoryStoreService implements SessionStore {
   }
 
   async getdel<T = any>(key: string): Promise<T | null> {
-    const val = await this.get<T>(key);
+    // Deliberately not `await this.get(key)` then delete: an `await` yields
+    // to the microtask queue between the two, so two callers racing on the
+    // same single-use key (a pre-authorized code, a c_nonce) could both
+    // observe the entry before either deletes it — defeating the single-use
+    // guarantee this method exists for. Read and delete here with no `await`
+    // between them, so the pair runs as one uninterruptible synchronous step.
+    const entry = this.map.get(key);
+    if (!entry) return null;
     this.map.delete(key);
-    return val;
+    if (entry.expiresAt < Date.now()) return null;
+    return entry.value as T;
   }
 
   async del(key: string): Promise<void> {

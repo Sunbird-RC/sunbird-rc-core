@@ -2,6 +2,13 @@
 export interface Oid4vcConfig {
   port: number;
   publicUrl: string;
+  // Only for URLs that identity-service itself must dereference over HTTP
+  // from inside its own container (currently: the ldp_vc @context document,
+  // fetched by its JSON-LD signer) — distinct from publicUrl because that's
+  // externally wallet-facing and, in the shipped compose stack, defaults to
+  // http://localhost:3400, which resolves to identity-service's own loopback
+  // from inside its container rather than back to this service.
+  internalUrl: string;
   credentialServiceBaseUrl: string;
   identityBaseUrl: string;
   schemaBaseUrl: string;
@@ -35,6 +42,7 @@ const num = (v: string | undefined, def: number) => {
 export const loadConfig = (): Oid4vcConfig => ({
   port: num(process.env.PORT, 3400),
   publicUrl: process.env.PUBLIC_URL || 'http://localhost:3400',
+  internalUrl: process.env.INTERNAL_URL || process.env.PUBLIC_URL || 'http://localhost:3400',
   credentialServiceBaseUrl:
     process.env.CREDENTIAL_SERVICE_BASE_URL || 'http://localhost:3000',
   identityBaseUrl: process.env.IDENTITY_BASE_URL || 'http://localhost:3332',

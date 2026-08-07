@@ -64,8 +64,23 @@ export class VaultService {
       const read = await this.vault.readKVSecret(this.token, secretPath);
       existing = read?.data;
       version = read?.metadata?.version ?? read?.version;
-    } catch (err) {
-      // secret does not exist yet — fall through to create
+    } catch (err: any) {
+      // hashi-vault-js's readKVSecret rejects on failure (via parseAxiosError,
+      // which tags the thrown error `isVaultError: true` and preserves the
+      // original response.status — verified against the installed
+      // node_modules/hashi-vault-js/Vault.js). Only a genuine 404 means the
+      // secret doesn't exist yet and is safe to create fresh. Any other error
+      // (auth failure, sealed vault, transient network blip, ...) must NOT be
+      // treated as "doesn't exist" — the previous bare catch-and-ignore did
+      // exactly that, falling through to createKVSecret below, which
+      // OVERWRITES the secret wholesale and destroys a DID's other key
+      // entries (e.g. privateKeyMultibase) on nothing more than a transient
+      // error.
+      const status = err?.response?.status;
+      if (!(err?.isVaultError && status === 404)) {
+        Logger.error(err);
+        throw new InternalServerErrorException('Error reading existing private key from vault');
+      }
     }
     try {
       const merged = { ...(existing || {}), ...secret };

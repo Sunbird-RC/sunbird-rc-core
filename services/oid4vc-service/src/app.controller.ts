@@ -35,9 +35,17 @@ export class AppController {
   // `oid4vciConfig.renderMethod.svg` instead of an already-hosted `url`.
   // Referenced by `renderMethod[].id` on issued credentials — see
   // oid4vci.service.ts createOffer()/issueForSession().
+  //
+  // `renderMethod.svg` is free-form input at schema-creation time — a lower-
+  // privilege action than operating this service — so serving it verbatim as
+  // `image/svg+xml` would let a schema author's embedded <script> execute in
+  // a browser that navigates here, on this service's own origin (stored
+  // XSS). Content-Disposition: attachment forces a download instead of
+  // inline rendering/execution.
   @ApiOperation({ summary: 'Inline SVG render-method template for a schema' })
   @Get('render-templates/:schemaId')
   @Header('content-type', 'image/svg+xml')
+  @Header('content-disposition', 'attachment; filename="render-template.svg"')
   async renderTemplate(@Param('schemaId') schemaId: string) {
     const configs = await this.schema.getOid4vciConfigs();
     const cfg = configs.find((c) => c.schemaId === schemaId);

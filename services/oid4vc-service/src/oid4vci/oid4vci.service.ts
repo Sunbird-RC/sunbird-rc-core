@@ -53,7 +53,6 @@ interface OfferSession {
 export class Oid4vciService {
   private readonly logger = new Logger(Oid4vciService.name);
   private readonly config = loadConfig();
-  private txCodeBypassWarned = false;
 
   constructor(
     @Inject(SESSION_STORE) private readonly store: SessionStore,
@@ -248,6 +247,18 @@ export class Oid4vciService {
         `Schema '${cfg.schemaId}' is missing oid4vciConfig.mdoc (docType/namespace) required for mso_mdoc`,
       );
     }
+    // No real out-of-band PIN storage/comparison exists yet — token() only
+    // ever checked that SOME tx_code was submitted, not that it matched
+    // anything the issuer actually distributed. An issuer enabling this
+    // reasonably believes they've added a second factor; in practice anyone
+    // holding the pre-authorized code could redeem it with any 6 digits. A
+    // silently no-op security control is worse than an unimplemented one, so
+    // refuse to create the offer rather than accept a flag that does nothing.
+    if (body.tx_code_required) {
+      throw new BadRequestException(
+        'tx_code_required is not yet implemented (no PIN storage/verification exists) — omit it',
+      );
+    }
     // Must match the key issuerMetadata() publishes under
     // credential_configurations_supported so wallets can correlate the offer.
     const configId = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
@@ -339,19 +350,15 @@ export class Oid4vciService {
     const session = await this.store.get<OfferSession>(`oid4vc:offer:${codeEntry.offerId}`);
     if (!session) throw new BadRequestException('invalid_grant: offer expired');
 
-    // tx_code / user_pin check.
+    // tx_code / user_pin check. createOffer() now refuses to create a
+    // tx_code_required offer at all (no real PIN storage/verification
+    // exists), so this only fires for an offer created before that fix and
+    // still within its TTL — fail closed rather than accept any non-empty
+    // value, since there's nothing genuine to compare it against.
     if (session.txCodeRequired) {
-      const pin = body.tx_code || body.user_pin;
-      if (!pin) throw new BadRequestException('invalid_request: tx_code required');
-      // NOTE: pin is compared to what the issuer distributed out-of-band; here
-      // we accept any non-empty pin in dev. Wire real pin storage per deployment.
-      if (!this.txCodeBypassWarned) {
-        this.txCodeBypassWarned = true;
-        this.logger.warn(
-          'tx_code/user_pin is accepted without verification against an out-of-band-distributed ' +
-            'value — wire real PIN storage/comparison before relying on this for production issuance.',
-        );
-      }
+      throw new BadRequestException(
+        'invalid_request: tx_code_required offers are no longer supported (no PIN verification exists)',
+      );
     }
 
     const accessToken = await this.tokens.mintAccessToken({
@@ -482,9 +489,16 @@ export class Oid4vciService {
       // crashes wallets whose parser assumes every @context entry is a plain
       // URL string. So the mapping is served as a real document (AppController's
       // `/contexts/:typeName`) and referenced by URL here.
+      //
+      // internalUrl, not publicUrl: this URL is dereferenced by
+      // identity-service's own JSON-LD signer, from inside identity-service's
+      // container — not by the wallet. The shipped compose stack's PUBLIC_URL
+      // default (http://localhost:3400) resolves to identity-service's own
+      // loopback there, not back to this service, which previously made every
+      // ldp_vc issuance fail with an ECONNREFUSED-driven signing error.
       '@context': [
         'https://www.w3.org/2018/credentials/v1',
-        `${this.config.publicUrl}/contexts/${encodeURIComponent(typeName)}`,
+        `${this.config.internalUrl}/contexts/${encodeURIComponent(typeName)}`,
       ],
       type: ['VerifiableCredential', typeName],
       issuer: session.issuerDid,

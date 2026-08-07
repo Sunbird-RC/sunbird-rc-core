@@ -20,6 +20,14 @@ describe('MemoryStoreService', () => {
     expect(await store.get('nonce:x')).toBeNull();
   });
 
+  it('getdel is atomic under concurrent callers', async () => {
+    await store.set('nonce:y', 'v', 60);
+    const [a, b] = await Promise.all([store.getdel('nonce:y'), store.getdel('nonce:y')]);
+    // Exactly one of the two racing callers may get the value — the other
+    // must see null, never both getting 'v'.
+    expect([a, b].sort()).toEqual([null, 'v']);
+  });
+
   it('honours TTL expiry', async () => {
     await store.set('short', 'v', -1); // already expired
     expect(await store.get('short')).toBeNull();

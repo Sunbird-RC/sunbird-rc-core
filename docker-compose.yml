@@ -312,6 +312,11 @@ services:
     environment:
       - PORT=3400
       - PUBLIC_URL=${OID4VC_PUBLIC_URL-http://localhost:3400}
+      # In-network address identity-service uses to dereference this
+      # service's ldp_vc @context documents from inside its own container —
+      # deliberately NOT PUBLIC_URL, which defaults to localhost and would
+      # resolve to identity-service's own loopback instead of back here.
+      - INTERNAL_URL=${OID4VC_INTERNAL_URL-http://oid4vc-service:3400}
       - CREDENTIAL_SERVICE_BASE_URL=${CREDENTIAL_SERVICE_BASE_URL-http://credential:3000}
       - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
       - SCHEMA_BASE_URL=${SCHEMA_BASE_URL}

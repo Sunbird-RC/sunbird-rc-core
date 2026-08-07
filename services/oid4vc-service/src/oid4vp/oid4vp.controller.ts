@@ -8,9 +8,11 @@ import {
   Param,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
+import { KeycloakAuthGuard } from '../auth/auth.guard';
 import { Oid4vpService } from './oid4vp.service';
 
 // OID4VP verifier-role endpoints, all under /vp/*.
@@ -19,12 +21,17 @@ import { Oid4vpService } from './oid4vp.service';
 export class Oid4vpController {
   constructor(private readonly oid4vp: Oid4vpService) {}
 
+  // Internal (verifier-role) endpoint — guarded, same as POST /oid4vc/offer.
+  // getRequestObject/submitResponse below stay open: those are wallet-facing
+  // protocol endpoints.
   @ApiOperation({
     summary:
       'Verifier creates a presentation request (DCQL). Signed draft-23 JAR by default; ' +
       'pass {"signed": false} for an unsigned request, or set OID4VP_LEGACY_CLIENT_ID_SCHEME ' +
       'for the pre-draft-22 redirect_uri client_id_scheme shape.',
   })
+  @ApiBearerAuth()
+  @UseGuards(KeycloakAuthGuard)
   @Post('request')
   createRequest(@Body() body: any) {
     return this.oid4vp.createRequest(body || {});
@@ -62,7 +69,12 @@ export class Oid4vpController {
     return this.oid4vp.submitResponse(body || {});
   }
 
+  // Internal (verifier-role) endpoint — guarded: it returns the disclosed
+  // credential claims, which anyone who can present or guess a transaction
+  // id would otherwise be able to read unauthenticated.
   @ApiOperation({ summary: 'Verifier polls the verification result' })
+  @ApiBearerAuth()
+  @UseGuards(KeycloakAuthGuard)
   @Get('status/:id')
   getStatus(@Param('id') id: string) {
     return this.oid4vp.getStatus(id);

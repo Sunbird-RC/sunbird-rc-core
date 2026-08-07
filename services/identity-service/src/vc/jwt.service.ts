@@ -160,9 +160,24 @@ export class JwtSignerService {
       const vms = (didDoc.verificationMethod || []).filter(
         (vm: any) => vm?.publicKeyJwk,
       );
-      const vm = kid ? vms.find((m: any) => m.id === kid) || vms[0] : vms[0];
-      if (!vm) return { verified: false, error: 'No JWK verification method on DID' };
-      const key = await jose.importJWK(vm.publicKeyJwk, (header.alg as string) || ES256);
+      // A `kid` that names a verification method not on this DID document
+      // must fail closed, not silently fall back to the DID's first key — a
+      // DID can carry multiple keys for different purposes (e.g. an mdoc EC
+      // key at #key-0 alongside a JWT signing key at #jwt-key-1), and falling
+      // back would let a signature made for one purpose validate as if it
+      // were made for another, or hide the fact that the token referenced an
+      // unknown/rotated key entirely.
+      const vm = kid ? vms.find((m: any) => m.id === kid) : vms[0];
+      if (!vm) {
+        return {
+          verified: false,
+          error: kid ? `No verification method matching kid '${kid}'` : 'No JWK verification method on DID',
+        };
+      }
+      // Pinned rather than trusting header.alg: this service only ever signs
+      // ES256, so honoring an attacker-controlled alg from the header buys
+      // nothing and only widens the algorithm-confusion attack surface.
+      const key = await jose.importJWK(vm.publicKeyJwk, ES256);
       const { payload } = await jose.compactVerify(token, key);
       return { verified: true, payload: JSON.parse(new TextDecoder().decode(payload)) };
     } catch (err) {
@@ -243,6 +258,20 @@ export class JwtSignerService {
           new TextDecoder().decode(jose.base64url.decode(disclosure)),
         );
         claims[name] = value;
+      }
+
+      // A caller that supplies a nonce/audience to check is asking for holder
+      // binding to be enforced, not merely reported if present. Without this,
+      // an SD-JWT with its KB-JWT stripped (the token simply ends in '~')
+      // skips the whole block below and returns verified:true with no holder
+      // proof at all — letting a captured presentation be replayed against a
+      // different verifier, nonce, or audience than the one it was actually
+      // made for.
+      if (!kbJwt && (keyBinding?.nonce || keyBinding?.audience)) {
+        return {
+          verified: false,
+          error: 'Key Binding JWT required (nonce/audience expected) but not present in SD-JWT',
+        };
       }
 
       if (kbJwt) {

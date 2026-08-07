@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IdentityClient } from '../clients/identity.client';
-import { resolveSelfContainedDidToJwk } from '../utils/self-contained-did.util';
+import {
+  resolveSelfContainedDidToJwk,
+  isSelfContainedDid,
+  jwkPublicKeyEquals,
+} from '../utils/self-contained-did.util';
 import * as jose from 'jose';
 
 export interface PopResult {
@@ -35,9 +39,34 @@ export class PopService {
 
       // Determine holder key: inline JWK, or resolve DID from kid.
       let holderJwk: jose.JWK | undefined = header.jwk as jose.JWK;
-      let holderDid: string | undefined = claims.iss;
+      let holderDid: string | undefined = header.kid
+        ? (header.kid as string).split('#')[0]
+        : claims.iss;
+
+      // An inline `jwk` header is self-asserted; if `kid`/`iss` also claims a
+      // holder DID, that DID's actual key — not the header — must be trusted.
+      // did:key/did:jwk are self-contained (deterministic from the
+      // identifier), so verify the two agree. Any other DID method (did:web,
+      // did:rcw, ...) can only be trusted via registry resolution, so an
+      // inline jwk alongside one is rejected outright rather than silently
+      // bound to whatever DID the header happened to claim — that mismatch is
+      // exactly what lets a wallet mint a credential subject-bound to a third
+      // party. Mirrors the same check in oid4vp.service.ts's holder-binding
+      // verification at presentation time.
+      if (holderJwk && holderDid) {
+        if (isSelfContainedDid(holderDid)) {
+          if (!jwkPublicKeyEquals(resolveSelfContainedDidToJwk(holderDid), holderJwk)) {
+            return { valid: false, error: 'kid/iss DID does not match inline jwk header' };
+          }
+        } else {
+          return {
+            valid: false,
+            error: 'inline jwk header not permitted alongside a registry-resolved holder DID',
+          };
+        }
+      }
+
       if (!holderJwk && header.kid) {
-        holderDid = header.kid.split('#')[0];
         // did:key/did:jwk encode the public key in the identifier itself, so
         // they resolve offline. identity-service's registry only knows its own
         // DB plus did:web and 500s on anything else — and standards-compliant
