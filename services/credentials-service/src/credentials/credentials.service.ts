@@ -218,7 +218,7 @@ export class CredentialsService {
           {
             ...((status || statusListRevoked !== null) && { revoked }),
             expired:
-              new Date(credToVerify.expirationDate).getTime() < Date.now()
+              new Date(credToVerify.expirationDate ?? (credToVerify as any).validUntil).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
             proof: proofOk ? 'OK' : 'NOK',
@@ -399,9 +399,18 @@ export class CredentialsService {
   async issueCredential(issueRequest: IssueCredentialDTO) {
     this.logger.debug(`Received issue credential request`);
     const credInReq = issueRequest.credential;
+    // VC 2.0 credentials (@context includes https://www.w3.org/ns/credentials/v2)
+    // use validFrom/validUntil instead of issuanceDate/expirationDate.
+    const isV2Context = [].concat(credInReq['@context'] || []).includes(
+      'https://www.w3.org/ns/credentials/v2'
+    );
     // check for issuance date
-    if (!credInReq.issuanceDate)
+    if (isV2Context) {
+      if (!(credInReq as any).validFrom)
+        (credInReq as any).validFrom = new Date(Date.now()).toISOString();
+    } else if (!credInReq.issuanceDate) {
       credInReq.issuanceDate = new Date(Date.now()).toISOString();
+    }
     // Verify the credential with the credential schema using ajv
     // get the credential schema
     const schema = await this.schemaUtilsService.getCredentialSchema(
@@ -485,8 +494,10 @@ export class CredentialsService {
         id: credInReq.id,
         type: credInReq.type,
         issuer: issuerId,
-        issuanceDate: credInReq.issuanceDate,
-        expirationDate: credInReq.expirationDate,
+        // VC 2.0 credentials carry validFrom/validUntil instead of
+        // issuanceDate/expirationDate; store them in the same columns.
+        issuanceDate: credInReq.issuanceDate ?? (credInReq as any).validFrom,
+        expirationDate: credInReq.expirationDate ?? (credInReq as any).validUntil,
         subject: credInReq.credentialSubject as JwtCredentialSubject,
         subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
         proof: proof,
