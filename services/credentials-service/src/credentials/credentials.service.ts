@@ -188,7 +188,7 @@ export class CredentialsService {
           {
             ...(status && {revoked: status === VCStatus.REVOKED ? 'NOK' : 'OK'}), // NOK represents revoked
             expired:
-              new Date(credToVerify.expirationDate).getTime() < Date.now()
+              new Date(credToVerify.expirationDate ?? (credToVerify as any).validUntil).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
             proof: !!results?.verified ? 'OK' : 'NOK',
@@ -268,9 +268,18 @@ export class CredentialsService {
   async issueCredential(issueRequest: IssueCredentialDTO) {
     this.logger.debug(`Received issue credential request`);
     const credInReq = issueRequest.credential;
+    // VC 2.0 credentials (@context includes https://www.w3.org/ns/credentials/v2)
+    // use validFrom/validUntil instead of issuanceDate/expirationDate.
+    const isV2Context = [].concat(credInReq['@context'] || []).includes(
+      'https://www.w3.org/ns/credentials/v2'
+    );
     // check for issuance date
-    if (!credInReq.issuanceDate)
+    if (isV2Context) {
+      if (!(credInReq as any).validFrom)
+        (credInReq as any).validFrom = new Date(Date.now()).toISOString();
+    } else if (!credInReq.issuanceDate) {
       credInReq.issuanceDate = new Date(Date.now()).toISOString();
+    }
     // Verify the credential with the credential schema using ajv
     // get the credential schema
     const schema = await this.schemaUtilsService.getCredentialSchema(
@@ -321,8 +330,10 @@ export class CredentialsService {
         id: signedCredential.id,
         type: signedCredential.type,
         issuer: signedCredential.issuer as IssuerType as string,
-        issuanceDate: signedCredential.issuanceDate,
-        expirationDate: signedCredential.expirationDate,
+        // VC 2.0 credentials carry validFrom/validUntil instead of
+        // issuanceDate/expirationDate; store them in the same columns.
+        issuanceDate: signedCredential.issuanceDate ?? (signedCredential as any).validFrom,
+        expirationDate: signedCredential.expirationDate ?? (signedCredential as any).validUntil,
         subject: signedCredential.credentialSubject as JwtCredentialSubject,
         subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
         proof: signedCredential.proof as Proof,

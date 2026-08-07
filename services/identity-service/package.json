@@ -27,6 +27,7 @@
     "@digitalbazaar/ed25519-signature-2020": "^5.2.0",
     "@digitalbazaar/ed25519-verification-key-2018": "^4.0.0",
     "@digitalbazaar/ed25519-verification-key-2020": "^4.1.0",
+    "@digitalbazaar/credentials-context": "^3.2.0",
     "@digitalcredentials/jsonld-signatures": "^10.0.1",
     "@fastify/static": "^6.10.2",
     "@nestjs/axios": "^3.0.2",
