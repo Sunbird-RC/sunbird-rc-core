@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 
-FROM node:20.11.0-alpine3.18 as build
+FROM node:20.11.0-alpine3.18 AS build
 WORKDIR /app
 COPY --from=install /app/node_modules ./node_modules
 COPY . .
