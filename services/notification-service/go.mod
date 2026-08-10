@@ -1,6 +1,6 @@
 module github.com/sunbirdrc/notification-service
 
-go 1.26.3
+go 1.25.0
 
 require (
 	github.com/go-openapi/errors v0.19.9

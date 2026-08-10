@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS notification-service
+FROM golang:1.25-alpine AS notification-service
 
 RUN apk add make git gcc musl-dev openssl-dev cyrus-sasl-dev zlib-dev
 
