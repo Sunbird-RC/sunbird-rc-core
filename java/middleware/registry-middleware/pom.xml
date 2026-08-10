@@ -29,21 +29,23 @@
                 <artifactId>spring-security-config</artifactId>
                 <version>5.7.13</version>
             </dependency>
-            <!-- CVE-2025-24813, CVE-2025-29145: tomcat-embed-core → 9.0.116 -->
+            <!-- CVE-2026-41293/43512/43515: tomcat-embed → 9.0.118 (was stale at 9.0.116,
+                 overriding the root pom's already-current 9.0.118 pin for every module
+                 under registry-middleware) -->
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>
-                <version>9.0.116</version>
+                <version>9.0.118</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-websocket</artifactId>
-                <version>9.0.116</version>
+                <version>9.0.118</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-el</artifactId>
-                <version>9.0.116</version>
+                <version>9.0.118</version>
             </dependency>
             <!-- CVE-2023-6378: logback → 1.2.13 -->
             <dependency>

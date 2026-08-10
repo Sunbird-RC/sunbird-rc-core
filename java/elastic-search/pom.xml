@@ -60,12 +60,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.15.4</version>
+            <!-- version managed by the root pom.xml's dependencyManagement -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.4</version>
+            <!-- version managed by the root pom.xml's dependencyManagement -->
         </dependency>
     </dependencies>
 
