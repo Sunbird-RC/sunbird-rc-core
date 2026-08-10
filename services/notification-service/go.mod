@@ -15,7 +15,7 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jinzhu/configor v1.2.1
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/net v0.53.0
+	golang.org/x/net v0.57.0
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.5.2
 )
 
@@ -35,8 +35,8 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	go.mongodb.org/mongo-driver v1.4.4 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

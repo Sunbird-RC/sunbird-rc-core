@@ -3,6 +3,7 @@ package dev.sunbirdrc.actors.factory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.protobuf.Value;
 import dev.sunbirdrc.elastic.ESMessage;
 import dev.sunbirdrc.pojos.*;
@@ -126,7 +127,10 @@ public class MessageFactory {
         msgBuilder.setTargetActorName(requestMessage.getActorName().orElseThrow(() ->
                 new Exception("Invalid plugin name " + requestMessage.getAttestorPlugin())));
         Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
-        ObjectMapper objectMapper = new ObjectMapper();
+        // requestMessage.actorName is Optional<String> (see getActorName() above) — needs
+        // Jdk8Module registered, or newer jackson-databind throws InvalidDefinitionException
+        // rather than the older versions' fallback bean-style serialization.
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new Jdk8Module());
         payloadBuilder.setStringValue(objectMapper.writeValueAsString(requestMessage));
         return msgBuilder.build();
     }

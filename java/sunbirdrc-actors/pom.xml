@@ -16,6 +16,12 @@
             <artifactId>sunbird-actor</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <!-- MessageFactory's plain `new ObjectMapper()` needs this registered explicitly
+             to serialize PluginRequestMessage.actorName (an Optional<String>) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
