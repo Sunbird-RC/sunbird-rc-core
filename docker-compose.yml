@@ -286,9 +286,68 @@ services:
       - JWKS_URI=${JWKS_URI}
       - ENABLE_AUTH=${ENABLE_AUTH}
       - QR_TYPE=${QR_TYPE}
+      - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-false}
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # OID4VCI / OID4VP protocol facade (optional; part of the 'oid4vc' profile).
+  # Deploying it changes nothing existing — the registry only calls it when
+  # oid4vc.enabled=true, and its routes are separate nginx locations.
+  oid4vc-service:
+    image: ghcr.io/sunbird-rc/sunbird-rc-oid4vc-service:${RELEASE_VERSION}
+    build: ./services/oid4vc-service
+    profiles: ["oid4vc"]
+    ports:
+      - "3400:3400"
+    depends_on:
+      credential:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
+    environment:
+      - PORT=3400
+      - PUBLIC_URL=${OID4VC_PUBLIC_URL-http://localhost:3400}
+      # In-network address identity-service uses to dereference this
+      # service's ldp_vc @context documents from inside its own container —
+      # deliberately NOT PUBLIC_URL, which defaults to localhost and would
+      # resolve to identity-service's own loopback instead of back here.
+      - INTERNAL_URL=${OID4VC_INTERNAL_URL-http://oid4vc-service:3400}
+      - CREDENTIAL_SERVICE_BASE_URL=${CREDENTIAL_SERVICE_BASE_URL-http://credential:3000}
+      - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
+      - SCHEMA_BASE_URL=${SCHEMA_BASE_URL}
+      - REDIS_URL=${OID4VC_REDIS_URL-redis://redis:6379}
+      - SESSION_STORE=${OID4VC_SESSION_STORE-memory}
+      - ISSUER_DID=${OID4VC_ISSUER_DID-}
+      - OID4VP_ENABLED=${OID4VP_ENABLED-true}
+      - DRAFT13_COMPAT_MODE=${OID4VC_DRAFT13_COMPAT-false}
+      # OID4VP request-object signing (JAR, draft-23). The service default is
+      # ON, but signing needs a VERIFIER_DID that WALLETS can resolve — a
+      # did:web. This local stack auto-provisions a did:rcw issuer DID, which
+      # only identity-service can resolve, so signing is opted OUT here to
+      # keep the out-of-box dev flow working. To exercise the signed path,
+      # set OID4VC_VERIFIER_DID to a did:web and OID4VP_SIGN_REQUEST=true.
+      - OID4VP_SIGN_REQUEST=${OID4VP_SIGN_REQUEST-false}
+      - OID4VP_LEGACY_CLIENT_ID_SCHEME=${OID4VP_LEGACY_CLIENT_ID_SCHEME-false}
+      - VERIFIER_DID=${OID4VC_VERIFIER_DID-}
+      # Keycloak bearer auth on POST /oid4vc/offer. Same two vars the other
+      # node services read; JWKS_URI for this stack is
+      # http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/certs
+      #
+      # Deliberately NO `depends_on: keycloak`. Keycloak's healthcheck is
+      # 30s x 10 against a WildFly image that needs ~a minute, so waiting on it
+      # would slow every `--profile oid4vc` start even with auth off. When the
+      # flag IS on, the service retries Keycloak for ~60s at boot and exits if
+      # it never answers, which covers the ordering without the fixed cost.
+      - ENABLE_AUTH=${ENABLE_AUTH-false}
+      - JWKS_URI=${JWKS_URI}
+      - AUTH_ISSUER=${AUTH_ISSUER-}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3400/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -386,6 +445,11 @@ services:
       retries: 10
   nginx:
     image: ghcr.io/sunbird-rc/sunbird-rc-nginx
+    # This mount is load-bearing, not cosmetic: without it, nginx runs
+    # entirely off the config baked into the published image, and any
+    # local edit to nginx/nginx.conf silently has zero effect.
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - '80:80'
     depends_on:

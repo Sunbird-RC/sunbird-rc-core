@@ -186,6 +186,9 @@ public class RegistryHelper {
     @Autowired(required = false)
     private SignatureHelper signatureHelper;
 
+    @Autowired(required = false)
+    private OID4VCIService oid4vciService;
+
     @Autowired
     private ConditionResolverService conditionResolverService;
 
@@ -626,6 +629,12 @@ public class RegistryHelper {
                             ATTESTED_DATA,
                             value
                     );
+
+                    // Optional, flag-gated wallet-offer hook for attestation-driven
+                    // issuance (fail-open — never blocks the claim grant).
+                    if (oid4vciService != null && oid4vciService.isEnabled()) {
+                        oid4vciService.createOfferSafely(title, response);
+                    }
                 } else {
                     metaData.put(
                             ATTESTED_DATA,

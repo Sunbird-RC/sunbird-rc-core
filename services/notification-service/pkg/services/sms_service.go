@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/imroc/req"
 	log "github.com/sirupsen/logrus"
 	"github.com/sunbirdrc/notification-service/config"
 )
@@ -12,21 +12,22 @@ import (
 func SendSMS(mobileNumber string, message string) (map[string]interface{}, error) {
 	if config.Config.SmsAPI.Enable {
 		smsRequest := GetSmsRequestPayload(message, mobileNumber)
-		log.Info("SMS request ", config.Config.SmsAPI.URL, smsRequest)
-		client := resty.New()
-		resp, err := client.R().
-			SetHeader("authkey", config.Config.SmsAPI.AuthKey).
-			SetHeader("Content-Type", "application/json").
-			SetBody(smsRequest).
-			Post(config.Config.SmsAPI.URL)
+		header := req.Header{
+			"authkey":      config.Config.SmsAPI.AuthKey,
+			"Content-Type": "application/json",
+		}
+		log.Info("SMS request ", config.Config.SmsAPI.URL, header, smsRequest)
+		response, err := req.Post(config.Config.SmsAPI.URL, header, req.BodyJSON(smsRequest))
 		if err != nil {
 			return nil, nil
 		}
-		if resp.StatusCode() != 200 {
-			return nil, errors.New(resp.String())
+		if response.Response().StatusCode != 200 {
+			responseStr, _ := response.ToString()
+			return nil, errors.New(responseStr)
 		}
 		responseObject := map[string]interface{}{}
-		if err = json.Unmarshal(resp.Body(), &responseObject); err != nil {
+		err = response.ToJSON(&responseObject)
+		if err != nil {
 			return nil, nil
 		}
 		log.Infof("Response %+v", responseObject)

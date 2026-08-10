@@ -1,12 +1,12 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v2.0.1
+RELEASE_VERSION = v2.0.3
 IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-claim-ms \
 			ghcr.io/sunbird-rc/sunbird-rc-notification-service ghcr.io/sunbird-rc/sunbird-rc-metrics \
 			ghcr.io/sunbird-rc/id-gen-service ghcr.io/sunbird-rc/encryption-service \
 			ghcr.io/sunbird-rc/sunbird-rc-identity-service ghcr.io/sunbird-rc/sunbird-rc-credential-schema \
-			ghcr.io/sunbird-rc/sunbird-rc-credentials-service
+			ghcr.io/sunbird-rc/sunbird-rc-credentials-service ghcr.io/sunbird-rc/sunbird-rc-oid4vc-service
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
@@ -19,6 +19,7 @@ build: java/registry/target/registry.jar
 	make -C services/identity-service/ docker
 	make -C services/credential-schema docker
 	make -C services/credentials-service/ docker
+	make -C services/oid4vc-service/ docker
 
 
 java/registry/target/registry.jar: $(SOURCES)

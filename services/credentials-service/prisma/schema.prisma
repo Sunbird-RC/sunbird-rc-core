@@ -31,6 +31,10 @@ model VerifiableCredentials {
   signed            Json?
   proof             Json?
   status            VCStatus  @default(ISSUED)
+  format            String    @default("ldp_vc")
+  enveloped         String?
+  statusListIndex   Int?
+  statusListCredential String?
   created_at        DateTime  @default(now())
   updated_at        DateTime? @default(now())
   createdBy         String?

@@ -51,4 +51,46 @@ export class VaultService {
     );
     return read.data;
   }
+
+  // Merges new key entries into an existing secret (or creates it).
+  // Used when adding an ES256/JWT key to a DID that already holds an Ed25519 key.
+  async mergePvtKey(secret: object, name: string, path?: string) {
+    const secretPath = path
+      ? path + `/${name}`
+      : `rcw/identity/private_keys/${name}`;
+    let existing: any = null;
+    let version: number | undefined;
+    try {
+      const read = await this.vault.readKVSecret(this.token, secretPath);
+      existing = read?.data;
+      version = read?.metadata?.version ?? read?.version;
+    } catch (err: any) {
+      // hashi-vault-js's readKVSecret rejects on failure (via parseAxiosError,
+      // which tags the thrown error `isVaultError: true` and preserves the
+      // original response.status — verified against the installed
+      // node_modules/hashi-vault-js/Vault.js). Only a genuine 404 means the
+      // secret doesn't exist yet and is safe to create fresh. Any other error
+      // (auth failure, sealed vault, transient network blip, ...) must NOT be
+      // treated as "doesn't exist" — the previous bare catch-and-ignore did
+      // exactly that, falling through to createKVSecret below, which
+      // OVERWRITES the secret wholesale and destroys a DID's other key
+      // entries (e.g. privateKeyMultibase) on nothing more than a transient
+      // error.
+      const status = err?.response?.status;
+      if (!(err?.isVaultError && status === 404)) {
+        Logger.error(err);
+        throw new InternalServerErrorException('Error reading existing private key from vault');
+      }
+    }
+    try {
+      const merged = { ...(existing || {}), ...secret };
+      if (existing) {
+        return await this.vault.updateKVSecret(this.token, secretPath, merged, version);
+      }
+      return await this.vault.createKVSecret(this.token, secretPath, merged);
+    } catch (err) {
+      Logger.error(err);
+      throw new InternalServerErrorException('Error merging private key into vault');
+    }
+  }
 }
