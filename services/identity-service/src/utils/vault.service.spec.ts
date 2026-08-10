@@ -93,4 +93,76 @@ describe('VaultService', () => {
       expect(mockVault.readKVSecret).toHaveBeenCalledWith((vaultService as any).token, `${path}/${name}`);
     });
   });
+
+  describe('mergePvtKey', () => {
+    const name = 'example';
+    const path = 'rcw/identity/private_keys';
+    const secretPath = `${path}/${name}`;
+
+    // hashi-vault-js's readKVSecret rejects (not resolves) on failure, tagging
+    // the thrown error `isVaultError: true` with the original response.status.
+    const vaultError = (statusCode: number) => {
+      const err: any = new Error(`vault error ${statusCode}`);
+      err.isVaultError = true;
+      err.response = { status: statusCode };
+      return err;
+    };
+
+    it('creates a fresh secret when none exists yet (404)', async () => {
+      jest.spyOn(mockVault, 'readKVSecret').mockRejectedValueOnce(vaultError(404));
+      jest.spyOn(mockVault, 'createKVSecret').mockResolvedValueOnce({ ok: true });
+
+      const result = await vaultService.mergePvtKey({ newKey: 'v' }, name, path);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockVault.createKVSecret).toHaveBeenCalledWith(
+        (vaultService as any).token,
+        secretPath,
+        { newKey: 'v' },
+      );
+    });
+
+    it('merges into the existing secret when one is found', async () => {
+      jest.spyOn(mockVault, 'readKVSecret').mockResolvedValueOnce({
+        data: { existingKey: 'e' },
+        metadata: { version: 3 },
+      });
+      jest.spyOn(mockVault, 'updateKVSecret').mockResolvedValueOnce({ ok: true });
+
+      const result = await vaultService.mergePvtKey({ newKey: 'v' }, name, path);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockVault.updateKVSecret).toHaveBeenCalledWith(
+        (vaultService as any).token,
+        secretPath,
+        { existingKey: 'e', newKey: 'v' },
+        3,
+      );
+    });
+
+    it('does NOT overwrite the secret on a non-404 vault error — fails closed instead', async () => {
+      jest.spyOn(mockVault, 'readKVSecret').mockRejectedValueOnce(vaultError(503));
+      const createSpy = jest.spyOn(mockVault, 'createKVSecret');
+      const loggerErrorSpy = jest.spyOn(Logger, 'error').mockImplementation();
+
+      await expect(
+        vaultService.mergePvtKey({ newKey: 'v' }, name, path),
+      ).rejects.toThrowError(InternalServerErrorException);
+
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('does NOT overwrite the secret on a non-Vault error (e.g. network failure) — fails closed instead', async () => {
+      jest.spyOn(mockVault, 'readKVSecret').mockRejectedValueOnce(new Error('ECONNRESET'));
+      const createSpy = jest.spyOn(mockVault, 'createKVSecret');
+      jest.spyOn(Logger, 'error').mockImplementation();
+
+      await expect(
+        vaultService.mergePvtKey({ newKey: 'v' }, name, path),
+      ).rejects.toThrowError(InternalServerErrorException);
+
+      expect(createSpy).not.toHaveBeenCalled();
+    });
+  });
 });

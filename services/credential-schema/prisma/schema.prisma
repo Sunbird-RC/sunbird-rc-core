@@ -35,6 +35,9 @@ model VerifiableCredentialSchema {
   tags         String[]
   status       SchemaStatus @default(DRAFT)
   deprecatedId String?
+  // OID4VCI opt-in config (additive, nullable):
+  // { oid4vciEnabled: boolean, oid4vciFormats: string[], vct?: string, display?: object[] }
+  oid4vciConfig Json?
 
   @@id([id, version])
   @@index([type], type: Hash)

@@ -65,6 +65,48 @@ export class SchemaService {
     }
   }
 
+  // Returns published schemas that have opted into OID4VCI
+  // (oid4vciConfig.oid4vciEnabled === true). Consumed by oid4vc-service to
+  // build the issuer metadata (credential_configurations_supported).
+  async getOid4vciConfigs() {
+    let schemas: VerifiableCredentialSchema[];
+    try {
+      schemas = await this.prisma.verifiableCredentialSchema.findMany({
+        where: { status: SchemaStatus.PUBLISHED },
+      });
+    } catch (err) {
+      this.logger.error('Error fetching OID4VCI configs', err);
+      throw new InternalServerErrorException('Error fetching OID4VCI configs');
+    }
+    return schemas
+      .filter((s) => (s.oid4vciConfig as any)?.oid4vciEnabled === true)
+      .map((s) => {
+        const cfg = (s.oid4vciConfig as any) || {};
+        return {
+          schemaId: s.id,
+          version: s.version,
+          name: s.name,
+          type: s.type,
+          tags: s.tags,
+          formats: cfg.oid4vciFormats || ['ldp_vc'],
+          vct: cfg.vct || s.name,
+          display: cfg.display || [{ name: s.name }],
+          schema: s.schema,
+          // Every schema already declares its own author DID at creation
+          // time (required field) — exposing it here lets oid4vc-service
+          // sign each credential as its OWN schema's issuer instead of one
+          // hardcoded, server-wide ISSUER_DID for every schema.
+          author: s.author,
+          // W3C VC Render Method (https://www.w3.org/TR/vc-render-method/)
+          // config, if the schema author supplied one.
+          renderMethod: cfg.renderMethod,
+          // mso_mdoc (ISO/IEC 18013-5) docType/namespace config, if this
+          // schema opts into that format.
+          mdoc: cfg.mdoc,
+        };
+      });
+  }
+
   async getAllSchemasById(id: string) {
     try {
       const schemas = await this.prisma.verifiableCredentialSchema.findMany({
@@ -189,6 +231,7 @@ export class SchemaService {
             proof: credSchema.schema.proof as Prisma.JsonValue || undefined,
             tags: credSchema.tags as string[],
             deprecatedId: deprecatedId,
+            oid4vciConfig: (createCredentialDto.oid4vciConfig as unknown as Prisma.InputJsonValue) || undefined,
           },
         });
 

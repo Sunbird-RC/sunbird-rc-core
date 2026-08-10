@@ -20,31 +20,91 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <lombok.version>1.18.8</lombok.version>
     <!-- Security overrides -->
-    <tomcat.version>9.0.116</tomcat.version>
+    <tomcat.version>9.0.118</tomcat.version>
     <logback.version>1.2.13</logback.version>
+    <!-- CVE-2024-38821, CVE-2025-22228: spring-security → 5.8.16 (latest 5.8.x) -->
+    <spring-security.version>5.8.16</spring-security.version>
+    <!-- CVE-2024-22243/22259/22262, CVE-2025-41249: spring-framework → 5.3.39 (latest 5.3.x) -->
+    <spring-framework.version>5.3.39</spring-framework.version>
+    <!-- CVE-2022-1471: snakeyaml → 2.0 -->
+    <snakeyaml.version>2.0</snakeyaml.version>
+    <!-- CVE-2023-52428: nimbus-jose-jwt → 9.37.2 (also bumps json-smart transitively) -->
+    <nimbus-jose-jwt.version>9.37.2</nimbus-jose-jwt.version>
   </properties>
   <dependencyManagement>
     <dependencies>
+      <!-- CVE-2026-54291: postgresql → 42.7.12 (was 42.7.11 — a newer patch fixing a
+           SCRAM-SHA-256-PLUS MITM downgrade has since shipped) -->
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.2</version>
+        <version>42.7.12</version>
       </dependency>
-      <!-- CVE-2024-38821: spring-security-web → 5.7.13 -->
+      <!-- spring-security versions managed by <spring-security.version>5.8.16</spring-security.version> property -->
+      <!-- CVE-2025-52999, GHSA-r7wm-3cxj-wff9, CVE-2026-59888, GHSA-72hv-8253-57qq:
+           jackson-core/-databind → 2.18.8 (spring-boot-starter-parent 2.7.18's own BOM
+           pins 2.13.5; 2.15.4 alone re-introduces the latter two as newly-disclosed) -->
       <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-web</artifactId>
-        <version>5.7.13</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-core</artifactId>
-        <version>5.7.13</version>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.18.8</version>
       </dependency>
       <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-config</artifactId>
-        <version>5.7.13</version>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <!-- 2.18.9, one patch ahead of jackson-core: closes CVE-2026-59889 /
+             GHSA-mhm7-754m-9p8w, disclosed against 2.18.8 itself. -->
+        <version>2.18.9</version>
+      </dependency>
+      <!-- CVE-2024-47554: commons-io → 2.14.0 -->
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.14.0</version>
+      </dependency>
+      <!-- CVE-2018-1320, CVE-2019-0205, CVE-2020-13949: libthrift → 0.14.0 (transitive;
+           CVE-2026-43869 needs 0.23.0, a breaking major bump — left for a follow-up pass) -->
+      <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>0.14.0</version>
+      </dependency>
+      <!-- CVE-2022-45688, CVE-2023-5072: org.json → 20231013 (transitive here) -->
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20231013</version>
+      </dependency>
+      <!-- CVE-2025-12183: lz4-java → 1.8.1 (CVE-2025-66566 has no fix yet) -->
+      <dependency>
+        <groupId>org.lz4</groupId>
+        <artifactId>lz4-java</artifactId>
+        <version>1.8.1</version>
+      </dependency>
+      <!-- CVE-2024-31141, CVE-2025-27817, CVE-2026-33558/35554: kafka-clients → 3.9.2 -->
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>3.9.2</version>
+      </dependency>
+      <!-- CVE-2023-34040: spring-kafka → 2.9.13 (CVE-2026-41731 needs 3.x/4.x) -->
+      <dependency>
+        <groupId>org.springframework.kafka</groupId>
+        <artifactId>spring-kafka</artifactId>
+        <version>2.9.13</version>
+      </dependency>
+      <!-- CVE-2023-34455, CVE-2023-43642: snappy-java → 1.1.10.4 -->
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>1.1.10.4</version>
+      </dependency>
+      <!-- CVE-2025-59250: mssql-jdbc → 12.8.2.jre11 (last version verified in the jre11
+           classifier line before this driver drops Java 11 support) -->
+      <dependency>
+        <groupId>com.microsoft.sqlserver</groupId>
+        <artifactId>mssql-jdbc</artifactId>
+        <version>12.8.2.jre11</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

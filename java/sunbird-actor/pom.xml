@@ -28,7 +28,10 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.6.1</version>
+            <!-- CVE-2021-22569, CVE-2022-3171/3509/3510, CVE-2024-7254: this module has
+                 no <parent>, so it doesn't inherit the root pom's pin — kept explicit
+                 and in sync with it (was pinned stale at 3.6.1). -->
+            <version>3.25.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

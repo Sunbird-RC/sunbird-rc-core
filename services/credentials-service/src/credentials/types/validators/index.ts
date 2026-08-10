@@ -98,8 +98,10 @@ export const UnsignedVCValidator = z
     id: z.string().optional(),
     type: z.string().array().nonempty(),
     issuer: ProfileValidator,
-    issuanceDate: z.string(),
+    issuanceDate: z.string().optional(),
     expirationDate: z.string().optional(),
+    validFrom: z.string().optional(),
+    validUntil: z.string().optional(),
     credentialSubject: CredentialSubjectValidator.or(
       CredentialSubjectValidator.array(),
     ),

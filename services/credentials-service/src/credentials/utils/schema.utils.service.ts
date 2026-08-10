@@ -76,6 +76,21 @@ export class SchemaUtilsSerivce {
         return !isNaN(date.getTime());
       }
     );
+    // AJV's strict mode throws (not just warns, despite the "ignored" wording
+    // in its own error message) on any format keyword it doesn't recognize —
+    // found live: a schema using "format": "date" (full-date, no time
+    // component) crashed every issuance attempt with an uncaught exception,
+    // surfacing as a generic 500 all the way up through oid4vc-service.
+    ajv.addFormat('date', function isValidDate(dateString) {
+        // ISO 8601 full-date: YYYY-MM-DD
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateString)) {
+          return false;
+        }
+        const date = new Date(`${dateString}T00:00:00.000Z`);
+        return !isNaN(date.getTime());
+      }
+    );
 
     const validate = ajv.compile(schema);
     return {

@@ -63,6 +63,8 @@ public class RegistryServiceImpl implements RegistryService {
     private EntityTypeHandler entityTypeHandler;
     @Autowired(required = false)
     private SignatureHelper signatureHelper;
+    @Autowired(required = false)
+    private OID4VCIService oid4vciService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
@@ -302,6 +304,11 @@ public class RegistryServiceImpl implements RegistryService {
             Object signedCredentials = signatureHelper.sign(requestBodyMap);
             OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel), signedCredentials);
             if(inputNode != null) OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);
+
+            // Optional, flag-gated wallet-offer hook (fail-open — never blocks issuance).
+            if (oid4vciService != null && oid4vciService.isEnabled()) {
+                oid4vciService.createOfferSafely(vertexLabel, rootNode.get(vertexLabel));
+            }
         }
     }
 

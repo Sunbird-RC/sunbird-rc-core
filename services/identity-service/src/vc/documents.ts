@@ -1,4 +1,11 @@
+import { contexts as vc2Contexts } from '@digitalbazaar/credentials-context';
+
 export const DOCUMENTS = {
+    // VC Data Model 2.0 context, bundled locally (no network fetch) so
+    // signing of 2.0 credentials works offline like 1.1 does.
+    "https://www.w3.org/ns/credentials/v2": vc2Contexts.get(
+        "https://www.w3.org/ns/credentials/v2"
+    ),
     "https://www.w3.org/2018/credentials/v1": {
         "@context": {
             "@version": 1.1,
