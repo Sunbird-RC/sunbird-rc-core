@@ -776,6 +776,144 @@
       ]
     },
     {
+      "name": "4b. OID4VP - PEX Presentation Flow",
+      "item": [
+        {
+          "name": "Verifier creates PEX request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"presentation_definition\": {\n    \"id\": \"pex_pilot\",\n    \"input_descriptors\": [\n      {\n        \"id\": \"pilot_cred\",\n        \"format\": { \"ldp_vc\": {} },\n        \"constraints\": { \"fields\": [{ \"path\": [\"$.credentialSubject.name\"] }] }\n      }\n    ]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('vp_transaction_id', json.transaction_id);",
+                  "pm.collectionVariables.set('vp_request_uri', json.request_uri);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wallet fetches request object",
+          "request": {
+            "method": "GET",
+            "url": "{{vp_request_uri}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const payload = pm.response.json();",
+                  "pm.collectionVariables.set('vp_nonce', payload.nonce);",
+                  "pm.collectionVariables.set('vp_state', payload.state);",
+                  "pm.test('request object has nonce+state+presentation_definition', () => {",
+                  "  pm.expect(payload.nonce).to.not.be.undefined;",
+                  "  pm.expect(payload.presentation_definition).to.not.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign VP token (via identity-service, stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('vp_jwt', json.jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit VP + presentation_submission (direct_post)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\",\n  \"presentation_submission\": {\n    \"id\": \"{{$guid}}\",\n    \"definition_id\": \"pex_pilot\",\n    \"descriptor_map\": [{ \"id\": \"pilot_cred\", \"format\": \"ldp_vc\", \"path\": \"$\" }]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status ok', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verifier polls status",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/vp/status/{{vp_transaction_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('all 6 checks OK incl. pex', () => {",
+                  "  pm.expect(json.verified).to.eql(true);",
+                  "  ['holderSignature','nonce','credentialSignatures','holderBinding','revocation','pex'].forEach(k => {",
+                  "    pm.expect(json.checks[k]).to.eql('OK');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "5. OID4VP - Negative Tests",
       "item": [
         {

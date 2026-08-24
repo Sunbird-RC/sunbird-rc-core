@@ -9,7 +9,7 @@ import { Injectable } from '@nestjs/common';
 // query or a presented credential can use either spelling without breaking
 // the other side.
 const SD_JWT_FORMAT_ALIASES = new Set(['vc+sd-jwt', 'dc+sd-jwt']);
-function sameFormat(a: string, b: string): boolean {
+export function sameFormat(a: string, b: string): boolean {
   if (a === b) return true;
   return SD_JWT_FORMAT_ALIASES.has(a) && SD_JWT_FORMAT_ALIASES.has(b);
 }

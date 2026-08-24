@@ -9,6 +9,7 @@ jest.mock('@auth0/mdl/lib/cbor', () => ({ cborEncode: jest.fn(), DataItem: {} })
 import { Oid4vpService } from './oid4vp.service';
 import { MemoryStoreService } from '../session/memory-store.service';
 import { DcqlService } from './dcql.service';
+import { PexService } from './pex.service';
 
 // Focused on the request-object builder (createRequest/getRequestObject) —
 // the three client_id/signing shapes described in the plan: signed
@@ -48,10 +49,12 @@ describe('Oid4vpService request-object modes', () => {
       credentials,
       tokens,
       new DcqlService(),
+      new PexService(),
     );
   }
 
   const dcqlQuery = { credentials: [{ id: 'c', meta: { type_values: [['X']] }, claims: [] }] };
+  const presentationDefinition = { input_descriptors: [{ id: 'c', constraints: { fields: [] } }] };
 
   it('signed mode (default): did: client_id, calls identity.signJwt, serves a JWS', async () => {
     process.env.VERIFIER_DID = 'did:web:verifier.example';
@@ -144,6 +147,30 @@ describe('Oid4vpService request-object modes', () => {
     const service = makeService();
     await service.createRequest({ dcql_query: dcqlQuery });
     expect(signJwt.mock.calls[0][0]).toBe('did:key:zExplicitOperatorChoice');
+  });
+
+  it('accepts presentation_definition and embeds it (not dcql_query) in the request object', async () => {
+    const service = makeService();
+    const created = await service.createRequest({
+      presentation_definition: presentationDefinition,
+      signed: false,
+    });
+    const id = created.request_uri.split('/').pop() as string;
+    const obj = await service.getRequestObject(id);
+    expect(obj.body.presentation_definition).toEqual(presentationDefinition);
+    expect(obj.body).not.toHaveProperty('dcql_query');
+  });
+
+  it('rejects when both dcql_query and presentation_definition are supplied', async () => {
+    const service = makeService();
+    await expect(
+      service.createRequest({ dcql_query: dcqlQuery, presentation_definition: presentationDefinition }),
+    ).rejects.toThrow(/exactly one of/);
+  });
+
+  it('rejects when neither dcql_query nor presentation_definition is supplied', async () => {
+    const service = makeService();
+    await expect(service.createRequest({})).rejects.toThrow(/exactly one of/);
   });
 
   it('signed mode with no VERIFIER_DID/ISSUER_DID/auto-provisioned DID at all throws instead of silently downgrading', async () => {

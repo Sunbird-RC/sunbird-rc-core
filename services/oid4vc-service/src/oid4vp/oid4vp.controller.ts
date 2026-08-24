@@ -26,8 +26,9 @@ export class Oid4vpController {
   // protocol endpoints.
   @ApiOperation({
     summary:
-      'Verifier creates a presentation request (DCQL). Signed draft-23 JAR by default; ' +
-      'pass {"signed": false} for an unsigned request, or set OID4VP_LEGACY_CLIENT_ID_SCHEME ' +
+      'Verifier creates a presentation request — exactly one of "dcql_query" or ' +
+      '"presentation_definition" (PEX). Signed draft-23 JAR by default; pass ' +
+      '{"signed": false} for an unsigned request, or set OID4VP_LEGACY_CLIENT_ID_SCHEME ' +
       'for the pre-draft-22 redirect_uri client_id_scheme shape.',
   })
   @ApiBearerAuth()
