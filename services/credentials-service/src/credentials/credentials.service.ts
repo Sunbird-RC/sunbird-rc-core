@@ -27,6 +27,8 @@ import {
  } from 'vc.types';
 import { SignResult } from './utils/credential-format.service';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
+import { resolveSelfContainedDidToJwk } from './utils/self-contained-did.util';
+import { verifyJsonWebSignature2020 } from './utils/jws2020.util';
 
 @Injectable()
 export class CredentialsService {
@@ -165,6 +167,11 @@ export class CredentialsService {
     if (typeof credToVerify === 'string') {
       return this.verifyEnvelopedCredential(credToVerify, status, options);
     }
+
+    const types = [].concat((credToVerify as any)?.type || []);
+    if (types.includes('VerifiablePresentation')) {
+      return this.verifyPresentation(credToVerify, options);
+    }
     try {
       // calling identity service to verify the issuer DID
       const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
@@ -296,6 +303,67 @@ export class CredentialsService {
       };
     } catch (e) {
       this.logger.error('Error verifying enveloped credential: ', e);
+      return { errors: [e] };
+    }
+  }
+
+  // Verifies a full VerifiablePresentation's own holder-binding proof —
+  // JsonWebSignature2020, `authentication` purpose, challenge/domain bound
+  // to this specific presentation request — NOT any embedded VC's
+  // assertion proof (callers verify those separately, per-VC, via the path
+  // above; a VP has no `issuer`/`expirationDate` of its own to check).
+  //
+  // No suite already registered in getSuite() (Ed25519Signature2020/2018,
+  // RsaSignature2018) covers JsonWebSignature2020 — see jws2020.util.ts.
+  // The holder DID is routinely did:jwk for real wallets (confirmed live
+  // against Inji Wallet), resolved locally (self-contained, no registry
+  // lookup); falls back to identity-service's resolveDID for other methods
+  // (e.g. did:web) the same way the bare-VC path above does.
+  private async verifyPresentation(
+    vp: any,
+    options?: { challenge?: string; domain?: string },
+  ) {
+    try {
+      const proof = vp?.proof || {};
+      if (proof.type !== 'JsonWebSignature2020') {
+        throw new Error(`unsupported VP proof type '${proof.type}'`);
+      }
+      const verificationMethodId: string | undefined =
+        typeof proof.verificationMethod === 'string' ? proof.verificationMethod : proof.verificationMethod?.id;
+      const holderDid = verificationMethodId?.split('#')[0];
+
+      let publicKeyJwk = resolveSelfContainedDidToJwk(holderDid);
+      let did: DIDDocument | undefined;
+      if (!publicKeyJwk) {
+        did = await this.identityUtilsService.resolveDID(holderDid);
+        const vm = did.verificationMethod?.find(
+          (d) => d.id === verificationMethodId,
+        );
+        publicKeyJwk = (vm as any)?.publicKeyJwk;
+        if (!publicKeyJwk) throw new Error('holder public key not resolvable');
+      }
+      // getDocumentLoader's didDoc-self-reference branch (`url === didDoc?.id`)
+      // simply never matches when did is undefined (the did:jwk case).
+      const documentLoader = this.getDocumentLoader(did);
+
+      const jwsResult = await verifyJsonWebSignature2020(vp, publicKeyJwk, 'authentication', documentLoader);
+      if (!jwsResult.verified) {
+        this.logger.error('Error in verifying presentation: ', jwsResult.error);
+      }
+
+      const replay = this.checkChallengeDomain(proof, options);
+      const proofOk = jwsResult.verified && replay.ok;
+
+      return {
+        checks: [
+          {
+            proof: proofOk ? 'OK' : 'NOK',
+            ...(replay.checked && { replay: replay.ok ? 'OK' : 'NOK' }),
+          },
+        ],
+      };
+    } catch (e) {
+      this.logger.error('Error in verifying presentation: ', e);
       return { errors: [e] };
     }
   }
