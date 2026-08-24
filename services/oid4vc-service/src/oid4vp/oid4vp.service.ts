@@ -327,7 +327,18 @@ export class Oid4vpService {
           const [parsed] = this.extractCredentials({ verifiableCredential: [entry] });
           if (!parsed) throw new Error('unable to parse SD-JWT claims');
           if (!holderDid && parsed.subjectId) holderDid = parsed.subjectId;
-          presented.push({ types: parsed.types, vct: parsed.vct, format: cq.format, claims: parsed.claims });
+          // Report which algorithms were actually used, so a verifier can hold
+          // an algorithm allowlist. The signatures are verified above and in
+          // credentials-service; without surfacing the `alg` here, a relying
+          // party has no way to see it and any algorithm policy it claims to
+          // enforce would be a control that does nothing.
+          presented.push({
+            types: parsed.types,
+            vct: parsed.vct,
+            format: cq.format,
+            claims: parsed.claims,
+            algs: this.presentationAlgs(entry),
+          });
           continue;
         }
 
@@ -475,8 +486,16 @@ export class Oid4vpService {
       if (!dcqlResult.satisfied) throw new Error(`DCQL not satisfied: ${dcqlResult.reason}`);
       checks.dcql = 'OK';
 
-      // Store the result.
-      const result = { verified: true, checks, claims: dcqlResult.matched, holderDid };
+      // Store the result. `algs` carries the signature algorithms observed on
+      // each presentation, for verifiers enforcing an algorithm policy.
+      const algs = [...new Set(presented.flatMap((p: any) => p.algs || []))];
+      const result = {
+        verified: true,
+        checks,
+        claims: dcqlResult.matched,
+        holderDid,
+        ...(algs.length ? { algs } : {}),
+      };
       await this.store.set(key, { ...txn, status: 'verified', result }, this.config.ttl.vpTxn);
       return { redirect_uri: null, status: 'ok' };
     } catch (err) {
@@ -491,6 +510,33 @@ export class Oid4vpService {
     const txn = await this.store.get<VpTxn>(`oid4vp:txn:${id}`);
     if (!txn) throw new NotFoundException('VP transaction not found');
     return { status: txn.status, ...(txn.result || {}) };
+  }
+
+  /**
+   * The signature algorithms on an SD-JWT+KB presentation: the issuer's JWS and
+   * the Key Binding JWT.
+   *
+   * Header inspection only — both signatures are verified elsewhere. This exists
+   * so a relying party can apply an algorithm allowlist, which it otherwise
+   * cannot do: `alg` lives in the JWS header and never reaches the claim set.
+   */
+  private presentationAlgs(sdJwt: string): string[] {
+    const parts = String(sdJwt).split('~');
+    const jws = parts[0];
+    // No trailing '~' means the last segment is the KB-JWT.
+    const kbJwt = String(sdJwt).endsWith('~') ? undefined : parts[parts.length - 1];
+    const algs: string[] = [];
+    for (const token of [jws, kbJwt]) {
+      if (!token) continue;
+      try {
+        const alg = jose.decodeProtectedHeader(token)?.alg;
+        if (typeof alg === 'string') algs.push(alg);
+      } catch {
+        // Unparseable header: the signature checks above already gate trust, and
+        // an absent alg must not be reported as an acceptable one.
+      }
+    }
+    return [...new Set(algs)];
   }
 
   // Pulls embedded credentials out of a VP, normalising the claim shape across
