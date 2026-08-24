@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
@@ -10,13 +11,21 @@ import * as crypto from 'crypto';
 import { SESSION_STORE, SessionStore } from '../session/session-store.interface';
 import { CredentialsClient } from '../clients/credentials.client';
 import { SchemaClient, Oid4vciSchemaConfig } from '../clients/schema.client';
-import { TokenService } from './token.service';
+import { TokenService, ValidatedToken } from './token.service';
 import { PopService } from './pop.service';
 import { loadConfig } from '../config/configuration';
 import { digestMultibase } from '../utils/multibase.util';
 import { normalizeVct, slugifyVct, isAbsoluteHttpUri } from './vct.util';
+import { ClaimSourceFactory } from '../claims/claim-source.factory';
+import {
+  ClaimSourceNotConfiguredError,
+  ClaimSourceUnavailableError,
+  SubjectNotFoundError,
+  type ClaimSourceProvider,
+} from '../claims/claim-source.interface';
 
 const PREAUTH_GRANT = 'urn:ietf:params:oauth:grant-type:pre-authorized_code';
+
 
 interface OfferSession {
   credentialConfigurationId: string;
@@ -32,6 +41,13 @@ interface OfferSession {
   claims: Record<string, any>;
   preAuthCode: string;
   txCodeRequired: boolean;
+  /** True when the offer carries authorization_code instead of pre-authorized_code. */
+  authCodeGrant?: boolean;
+  // The actual PIN, when one is required. Held server-side ONLY: it is returned
+  // to the offer's creator (so a portal can display it) and never placed in the
+  // offer object, which would defeat the purpose — the QR would then carry its
+  // own PIN and prove nothing about who received it.
+  txCode?: string;
   tags: string[];
   // Optional deferred: when set, issuance waits on this claim id.
   deferredClaimId?: string;
@@ -53,6 +69,7 @@ interface OfferSession {
 export class Oid4vciService {
   private readonly logger = new Logger(Oid4vciService.name);
   private readonly config = loadConfig();
+  private offerAuthWarned = false;
 
   constructor(
     @Inject(SESSION_STORE) private readonly store: SessionStore,
@@ -60,6 +77,10 @@ export class Oid4vciService {
     private readonly schema: SchemaClient,
     private readonly tokens: TokenService,
     private readonly pop: PopService,
+    // Not a RegistryClient: which system of record backs a credential type is a
+    // per-type decision, so this service depends on the chooser rather than on any
+    // one system of record.
+    private readonly claimSources: ClaimSourceFactory,
   ) {}
 
   // --- Metadata ------------------------------------------------------------
@@ -86,18 +107,42 @@ export class Oid4vciService {
         const isMdoc = format === 'mso_mdoc';
         supported[id] = {
           format,
-          scope: cfg.name,
+          // An OAuth scope, so it MUST NOT contain spaces — space is the scope
+          // delimiter. Publishing the raw schema name ("Farmer Land Holding")
+          // made Keycloak reject the wallet's authorization request outright with
+          // `invalid_scope`, so the holder never even reached a login form.
+          // Slugified to stay a single valid token.
+          scope: slugifyVct(cfg.name),
           cryptographic_binding_methods_supported: ['did:web', 'did:key', 'jwk'],
-          credential_signing_alg_values_supported: isMdoc ? ['ES256'] : ['ES256', 'Ed25519Signature2020'],
-          proof_types_supported: { jwt: { proof_signing_alg_values_supported: ['ES256'] } },
-          // vct MUST be a URI if it contains a ':', and some wallets resolve
-          // EVERY vct as a URL regardless of that spec carve-out, so a bare
-          // display name like "National Identity Credential" crashes them on
-          // the embedded space. normalizeVct() turns any non-URI schema name
-          // into `<publicUrl>/vct/<slug>`, which vct.controller.ts then
+          // Per FORMAT, because these are two different value spaces: ldp_vc and
+          // jwt_vc_json name Linked-Data cryptosuites, vc+sd-jwt names JWA
+          // algorithms. Publishing `Ed25519Signature2020` (an LD suite) as an
+          // SD-JWT signing alg — which this did for every non-mdoc format — is
+          // not a value a JOSE wallet can act on.
+          //
+          // Declared rather than derived: the signing key belongs to each
+          // schema's `author` DID and the actual signing happens in
+          // credentials-service, so this service cannot inspect it. Which makes
+          // it configuration, so an issuer holding Ed25519 keys can correct the
+          // advertisement without a code change.
+          credential_signing_alg_values_supported: isMdoc
+            ? this.config.credentialSigningAlgs.mdoc
+            : format === 'vc+sd-jwt'
+              ? this.config.credentialSigningAlgs.jose
+              : this.config.credentialSigningAlgs.ldp,
+          proof_types_supported: {
+            jwt: { proof_signing_alg_values_supported: this.config.proofSigningAlgs },
+          },
+          // vct MUST be a URI if it contains a ':', and — found live against
+          // walt.id's wallet — some wallets resolve EVERY vct as a URL
+          // regardless of that spec carve-out, so a bare display name like
+          // "National Identity Credential" crashes them ("Illegal character
+          // in path" on the space). normalizeVct() turns any non-URI schema
+          // name into `<publicUrl>/vct/<slug>`, which vct.controller.ts then
           // actually serves as SD-JWT VC Type Metadata.
           ...(format === 'vc+sd-jwt' ? { vct: normalizeVct(cfg.vct, this.config.publicUrl) } : {}),
-          display: cfg.display,
+          // Same locale requirement as the vct document — see withDisplayLocale.
+          display: this.withDisplayLocale(cfg.display),
           // `credential_definition` is the W3C-format parameter (ldp_vc /
           // jwt_vc_json). SD-JWT VC identifies its type with `vct` (set above)
           // and mdoc with `doctype`, and neither may carry it: a strict wallet
@@ -126,7 +171,11 @@ export class Oid4vciService {
 
     const base = {
       credential_issuer: this.config.publicUrl,
-      authorization_servers: [this.config.publicUrl],
+      // With Keycloak configured this lists the realm first, so a wallet doing
+      // authorization_code + PKCE discovers the realm's own metadata and
+      // authenticates the holder there. This service implements no /authorize:
+      // Keycloak is the authorization server, we are the resource server.
+      authorization_servers: this.tokens.authorizationServers(),
       credential_endpoint: `${this.config.publicUrl}/oid4vc/credential`,
       nonce_endpoint: `${this.config.publicUrl}/oid4vc/nonce`,
       deferred_credential_endpoint: `${this.config.publicUrl}/oid4vc/deferred`,
@@ -164,20 +213,102 @@ export class Oid4vciService {
     return {
       vct: normalizeVct(cfg.vct, this.config.publicUrl),
       name: cfg.name,
-      display: cfg.display,
+      // Every display entry MUST carry a locale. SD-JWT VC Type Metadata
+      // validation in @sd-jwt/sd-jwt-vc — which Credo, and therefore Paradym,
+      // runs on the fetched document — rejects the whole credential with
+      //   "Either locale (preferred) or lang (spec name, deprecated) MUST be
+      //    defined on claim display entry"
+      // and the holder sees only "something went wrong". Schemas are authored by
+      // hand through the schema API and routinely omit it, so default here rather
+      // than depending on every author remembering.
+      display: this.withDisplayLocale(cfg.display),
     };
+  }
+
+  /**
+   * Ensures each display entry has a `locale`, defaulting to en-US.
+   *
+   * Deliberately does not invent any other field: a missing locale is the one
+   * omission that makes the document invalid rather than merely sparse.
+   */
+  private withDisplayLocale(display: Record<string, any>[] | undefined): Record<string, any>[] {
+    const entries = Array.isArray(display) && display.length ? display : [{}];
+    return entries.map((d) => ({
+      ...d,
+      ...(d?.locale || d?.lang ? {} : { locale: this.config.defaultDisplayLocale }),
+    }));
   }
 
   // --- Offer ---------------------------------------------------------------
 
-  async createOffer(body: {
-    credential_configuration_id: string;
-    claims: Record<string, any>;
-    format?: string;
-    tx_code_required?: boolean;
-    tags?: string[];
-    deferred_claim_id?: string;
-  }) {
+  /**
+   * Requires a staff Keycloak token, when configured to.
+   *
+   * The role NAME is configuration (`OFFER_STAFF_ROLE`), because it lives in the
+   * deployment's realm rather than here — a realm that calls it
+   * `credential-issuer` should not need a code change to use this gate.
+   *
+   * Deliberately opt-in (`OFFER_REQUIRES_STAFF`): turning it on unconditionally
+   * would break every existing caller of this endpoint, including the verifier
+   * console's sample-issuance button. The one-shot warning makes the open state
+   * visible in the log rather than assumed to be intentional.
+   */
+  private async assertStaff(authHeader?: string): Promise<void> {
+    const staffRole = this.config.offerStaffRole;
+    if (!this.config.offerRequiresStaff) {
+      if (!this.offerAuthWarned) {
+        this.offerAuthWarned = true;
+        this.logger.warn(
+          'POST /oid4vc/offer is UNAUTHENTICATED and trusts caller-supplied claims — ' +
+            'anyone who can reach it can mint a credential about anyone. ' +
+            `Set OFFER_REQUIRES_STAFF=true (with KEYCLOAK_PUBLIC_URL) to require the ${staffRole} role.`,
+        );
+      }
+      return;
+    }
+    if (!this.config.keycloak.enabled) {
+      // Failing closed: asking for a role check with no way to check roles must
+      // not silently degrade into no check at all.
+      throw new BadRequestException(
+        'server_error: OFFER_REQUIRES_STAFF is set but KEYCLOAK_PUBLIC_URL is not configured',
+      );
+    }
+    const token = await this.tokens.validateAccessToken(authHeader);
+    if (token.source !== 'keycloak' || !(token.roles ?? []).includes(staffRole)) {
+      throw new ForbiddenException(`insufficient_scope: the '${staffRole}' role is required`);
+    }
+  }
+
+  async createOffer(
+    body: {
+      credential_configuration_id: string;
+      claims: Record<string, any>;
+      format?: string;
+      tx_code_required?: boolean;
+      tags?: string[];
+      deferred_claim_id?: string;
+      /**
+       * Which grant the offer should carry.
+       *
+       * `pre-authorized_code` (default) hands the holder a bearer offer, gated by
+       * a transaction code the issuer distributes out of band.
+       *
+       * `authorization_code` instead sends the holder to Keycloak to sign in:
+       * the wallet runs authorization_code + PKCE against the realm, and the
+       * credential is issued from the registry record belonging to whoever
+       * authenticated. No PIN, because the login itself establishes identity —
+       * and nobody can collect a credential without valid Keycloak credentials.
+       */
+      grant?: 'pre-authorized_code' | 'authorization_code';
+    },
+    authHeader?: string,
+  ) {
+    // Offer creation takes caller-supplied claims, so an unauthenticated caller
+    // can mint a credential asserting anything about anyone. Gated on the
+    // issuer-staff realm role when OFFER_REQUIRES_STAFF is on; left open by
+    // default so existing deployments keep working, which is why the warning
+    // below exists rather than a silent default.
+    await this.assertStaff(authHeader);
     const configs = await this.schema.getOid4vciConfigs();
     // Prefer an exact match on the stable, always-unique schemaId — this is
     // what issuerMetadata() now actually publishes as credential_configuration_id
@@ -264,7 +395,18 @@ export class Oid4vciService {
     const configId = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
 
     const id = uuid();
+    const useAuthCode = body.grant === 'authorization_code';
+    if (useAuthCode && !this.config.keycloak.enabled) {
+      throw new BadRequestException(
+        'server_error: authorization_code offers require KEYCLOAK_PUBLIC_URL to be configured',
+      );
+    }
     const preAuthCode = this.randomToken();
+    // A transaction code exists to substitute for authentication. With
+    // authorization_code the holder authenticates for real, so a PIN would be
+    // redundant friction — and the wallet would have nowhere to get it.
+    const txCodeRequired = !useAuthCode && !!body.tx_code_required;
+    const txCode = txCodeRequired ? this.randomPin() : undefined;
     const session: OfferSession = {
       credentialConfigurationId: configId,
       format,
@@ -281,7 +423,9 @@ export class Oid4vciService {
       issuerDid: cfg.author || this.tokens.getIssuerDid(),
       claims: body.claims || {},
       preAuthCode,
-      txCodeRequired: !!body.tx_code_required,
+      txCodeRequired,
+      txCode,
+      authCodeGrant: useAuthCode,
       tags: body.tags || cfg.tags || [cfg.name],
       deferredClaimId: body.deferred_claim_id,
       renderMethod: this.resolveRenderMethod(cfg, format),
@@ -293,7 +437,13 @@ export class Oid4vciService {
     // Index by pre-auth code for the token endpoint.
     await this.store.set(`oid4vc:code:${preAuthCode}`, { offerId: id }, this.config.ttl.offer);
 
-    const offerObject = this.buildOfferObject(configId, preAuthCode, session.txCodeRequired);
+    const offerObject = this.buildOfferObject(
+      configId,
+      preAuthCode,
+      session.txCodeRequired,
+      useAuthCode,
+      id,
+    );
     const offerUri = `${this.config.publicUrl}/oid4vc/offer/${id}`;
     const qrData = `openid-credential-offer://?credential_offer_uri=${encodeURIComponent(offerUri)}`;
 
@@ -302,6 +452,10 @@ export class Oid4vciService {
       credential_offer_uri: offerUri,
       credential_offer: offerObject,
       qr_data: qrData,
+      // Returned to the CREATOR only (the issuer portal, which shows it to the
+      // holder out of band). Deliberately absent from `credential_offer` above:
+      // a PIN travelling inside the QR would prove nothing.
+      ...(txCode ? { tx_code: txCode } : {}),
     };
   }
 
@@ -312,16 +466,69 @@ export class Oid4vciService {
       session.credentialConfigurationId,
       session.preAuthCode,
       session.txCodeRequired,
+      !!session.authCodeGrant,
+      id,
     );
   }
 
-  private buildOfferObject(configId: string, preAuthCode: string, txCodeRequired: boolean) {
+  private buildOfferObject(
+    configId: string,
+    preAuthCode: string,
+    txCodeRequired: boolean,
+    authCodeGrant = false,
+    offerId?: string,
+  ) {
+    const authorizationServers = this.tokens.authorizationServers();
+
+    // --- authorization_code: the holder signs in, no PIN ---------------------
+    // The wallet sees this grant, runs authorization_code + PKCE against the
+    // named authorization server (the Keycloak realm), and only reaches the
+    // credential endpoint with a token proving who authenticated. Issuance then
+    // resolves that person's own registry record, so a credential cannot be
+    // collected without valid Keycloak credentials.
+    if (authCodeGrant) {
+      return {
+        credential_issuer: this.config.publicUrl,
+        ...(this.config.draft13CompatMode
+          ? { credentials: [configId] }
+          : { credential_configuration_ids: [configId] }),
+        grants: {
+          authorization_code: {
+            // Ties the eventual authorization request back to this offer. The
+            // wallet echoes it to the authorization server; harmless if unused.
+            ...(offerId ? { issuer_state: offerId } : {}),
+            // Keycloak owns this grant — NOT this service, which implements no
+            // /authorize. Naming it is also mandatory whenever metadata
+            // advertises more than one authorization server.
+            authorization_server: this.keycloakAuthorizationServer(authorizationServers),
+          },
+        },
+      };
+    }
+
     const grant: any = { 'pre-authorized_code': preAuthCode };
     if (this.config.draft13CompatMode) {
       // draft-13 idiom
       grant.user_pin_required = txCodeRequired;
     } else if (txCodeRequired) {
       grant.tx_code = { input_mode: 'numeric', length: 6 };
+    }
+
+    // When issuer metadata advertises MORE THAN ONE authorization server,
+    // OID4VCI requires each grant to name the one it applies to. Omitting it is
+    // not a soft warning: a Credo-based wallet (Paradym included) refuses the
+    // offer outright with
+    //   "Credential issuer metadata has 'authorization_server' with multiple
+    //    entries, but the credential offer grant did not specify which
+    //    authorization server to use."
+    // which the user sees only as "something went wrong".
+    //
+    // This became reachable the moment the Keycloak realm was added alongside
+    // this service in authorizationServers(). The pre-authorized_code grant is
+    // always served by THIS service — it mints the pre-auth token — so the
+    // correct value is our own issuer identifier, not the realm.
+    if (authorizationServers.length > 1) {
+      grant.authorization_server = this.config.publicUrl;
     }
     return {
       credential_issuer: this.config.publicUrl,
@@ -388,10 +595,30 @@ export class Oid4vciService {
   // --- Credential ----------------------------------------------------------
 
   async credential(authHeader: string | undefined, body: Record<string, any>) {
-    const tokenPayload = await this.tokens.validateAccessToken(authHeader);
-    const offerId = tokenPayload.sub;
-    const session = await this.store.get<OfferSession>(`oid4vc:offer:${offerId}`);
-    if (!session) throw new BadRequestException('Offer session expired');
+    const token = await this.tokens.validateAccessToken(authHeader);
+
+    // Two ways to arrive here, and they differ in WHO decided the contents.
+    //
+    // pre-authorized_code: an offer already exists and its claims were fixed
+    // when staff created it, so the token's `sub` is just a handle to that.
+    //
+    // Keycloak: the caller is the holder's own wallet, signed in as a person.
+    // Nothing about the credential has been decided yet — and anything the
+    // wallet asserts about itself is unverified by construction — so the claims
+    // are built here, from the registry record its token names. That is what
+    // makes "a holder can only ever get their own credential" true structurally
+    // rather than by policy.
+    let session: OfferSession;
+    let offerId: string;
+    if (token.source === 'keycloak') {
+      offerId = `self:${token.payload.sub}`;
+      session = await this.buildSelfServiceSession(token, body);
+    } else {
+      offerId = token.payload.sub;
+      const existing = await this.store.get<OfferSession>(`oid4vc:offer:${offerId}`);
+      if (!existing) throw new BadRequestException('Offer session expired');
+      session = existing;
+    }
 
     // Verify holder proof-of-possession.
     const proofJwt = body?.proof?.jwt;
@@ -434,6 +661,228 @@ export class Oid4vciService {
       popResult.holderKid,
     );
     return { credential, c_nonce: await this.issueNonce(), format: session.format };
+  }
+
+  /**
+   * Builds an issuance session for a signed-in holder, with claims read from the
+   * registry rather than from the request.
+   *
+   * The wallet chooses only WHICH credential type it wants; every value in it
+   * comes from the record its token points at. A wallet that sends `claims` is
+   * ignored — silently, because a spec-compliant wallet has no reason to send
+   * them on this path and failing the request would be less useful than issuing
+   * the correct credential.
+   */
+  private async buildSelfServiceSession(
+    token: ValidatedToken,
+    body: Record<string, any>,
+  ): Promise<OfferSession> {
+    // Deliberately NOT gated on the registry here. Which system of record backs a
+    // credential type is resolved per type further down, once the type is known —
+    // an authority may keep its records in its own database, and requiring the
+    // Sunbird registry to be configured would make issuing depend on adopting it.
+    //
+    // Which claim identifies the holder is deployment configuration with no
+    // default, so distinguish the two ways it can be absent. Reporting an
+    // unconfigured service as "your account is not linked" sends an operator
+    // looking through Keycloak users for a problem that is in the environment.
+    if (!this.config.keycloak.subjectClaim) {
+      throw new BadRequestException(
+        'server_error: self-service issuance requires KEYCLOAK_SUBJECT_CLAIM — set it to ' +
+          "the token claim carrying the holder's registry key (there is no default, " +
+          'because the field name belongs to the deployment, not to this service)',
+      );
+    }
+    const subjectId = token.subjectId;
+    if (!subjectId) {
+      // Authenticated, but their account was never linked to a record. This is a
+      // provisioning gap rather than a wallet error, so say so plainly instead of
+      // returning something that reads like a protocol failure.
+      throw new BadRequestException(
+        `credential_request_denied: this account is not linked to a registry record ` +
+          `(no '${this.config.keycloak.subjectClaim}' claim). An issuer administrator must link it.`,
+      );
+    }
+
+    const requestedId = body?.credential_configuration_id || body?.credential_identifier;
+    const configs = await this.schema.getOid4vciConfigs();
+    // Only what the request actually said. The format is derived from the
+    // resolved credential further down — assuming one here (this used to default
+    // to 'vc+sd-jwt') made every filter below reject a deployment that publishes
+    // only ldp_vc or mso_mdoc, reporting "could not determine the credential
+    // type" even with exactly one type published.
+    const requestedFormat: string | undefined = body?.format;
+
+    let cfg = configs.find((c) => c.schemaId === requestedId);
+    // A multi-format credential is published as `<schemaId>_<format>`, so the id
+    // the wallet sent already says which format it wants. Captured rather than
+    // discarded: without it, a wallet asking for `…_mso_mdoc` would be answered
+    // with whichever format happened to be first.
+    let derivedFormat: string | undefined;
+    if (!cfg && requestedId) {
+      for (const c of configs) {
+        const suffix = c.formats.find((f) => `${c.schemaId}_${f}` === requestedId);
+        if (suffix) {
+          cfg = c;
+          derivedFormat = suffix;
+          break;
+        }
+      }
+    }
+    // OID4VCI lets a credential request identify what it wants in more than one
+    // way, and wallets differ. Credo sends neither
+    // `credential_configuration_id` nor `credential_identifier` on the
+    // authorization_code path, so fall back to the `vct` it does send — matched
+    // against the SAME normalised value published in issuer metadata.
+    if (!cfg && body?.vct) {
+      cfg = configs.find(
+        (c) =>
+          c.formats.includes('vc+sd-jwt') &&
+          normalizeVct(c.vct, this.config.publicUrl) === body.vct,
+      );
+      // `vct` exists only in SD-JWT VC, so identifying by it settles the format.
+      // Required, not cosmetic: Credo sends `vct` and no format, and a credential
+      // published as both ldp_vc and vc+sd-jwt would otherwise fall through to
+      // its first listed format and answer a vct request with an LDP credential.
+      if (cfg) derivedFormat = 'vc+sd-jwt';
+    }
+    // Last resort, and ONLY when the request named nothing at all: with a single
+    // credential type there is no ambiguity about what was meant.
+    //
+    // Filtered by format only when the request asked for one. Filtering by an
+    // assumed format instead would make "the deployment publishes exactly one
+    // credential type" fail whenever that type is not the assumed format.
+    //
+    // Deliberately not applied when the request DID name an id or vct that did
+    // not match. Falling back then would hand the holder a different credential
+    // from the one they asked for, silently — worse than a clear error.
+    const identifiedSomething = Boolean(requestedId || body?.vct);
+    if (!cfg && !identifiedSomething) {
+      const candidates = requestedFormat
+        ? configs.filter((c) => c.formats.includes(requestedFormat))
+        : configs;
+      if (candidates.length === 1) cfg = candidates[0];
+    }
+    if (!cfg) {
+      this.logger.warn(
+        `Self-service credential request did not identify a type. Body keys: ${Object.keys(
+          body ?? {},
+        ).join(', ')}`,
+      );
+      throw new BadRequestException(
+        `invalid_credential_request: could not determine the credential type from the request ` +
+          `(no credential_configuration_id, credential_identifier or known vct)`,
+      );
+    }
+    // Derived here, not assumed at the top, in this precedence:
+    //   1. what the request asked for
+    //   2. the format encoded in a `<schemaId>_<format>` configuration id
+    //   3. the credential's own first published format
+    // Mirrors resolveOfferConfig's `derivedFormat || cfg.formats[0]`, so the two
+    // issuance paths agree about what a request without a format means.
+    const format = requestedFormat || derivedFormat || cfg.formats[0];
+    if (!format) {
+      throw new BadRequestException(
+        `invalid_credential_request: credential type '${cfg.name}' publishes no format`,
+      );
+    }
+    if (!cfg.formats.includes(format)) {
+      throw new BadRequestException(`invalid_credential_request: format '${format}' not supported`);
+    }
+
+    // Where this credential type's claims come from — the Sunbird registry, or an
+    // endpoint the issuing authority hosts against its own database. Resolved per
+    // type, so authorities with different systems of record coexist here.
+    const properties = Object.keys(cfg.schema?.properties ?? {});
+    const { claims, missing } = await this.resolveClaimsFor(cfg, subjectId, properties);
+    if (missing.length) {
+      throw new BadRequestException(
+        `credential_request_denied: your record is missing required ${missing.join(', ')}. ` +
+          `Contact the issuing authority.`,
+      );
+    }
+
+    const configId = cfg.formats.length > 1 ? `${cfg.schemaId}_${format}` : cfg.schemaId;
+    this.logger.log(
+      `Self-service issuance: ${cfg.name} for ${this.config.keycloak.subjectClaim}=${subjectId}`,
+    );
+
+    return {
+      credentialConfigurationId: configId,
+      format,
+      schemaId: cfg.schemaId,
+      schemaVersion: cfg.version,
+      schemaName: cfg.name,
+      vct: format === 'vc+sd-jwt' ? normalizeVct(cfg.vct, this.config.publicUrl) : undefined,
+      issuerDid: cfg.author || this.tokens.getIssuerDid(),
+      claims,
+      // No pre-auth code and no PIN: the Keycloak login already established who
+      // this is, which is precisely what a tx_code exists to substitute for.
+      preAuthCode: '',
+      txCodeRequired: false,
+      tags: cfg.tags || [cfg.name],
+      renderMethod: this.resolveRenderMethod(cfg, format),
+      docType: cfg.mdoc?.docType,
+      namespace: cfg.mdoc?.namespace,
+      elementMapping: cfg.mdoc?.elementMapping,
+    };
+  }
+
+  /**
+   * Resolves claims through whichever source backs this credential type, turning
+   * each provider failure into the message that actually helps.
+   *
+   * The three cases are genuinely different and must not collapse into one
+   * "issuance failed": nothing configured is a deployment decision, the source
+   * being down is the authority's system, and no record for this subject is a
+   * provisioning gap for one holder. Reporting the wrong one sends whoever is
+   * debugging to the wrong system entirely.
+   */
+  private async resolveClaimsFor(
+    cfg: { schemaId: string; name: string; schema?: { required?: string[] } },
+    subjectId: string,
+    properties: string[],
+  ) {
+    let provider: ClaimSourceProvider;
+    try {
+      provider = this.claimSources.for({ schemaId: cfg.schemaId, name: cfg.name });
+    } catch (err) {
+      if (err instanceof ClaimSourceNotConfiguredError) {
+        throw new BadRequestException(`credential_request_denied: ${err.message}`);
+      }
+      if (err instanceof ClaimSourceUnavailableError) {
+        throw new BadRequestException(`server_error: ${err.message}`);
+      }
+      throw err;
+    }
+
+    try {
+      return await provider.resolve({
+        subjectId,
+        subjectClaim: this.config.keycloak.subjectClaim,
+        credentialConfigurationId: cfg.schemaId,
+        credentialName: cfg.name,
+        properties,
+        required: cfg.schema?.required ?? [],
+      });
+    } catch (err) {
+      if (err instanceof SubjectNotFoundError) {
+        throw new BadRequestException(
+          `credential_request_denied: no record for ` +
+            `${this.config.keycloak.subjectClaim} '${subjectId}'. Contact the issuing authority.`,
+        );
+      }
+      if (err instanceof ClaimSourceUnavailableError) {
+        // Named, because "try again" is the right advice here and is not the right
+        // advice for any of the other refusals on this path.
+        this.logger.error(err.message);
+        throw new BadRequestException(
+          `server_error: the issuing authority's records are temporarily unreachable ` +
+            `(${err.source}). Try again shortly.`,
+        );
+      }
+      throw err;
+    }
   }
 
   async deferred(authHeader: string | undefined, body: Record<string, any>) {
@@ -586,8 +1035,49 @@ export class Oid4vciService {
     return undefined;
   }
 
+  /**
+   * The Keycloak realm among the advertised authorization servers.
+   *
+   * Picked by matching the realm issuer rather than by position: the ordering in
+   * authorizationServers() is a display choice, and silently naming this service
+   * for an authorization_code grant would send the wallet to an /authorize
+   * endpoint that does not exist.
+   */
+  private keycloakAuthorizationServer(servers: string[]): string {
+    const realm = servers.find((s) => s !== this.config.publicUrl);
+    if (!realm) {
+      throw new BadRequestException(
+        'server_error: no external authorization server is advertised for authorization_code',
+      );
+    }
+    return realm;
+  }
+
   private randomToken(): string {
     return crypto.randomBytes(24).toString('base64url');
+  }
+
+  /**
+   * Six-digit transaction code, matching the `tx_code` shape published in the
+   * offer (`input_mode: 'numeric', length: 6`).
+   *
+   * `randomInt` rather than `Math.random()`: this is a shared secret protecting
+   * a credential, and it is short enough that a predictable generator would make
+   * guessing realistic.
+   */
+  private randomPin(): string {
+    return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+  }
+
+  /**
+   * Length-independent constant-time compare. `crypto.timingSafeEqual` throws on
+   * a length mismatch, and returning early on that would leak the PIN's length —
+   * so hash both sides to a fixed width first and compare those.
+   */
+  private constantTimeEquals(a: string, b: string): boolean {
+    const ha = crypto.createHash('sha256').update(a, 'utf8').digest();
+    const hb = crypto.createHash('sha256').update(b, 'utf8').digest();
+    return crypto.timingSafeEqual(ha, hb);
   }
 
   private decodeJwtClaims(jwt: string): any {
