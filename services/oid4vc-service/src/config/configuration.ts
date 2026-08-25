@@ -197,6 +197,17 @@ export interface Oid4vcConfig {
     /** Expected `aud`; empty accepts any audience (Keycloak's default is azp-only). */
     audience: string;
   };
+  /**
+   * How the credential issuer presents itself in its own metadata
+   * (OpenID4VCI `display` on the credential issuer).
+   *
+   * Matters for wallet-driven issuance: a wallet showing a directory of issuers
+   * has nothing but this to label the entry, and falls back to the bare
+   * hostname without it — so the citizen is asked to pick "98.70.36.106.sslip.io"
+   * rather than "National Identity Authority". Empty name omits `display`
+   * entirely rather than publishing a blank one.
+   */
+  issuerDisplay: { name: string; logoUri: string; locale: string };
   registryBaseUrl: string;
   /**
    * Where a self-issued credential's claims come from, as CONFIGURATION rather
@@ -344,6 +355,11 @@ export const loadConfig = (): Oid4vcConfig => ({
     // variable it was missing.
     subjectClaim: process.env.KEYCLOAK_SUBJECT_CLAIM || '',
     audience: process.env.KEYCLOAK_AUDIENCE || '',
+  },
+  issuerDisplay: {
+    name: (process.env.ISSUER_DISPLAY_NAME || '').trim(),
+    logoUri: (process.env.ISSUER_DISPLAY_LOGO_URI || '').trim(),
+    locale: (process.env.ISSUER_DISPLAY_LOCALE || 'en-US').trim(),
   },
   registryBaseUrl: process.env.REGISTRY_BASE_URL || '',
   registrySources: {

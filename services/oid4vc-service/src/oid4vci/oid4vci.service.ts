@@ -163,6 +163,22 @@ export class Oid4vciService {
       nonce_endpoint: `${this.config.publicUrl}/oid4vc/nonce`,
       deferred_credential_endpoint: `${this.config.publicUrl}/oid4vc/deferred`,
       notification_endpoint: `${this.config.publicUrl}/oid4vc/notification`,
+      // Omitted rather than blank when unconfigured: a wallet that finds an
+      // empty display name has nothing better to fall back on than the URL,
+      // and an empty string is worse than absent because it looks deliberate.
+      ...(this.config.issuerDisplay.name
+        ? {
+            display: [
+              {
+                name: this.config.issuerDisplay.name,
+                locale: this.config.issuerDisplay.locale,
+                ...(this.config.issuerDisplay.logoUri
+                  ? { logo: { uri: this.config.issuerDisplay.logoUri } }
+                  : {}),
+              },
+            ],
+          }
+        : {}),
     };
 
     // Draft-13 (Inji) uses `credentials_supported`; final 1.0 uses
