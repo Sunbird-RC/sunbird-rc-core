@@ -251,29 +251,7 @@ export interface Oid4vcConfig {
    * reading the wrong data.
    */
   offerStaffRole: string;
-  /**
-   * What issuer metadata ADVERTISES as supported, per value space.
-   *
-   * This service does not sign credentials — credentials-service does, with the
-   * key behind each schema's `author` DID — so it cannot derive these from the
-   * key in use. They are therefore declared, and the declaration must be
-   * correctable without a code change: an issuer whose keys are Ed25519 needs to
-   * say so.
-   *
-   * `ldp` carries Linked-Data cryptosuite names (`Ed25519Signature2020`), `jose`
-   * carries JWA algorithm names (`ES256`). They are different value spaces and
-   * must not be emitted into each other's formats.
-   */
-  credentialSigningAlgs: {
-    /** vc+sd-jwt — JWA names. */
-    jose: string[];
-    /** ldp_vc / jwt_vc_json — LD cryptosuite names. */
-    ldp: string[];
-    /** mso_mdoc — COSE, ES256 in practice. */
-    mdoc: string[];
-  };
   /** Accepted wallet key-proof algorithms, published in proof_types_supported. */
-  proofSigningAlgs: string[];
   ttl: {
     offer: number;
     nonce: number;
@@ -396,17 +374,6 @@ export const loadConfig = (): Oid4vcConfig => ({
   defaultDisplayLocale: process.env.DEFAULT_DISPLAY_LOCALE || 'en-US',
   offerRequiresStaff: process.env.OFFER_REQUIRES_STAFF === 'true',
   offerStaffRole: process.env.OFFER_STAFF_ROLE || 'issuer-staff',
-  credentialSigningAlgs: {
-    // JWA names, because vc+sd-jwt is JOSE. `EdDSA` is how JWA spells Ed25519 —
-    // the previous literal published `Ed25519Signature2020` here, which is a
-    // Linked-Data cryptosuite and not a value any JOSE wallet can act on.
-    jose: list(process.env.CREDENTIAL_SIGNING_ALGS_JOSE, ['ES256', 'EdDSA']),
-    // LD cryptosuite names, for ldp_vc / jwt_vc_json. Unchanged from what this
-    // service has always published, and the value space that name belongs to.
-    ldp: list(process.env.CREDENTIAL_SIGNING_ALGS_LDP, ['ES256', 'Ed25519Signature2020']),
-    mdoc: list(process.env.CREDENTIAL_SIGNING_ALGS_MDOC, ['ES256']),
-  },
-  proofSigningAlgs: list(process.env.PROOF_SIGNING_ALGS, ['ES256']),
   ttl: {
     offer: num(process.env.OFFER_TTL, 600),
     nonce: num(process.env.NONCE_TTL, 300),

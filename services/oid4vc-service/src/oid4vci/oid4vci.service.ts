@@ -114,25 +114,8 @@ export class Oid4vciService {
           // Slugified to stay a single valid token.
           scope: slugifyVct(cfg.name),
           cryptographic_binding_methods_supported: ['did:web', 'did:key', 'jwk'],
-          // Per FORMAT, because these are two different value spaces: ldp_vc and
-          // jwt_vc_json name Linked-Data cryptosuites, vc+sd-jwt names JWA
-          // algorithms. Publishing `Ed25519Signature2020` (an LD suite) as an
-          // SD-JWT signing alg — which this did for every non-mdoc format — is
-          // not a value a JOSE wallet can act on.
-          //
-          // Declared rather than derived: the signing key belongs to each
-          // schema's `author` DID and the actual signing happens in
-          // credentials-service, so this service cannot inspect it. Which makes
-          // it configuration, so an issuer holding Ed25519 keys can correct the
-          // advertisement without a code change.
-          credential_signing_alg_values_supported: isMdoc
-            ? this.config.credentialSigningAlgs.mdoc
-            : format === 'vc+sd-jwt'
-              ? this.config.credentialSigningAlgs.jose
-              : this.config.credentialSigningAlgs.ldp,
-          proof_types_supported: {
-            jwt: { proof_signing_alg_values_supported: this.config.proofSigningAlgs },
-          },
+          credential_signing_alg_values_supported: isMdoc ? ['ES256'] : ['ES256', 'Ed25519Signature2020'],
+          proof_types_supported: { jwt: { proof_signing_alg_values_supported: ['ES256'] } },
           // vct MUST be a URI if it contains a ':', and — found live against
           // walt.id's wallet — some wallets resolve EVERY vct as a URL
           // regardless of that spec carve-out, so a bare display name like

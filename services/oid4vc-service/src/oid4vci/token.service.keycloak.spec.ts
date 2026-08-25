@@ -214,6 +214,80 @@ describe('TokenService Keycloak validation', () => {
     expect(service.authorizationServers()).toEqual([ISSUER, 'https://issuer.example']);
   });
 
+  /**
+   * Mints a token shaped like one this service issues itself.
+   *
+   * It has to be a decodable JWT carrying the issuer's own `iss`, because
+   * validateAccessToken routes on the unverified issuer before verifying
+   * anything — that is how it tells a realm token from its own.
+   */
+  async function mintSelfIssued(claims: Record<string, unknown> = {}) {
+    const now = Math.floor(Date.now() / 1000);
+    return new jose.SignJWT({ ...claims })
+      .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+      .setIssuer('https://issuer.example')
+      .setIssuedAt(now)
+      .setExpirationTime(now + 120)
+      .sign(signKey);
+  }
+
+  // --- both grants coexist -------------------------------------------------
+  //
+  // The condition attached to approving this capability: "existing pre-authorised
+  // issuance remains supported and unchanged by default" and "both grants have
+  // regression coverage and do not weaken each other's token, nonce,
+  // holder-binding, or claim-source controls".
+  //
+  // Enabling Keycloak must therefore not turn the service's own access tokens
+  // into second-class citizens, and must not make a realm token usable where a
+  // pre-auth token is required.
+
+  it('still accepts its own pre-authorised access token while Keycloak is enabled', async () => {
+    const service = makeService();
+    // A token this service minted: verified through identity-service against the
+    // issuer DID, exactly as before the Keycloak capability existed.
+    identity.verifyJwt.mockResolvedValue({
+      verified: true,
+      payload: {
+        iss: 'https://issuer.example',
+        sub: 'offer-abc',
+        credential_configuration_id: 'did:schema:age',
+        exp: Math.floor(Date.now() / 1000) + 120,
+      },
+    });
+
+    const token = await mintSelfIssued({ sub: 'offer-abc' });
+    const result = await service.validateAccessToken(`Bearer ${token}`);
+
+    expect(result.source).toBe('preauth');
+    // The offer id is what the credential endpoint resolves claims from on this
+    // path; a Keycloak subject must not appear in its place.
+    expect(result.payload.sub).toBe('offer-abc');
+    expect(result.subjectId).toBeUndefined();
+  });
+
+  it('keeps the two token sources distinguishable, so neither can stand in for the other', async () => {
+    const service = makeService();
+
+    identity.verifyJwt.mockResolvedValue({ verified: false, error: 'not a preauth token' });
+    const realm = await service.validateAccessToken(`Bearer ${await mint()}`);
+    expect(realm.source).toBe('keycloak');
+    expect(realm.subjectId).toBe('FRM-000123');
+
+    identity.verifyJwt.mockResolvedValue({
+      verified: true,
+      payload: { iss: 'https://issuer.example', sub: 'offer-xyz' },
+    });
+    const preauth = await service.validateAccessToken(
+      `Bearer ${await mintSelfIssued({ sub: 'offer-xyz' })}`,
+    );
+    expect(preauth.source).toBe('preauth');
+    // Claim source is decided by which grant issued the token. If these ever
+    // collapsed into one shape, an offer-bound token could be read as an
+    // authenticated subject, or the reverse.
+    expect(preauth.subjectId).toBeUndefined();
+  });
+
   it('advertises only itself when Keycloak is not configured', async () => {
     delete process.env.KEYCLOAK_PUBLIC_URL;
     expect(makeService().authorizationServers()).toEqual(['https://issuer.example']);
