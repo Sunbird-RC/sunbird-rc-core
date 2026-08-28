@@ -165,6 +165,19 @@ export interface Oid4vcConfig {
   sessionStore: 'memory' | 'redis';
   redisUrl: string;
   issuerDid: string;
+  /**
+   * Advertise only the credentials this issuer authored.
+   *
+   * `credential-schema`'s /oid4vci-configs returns every published config in the
+   * deployment, so an issuer metadata document built from it lists other
+   * issuers' credentials too. Harmless with one issuer; wrong as soon as there
+   * are two, because a wallet's issuer directory then shows the same credential
+   * under whichever issuer the holder happened to open.
+   *
+   * Off by default: a single-issuer deployment behaves exactly as before, and
+   * nothing changes for anyone who has not asked for it.
+   */
+  advertiseOwnCredentialsOnly: boolean;
   oid4vpEnabled: boolean;
   draft13CompatMode: boolean;
   vpSignRequest: boolean;
@@ -304,6 +317,7 @@ export const loadConfig = (): Oid4vcConfig => ({
   sessionStore: process.env.SESSION_STORE === 'redis' ? 'redis' : 'memory',
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   issuerDid: process.env.ISSUER_DID || '',
+  advertiseOwnCredentialsOnly: process.env.ADVERTISE_OWN_CREDENTIALS_ONLY === 'true',
   oid4vpEnabled: process.env.OID4VP_ENABLED !== 'false',
   draft13CompatMode: process.env.DRAFT13_COMPAT_MODE === 'true',
   // OID4VP request-object mode. Legacy implies unsigned (the `redirect_uri`

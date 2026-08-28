@@ -83,10 +83,39 @@ export class Oid4vciService {
     private readonly claimSources: ClaimSourceFactory,
   ) {}
 
+  /**
+   * Published OID4VCI configs, optionally narrowed to the ones this issuer
+   * authored.
+   *
+   * credential-schema's /oid4vci-configs is deployment-wide and takes no filter,
+   * so with several issuers sharing one schema service each of them would
+   * otherwise advertise all of the others' credentials. A schema already carries
+   * the DID that authored it — the same value used as the per-schema issuer DID
+   * when creating an offer — so the issuer can recognise its own without any new
+   * concept.
+   *
+   * Requires ISSUER_DID to be set as well as the flag: filtering on an empty DID
+   * would advertise nothing at all, which is a worse failure than advertising too
+   * much and would look like the schema service being down.
+   */
+  private async ownConfigs() {
+    const configs = await this.schema.getOid4vciConfigs();
+    if (!this.config.advertiseOwnCredentialsOnly || !this.config.issuerDid) return configs;
+    const own = configs.filter((cfg) => cfg.author === this.config.issuerDid);
+    if (own.length === 0) {
+      this.logger.warn(
+        `ADVERTISE_OWN_CREDENTIALS_ONLY is set and ISSUER_DID is ${this.config.issuerDid}, but no ` +
+          `published schema is authored by it — this issuer will advertise no credentials. Check ` +
+          `that the schema's author matches ISSUER_DID.`,
+      );
+    }
+    return own;
+  }
+
   // --- Metadata ------------------------------------------------------------
 
   async issuerMetadata() {
-    const configs = await this.schema.getOid4vciConfigs();
+    const configs = await this.ownConfigs();
     const supported: Record<string, any> = {};
     for (const cfg of configs) {
       for (const format of cfg.formats) {
