@@ -15,7 +15,7 @@ import { TokenService, ValidatedToken } from './token.service';
 import { PopService } from './pop.service';
 import { loadConfig } from '../config/configuration';
 import { digestMultibase } from '../utils/multibase.util';
-import { normalizeVct, slugifyVct, isAbsoluteHttpUri } from './vct.util';
+import { normalizeVct, slugifyVct, isAbsoluteHttpUri, vctSlug } from './vct.util';
 import { ClaimSourceFactory } from '../claims/claim-source.factory';
 import {
   ClaimSourceNotConfiguredError,
@@ -826,7 +826,15 @@ export class Oid4vciService {
                 c.formats.some((f) => `${c.schemaId}_${f}` === requestedId))) ||
             (body?.vct &&
               c.formats.includes('vc+sd-jwt') &&
-              normalizeVct(c.vct, this.config.publicUrl) === body.vct),
+              // By type SLUG, not by the whole normalised vct. Every instance
+              // normalises a RELATIVE schema vct against its OWN publicUrl, so
+              // this instance renders another issuer's type as
+              // `<host>/<my-path>/vct/<slug>` while the wallet asks for
+              // `<host>/<their-path>/vct/<slug>`. Comparing the full URLs here
+              // therefore never matched, and the refusal fell through to
+              // "could not determine the credential type" — the exact unhelpful
+              // message this branch exists to replace.
+              vctSlug(normalizeVct(c.vct, this.config.publicUrl)) === vctSlug(body.vct)),
         );
         if (elsewhere) {
           this.logger.warn(

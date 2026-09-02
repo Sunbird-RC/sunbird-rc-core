@@ -6,7 +6,18 @@
 // party and not of the protocol boundary.
 //
 // These assertions are about which of those two guarantees the service makes.
+// oid4vp.service.ts transitively imports @auth0/mdl for the mso_mdoc path,
+// whose cose-kit dependency uses a Node "imports" subpath jest cannot resolve.
+// Stubbed the same way oid4vp.service.spec.ts does — nothing here goes near
+// mdoc, and the alternative is pulling the whole COSE/CBOR chain into a test
+// about SD-JWT disclosures.
+jest.mock('@auth0/mdl', () => ({ Verifier: class {} }), { virtual: true });
+jest.mock('@auth0/mdl/lib/cbor', () => ({ cborEncode: jest.fn(), DataItem: {} }), {
+  virtual: true,
+});
+
 import { DcqlService } from './dcql.service';
+import { Oid4vpService } from './oid4vp.service';
 
 describe('rejecting disclosures the request did not ask for', () => {
   const dcql = new DcqlService();
@@ -171,5 +182,97 @@ describe('rejecting disclosures the request did not ask for', () => {
     );
     expect(result.satisfied).toBe(true);
     expect(result.matched.c).toEqual({ 'address.city': 'Bengaluru' });
+  });
+
+  // The check above is only as good as the value it is given, and the first
+  // build of this feature got that wrong: extractCredentials() populated
+  // disclosedNames, the matcher consumed it, and the ONE place that connects
+  // them — the multi-credential keyed vp_token branch every Education
+  // presentation takes — did not pass it on. Every test in this file still
+  // passed, because they all hand the matcher a fixture written by hand.
+  //
+  // So this one builds an SD-JWT the way a wallet does, runs it through the real
+  // extractCredentials(), and feeds THAT to the matcher. No fixture in the
+  // middle.
+  describe('driven by what extractCredentials actually produces', () => {
+    const b64 = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+
+    /** An SD-JWT+KB presentation, in the wire shape identity-service emits. */
+    const sdJwt = (disclosures: Array<[string, unknown]>) =>
+      [
+        `${b64({ alg: 'ES256', typ: 'vc+sd-jwt' })}.${b64({
+          iss: 'did:web:issuer.example:school',
+          iat: 1756700000,
+          sub: 'did:key:holder',
+          vct: 'https://issuer.example/school/vct/school-record-credential',
+          cnf: { jwk: {} },
+          _sd: [],
+          _sd_alg: 'sha-256',
+        })}.signature`,
+        ...disclosures.map(([name, value]) => b64(['salt', name, value])),
+        // The trailing Key Binding JWT, which is not a disclosure and must not
+        // be counted as one.
+        `${b64({ alg: 'ES256', typ: 'kb+jwt' })}.${b64({ nonce: 'n', aud: 'a' })}.signature`,
+      ].join('~');
+
+    const extract = (presentation: string) => {
+      const service: any = Object.create(Oid4vpService.prototype);
+      const [parsed] = service.extractCredentials({ verifiableCredential: [presentation] });
+      return {
+        types: parsed.types,
+        vct: parsed.vct,
+        format: 'vc+sd-jwt',
+        claims: parsed.claims,
+        disclosedNames: parsed.disclosedNames,
+      };
+    };
+
+    it('reads the disclosed names off the wire and not out of the payload', () => {
+      const parsed = extract(
+        sdJwt([
+          ['learnerId', 'EDU-L-006733'],
+          ['completionStatus', 'COMPLETED'],
+        ]),
+      );
+      expect(parsed.disclosedNames).toEqual(['learnerId', 'completionStatus']);
+      // Not the registered claims, and not the Key Binding JWT.
+      expect(parsed.disclosedNames).not.toContain('iss');
+      expect(parsed.disclosedNames).not.toContain('nonce');
+    });
+
+    it('accepts exactly what was asked for, end to end', () => {
+      const result = dcql.evaluate(
+        QUERY,
+        [
+          extract(
+            sdJwt([
+              ['learnerId', 'EDU-L-006733'],
+              ['completionStatus', 'COMPLETED'],
+            ]),
+          ),
+        ],
+        { rejectUnrequestedDisclosures: true },
+      );
+      expect(result.satisfied).toBe(true);
+    });
+
+    it('refuses a surplus disclosure, end to end', () => {
+      const result = dcql.evaluate(
+        QUERY,
+        [
+          extract(
+            sdJwt([
+              ['learnerId', 'EDU-L-006733'],
+              ['completionStatus', 'COMPLETED'],
+              ['percentage', 7250],
+            ]),
+          ),
+        ],
+        { rejectUnrequestedDisclosures: true },
+      );
+      expect(result.satisfied).toBe(false);
+      expect(result.reason).toContain('percentage');
+      expect(result.reason).not.toContain('7250');
+    });
   });
 });

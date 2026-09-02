@@ -338,6 +338,14 @@ export class Oid4vpService {
             format: cq.format,
             claims: parsed.claims,
             algs: this.presentationAlgs(entry),
+            // Carried through, not recomputed: the over-disclosure check needs
+            // what the holder actually revealed in the `~` segments, and
+            // `claims` is a merged view that also contains the signed payload's
+            // registered claims. Omitting this silently disabled the check on
+            // this path — the multi-credential SD-JWT path every Education
+            // presentation takes — while the unit tests, which call evaluate()
+            // directly, went on passing.
+            disclosedNames: parsed.disclosedNames,
           });
           continue;
         }
