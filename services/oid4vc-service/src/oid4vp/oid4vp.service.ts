@@ -482,7 +482,9 @@ export class Oid4vpService {
       }
 
       // DCQL satisfaction.
-      const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented);
+      const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented, {
+        rejectUnrequestedDisclosures: this.config.rejectUnrequestedDisclosures,
+      });
       if (!dcqlResult.satisfied) throw new Error(`DCQL not satisfied: ${dcqlResult.reason}`);
       checks.dcql = 'OK';
 
@@ -548,6 +550,18 @@ export class Oid4vpService {
     format: string;
     claims: Record<string, any>;
     subjectId?: string;
+    // The claim names the HOLDER chose to reveal, for SD-JWT only.
+    //
+    // Kept separate from `claims` because `claims` is a merged view: the signed
+    // payload's registered claims (iss, iat, sub, vct, cnf, ...) plus the
+    // disclosed values. Comparing that against what a query asked for would
+    // flag `iss` as an unrequested disclosure and refuse every presentation.
+    // Only the `~` segments say what the holder actually disclosed.
+    //
+    // Undefined for formats that have no selective disclosure, where the
+    // question does not arise: an ldp_vc or jwt_vc_json credential carries all
+    // of its claims by construction and the holder chose nothing.
+    disclosedNames?: string[];
   }> {
     let list = vp.verifiableCredential || vp.verifiable_credential || [];
     if (!Array.isArray(list)) list = [list];
@@ -579,12 +593,17 @@ export class Oid4vpService {
           delete claims._sd;
           delete claims._sd_alg;
           const disclosed: Record<string, any> = { ...claims };
+          const disclosedNames: string[] = [];
           for (const d of parts.slice(1).filter((p) => p.length > 0)) {
             try {
               const [, name, value] = JSON.parse(
                 Buffer.from(d, 'base64url').toString('utf8'),
               );
               disclosed[name] = value;
+              // A three-element array is a disclosure; the trailing segment of a
+              // presentation is the Key Binding JWT, which parses as neither and
+              // lands in the catch below.
+              if (typeof name === 'string') disclosedNames.push(name);
             } catch {
               // malformed disclosure — ignore, digest check in verify() below still gates trust
             }
@@ -596,6 +615,7 @@ export class Oid4vpService {
             format: 'vc+sd-jwt',
             claims: disclosed,
             subjectId: disclosed?.sub,
+            disclosedNames,
           };
         }
         // jwt_vc_json: W3C VC-JWT convention, claims nested under `vc`.

@@ -733,7 +733,22 @@ export class Oid4vciService {
     }
 
     const requestedId = body?.credential_configuration_id || body?.credential_identifier;
-    const configs = await this.schema.getOid4vciConfigs();
+    // ownConfigs(), not getOid4vciConfigs(): the SAME narrowing the metadata
+    // applies, applied to the endpoint that actually mints.
+    //
+    // Filtering only the metadata was a hole, not merely untidy. credential-schema
+    // signs with the key of the DID that AUTHORED the schema, so an authenticated
+    // holder could ask any instance for any published configuration id and get
+    // back a credential signed by a different issuer, carrying the claims this
+    // instance resolved from its own registry entity. Reported live on 1 September
+    // 2026: the school instance answered a request for the college configuration
+    // with a College-signed credential carrying the learner's school percentage.
+    //
+    // A vct scoped to the minting instance's PUBLIC_URL kept it unpresentable, so
+    // nothing downstream accepted it — but that is a property of how a URL is
+    // built, not an authorization decision, and it is not what should be standing
+    // between a holder and someone else's signing key.
+    const configs = await this.ownConfigs();
     // Only what the request actually said. The format is derived from the
     // resolved credential further down — assuming one here (this used to default
     // to 'vc+sd-jwt') made every filter below reject a deployment that publishes
@@ -792,6 +807,38 @@ export class Oid4vciService {
       if (candidates.length === 1) cfg = candidates[0];
     }
     if (!cfg) {
+      // "Not mine" and "no such thing" are different answers, and an operator
+      // debugging a refusal needs to be told which. Only reached when the
+      // narrowing above actually removed something, so the extra lookup costs
+      // nothing in the ordinary case.
+      if (identifiedSomething && this.config.advertiseOwnCredentialsOnly && this.config.issuerDid) {
+        const all = await this.schema.getOid4vciConfigs();
+        // By id OR by vct: a wallet on the authorization_code path sends neither a
+        // configuration id nor a credential identifier — Credo sends `vct` — so
+        // reporting the useful message only for an id would leave the commonest
+        // request shape with "could not determine the credential type", which
+        // sends an operator looking for a schema that is present and simply
+        // belongs to somebody else.
+        const elsewhere = all.find(
+          (c) =>
+            (requestedId &&
+              (c.schemaId === requestedId ||
+                c.formats.some((f) => `${c.schemaId}_${f}` === requestedId))) ||
+            (body?.vct &&
+              c.formats.includes('vc+sd-jwt') &&
+              normalizeVct(c.vct, this.config.publicUrl) === body.vct),
+        );
+        if (elsewhere) {
+          this.logger.warn(
+            `Refused a credential request for '${elsewhere.name}', authored by ` +
+              `${elsewhere.author}, on the instance whose ISSUER_DID is ${this.config.issuerDid}.`,
+          );
+          throw new BadRequestException(
+            `invalid_credential_request: '${elsewhere.name}' is not issued by this issuer. ` +
+              `It is authored by ${elsewhere.author}; request it from that issuer instead.`,
+          );
+        }
+      }
       this.logger.warn(
         `Self-service credential request did not identify a type. Body keys: ${Object.keys(
           body ?? {},

@@ -178,6 +178,21 @@ export interface Oid4vcConfig {
    * nothing changes for anyone who has not asked for it.
    */
   advertiseOwnCredentialsOnly: boolean;
+  /**
+   * Refuse a presentation that discloses more than the DCQL query asked for,
+   * instead of dropping the surplus and answering normally.
+   *
+   * ON by default, unlike the flag above. That one widens what a wallet is shown
+   * and could surprise an existing deployment, so it opts in; this one closes a
+   * gap between what a verifier receives and what it can claim to have received,
+   * and defaulting it off would ship the weaker guarantee to everyone who does
+   * not know to look for it.
+   *
+   * Set REJECT_UNREQUESTED_DISCLOSURES=false to restore the previous behaviour —
+   * useful when testing against a wallet that over-discloses and you need to see
+   * the rest of the flow before fixing it.
+   */
+  rejectUnrequestedDisclosures: boolean;
   oid4vpEnabled: boolean;
   draft13CompatMode: boolean;
   vpSignRequest: boolean;
@@ -318,6 +333,7 @@ export const loadConfig = (): Oid4vcConfig => ({
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   issuerDid: process.env.ISSUER_DID || '',
   advertiseOwnCredentialsOnly: process.env.ADVERTISE_OWN_CREDENTIALS_ONLY === 'true',
+  rejectUnrequestedDisclosures: process.env.REJECT_UNREQUESTED_DISCLOSURES !== 'false',
   oid4vpEnabled: process.env.OID4VP_ENABLED !== 'false',
   draft13CompatMode: process.env.DRAFT13_COMPAT_MODE === 'true',
   // OID4VP request-object mode. Legacy implies unsigned (the `redirect_uri`
