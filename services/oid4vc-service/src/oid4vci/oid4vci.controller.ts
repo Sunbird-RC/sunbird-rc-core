@@ -28,8 +28,8 @@ export class Oid4vciController {
   @ApiBearerAuth()
   @UseGuards(KeycloakAuthGuard)
   @Post('offer')
-  createOffer(@Body() body: any) {
-    return this.oid4vci.createOffer(body);
+  createOffer(@Body() body: any, @Headers('authorization') auth?: string) {
+    return this.oid4vci.createOffer(body, auth);
   }
 
   @ApiOperation({ summary: 'Dereference a credential offer (wallet)' })

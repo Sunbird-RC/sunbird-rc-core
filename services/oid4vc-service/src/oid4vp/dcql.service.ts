@@ -24,9 +24,21 @@ function sameFormat(a: string, b: string): boolean {
 @Injectable()
 export class DcqlService {
   // Returns { satisfied, matched: { [credentialQueryId]: disclosedClaims } }.
+  //
+  // `rejectUnrequestedDisclosures` refuses a presentation that reveals more than
+  // the query asked for, rather than quietly dropping the surplus. See the block
+  // marked OVER-DISCLOSURE below for why that distinction matters.
   evaluate(
     query: any,
-    presented: Array<{ types: string[]; vct?: string; docType?: string; format: string; claims: Record<string, any> }>,
+    presented: Array<{
+      types: string[];
+      vct?: string;
+      docType?: string;
+      format: string;
+      claims: Record<string, any>;
+      disclosedNames?: string[];
+    }>,
+    options: { rejectUnrequestedDisclosures?: boolean } = {},
   ): { satisfied: boolean; matched: Record<string, any>; reason?: string } {
     const credentialQueries = query?.credentials || [];
     if (!Array.isArray(credentialQueries) || credentialQueries.length === 0) {
@@ -82,6 +94,49 @@ export class DcqlService {
           };
         }
         disclosed[path.join('.')] = value;
+      }
+      // OVER-DISCLOSURE.
+      //
+      // Building `disclosed` from the requested paths alone means a holder who
+      // reveals more than was asked for is answered normally, with the surplus
+      // silently discarded. The relying party never sees it and no decision can
+      // turn on it — but the values did leave the wallet and did reach this
+      // service, so "the verifier never receives it" was true of the relying
+      // party and not of the protocol boundary. Refusing here makes the
+      // guarantee the one that was claimed.
+      //
+      // Only for selective-disclosure formats, and only when the query named
+      // claims: a query with no `claims` is asking for the whole credential, so
+      // nothing a holder sends can exceed it.
+      if (options.rejectUnrequestedDisclosures && requestedClaims.length && candidate.disclosedNames) {
+        // Compare on the FIRST path segment. A nested claim is disclosed as its
+        // top-level object, so a request for ["address","city"] is satisfied by
+        // disclosing `address` — matching the full dotted path would refuse a
+        // correct presentation.
+        const asked = new Set(
+          requestedClaims
+            .map((c: any) => (Array.isArray(c.path) ? c.path : []))
+            .map((path: string[]) =>
+              (candidate.format === 'jwt_vc_json' || candidate.format === 'ldp_vc') &&
+              path[0] === 'credentialSubject'
+                ? path[1]
+                : path[0],
+            )
+            .filter(Boolean),
+        );
+        const surplus = candidate.disclosedNames.filter((name) => !asked.has(name));
+        if (surplus.length) {
+          return {
+            satisfied: false,
+            matched,
+            // Names the claims, not their values: this reason is reported to the
+            // relying party, and echoing a value the holder should not have sent
+            // would disclose it after refusing to accept it.
+            reason:
+              `credential for query ${cq.id} disclosed ${surplus.length} claim(s) the request ` +
+              `did not ask for: ${surplus.sort().join(', ')}`,
+          };
+        }
       }
       // No specific claims requested → disclose all.
       matched[cq.id || candidate.types.join('_')] =
