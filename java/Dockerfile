@@ -6,4 +6,8 @@ COPY ./org  /home/sunbirdrc/org
 COPY ./BOOT-INF/classes /home/sunbirdrc/BOOT-INF/classes
 COPY ./BOOT-INF/classes/frame.json.sample /home/sunbirdrc/BOOT-INF/classes/frame.json
 RUN mkdir -p /home/sunbirdrc/config/public/_schemas
+
+# [Auto-Remediation CWE-250] Enforce non-root execution
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
 CMD ["java", "-Xms1024m", "-Xmx2048m", "-XX:+UseG1GC", "-Dserver.port=8081", "-cp", "/home/sunbirdrc/config:/home/sunbirdrc", "org.springframework.boot.loader.JarLauncher"]
