@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/Sunbird-RC/community/discussions
+    about: Ask a question, or float an idea before it becomes a feature request.
+  - name: Documentation
+    url: https://rc.sunbird.org/
+    about: Installation, API reference, schemas, credentials and attestation.
+  - name: Installation and getting started
+    url: https://rc.sunbird.org/use/getting-started/install-sunbird-rc
+    about: Prerequisites and setup — most install problems are answered here.
+  - name: Report a security vulnerability
+    url: https://github.com/Sunbird-RC/sunbird-rc-core/security/advisories/new
+    about: Never report security issues publicly. Use private reporting instead.

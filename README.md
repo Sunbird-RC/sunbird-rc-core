@@ -2,7 +2,6 @@
 
 ![Build](https://github.com/Sunbird-RC/sunbird-rc-core/actions/workflows/maven.yml/badge.svg)
 
-
 Sunbird RC is an open-source software framework for rapidly building electronic
 registries, enable atestation capabilities, and build verifiable credentialling
 with minimal effort.
@@ -13,17 +12,19 @@ with the link to the repository in a digitally signed form. It allows data
 owners to provide authorized access to other users/entities in controlled manner
 for digital verification and usage.
 
+## Maintainer
+
+[@pallakartheekreddy](https://github.com/pallakartheekreddy)
 
 ## Installation and Setup
 
-See
-[the installation and getting started guide](https://docs.sunbirdrc.dev/developer-documentation/installation-guide).
+Checkout [the installation and getting started guide](https://rc.sunbird.org/use/getting-started/installation).
 
-More documentation can be found [here](https://docs.sunbirdrc.dev/).
+More documentation can be found [here](https://rc.sunbird.org/).
 
 ## [Help / Discussion](https://github.com/Sunbird-RC/community/discussions)
 
 ## License
 
 This repository's contents are licensed under the MIT license. See the
-[license file](./LICENSE) for more details.
+[license file](LICENSE) for more details.
