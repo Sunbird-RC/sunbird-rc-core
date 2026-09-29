@@ -115,3 +115,216 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
     expect(claims.jti).toBe('urn:uuid:cred-1');
   });
 });
+
+describe('CredentialFormatService — signInFormat dispatch', () => {
+  const cred = {
+    id: 'urn:uuid:cred-1',
+    type: ['VerifiableCredential'],
+    issuer: { id: 'did:rcw:issuer-1' },
+    issuanceDate: '2026-01-01T00:00:00Z',
+    credentialSubject: { id: 'did:key:holder' },
+  };
+
+  it('routes ldp_vc to signLdp (identityUtilsService.signVC)', async () => {
+    const signVC = jest.fn().mockResolvedValue({ proof: { type: 'Ed25519Signature2020' } });
+    const service = new CredentialFormatService({ signVC } as any);
+
+    const result = await service.signInFormat(cred as any, 'did:rcw:issuer-1', 'ldp_vc');
+    expect(signVC).toHaveBeenCalled();
+    expect(result.signed).toHaveProperty('proof');
+    expect(result.enveloped).toBeNull();
+  });
+
+  it('routes jwt_vc_json to signJwtVc', async () => {
+    const signJwt = jest.fn().mockResolvedValue('jwt.value');
+    const service = new CredentialFormatService({ signJwt } as any);
+
+    const result = await service.signInFormat(cred as any, 'did:rcw:issuer-1', 'jwt_vc_json');
+    expect(signJwt).toHaveBeenCalled();
+    expect(result.enveloped).toBe('jwt.value');
+    expect(result.signed).toHaveProperty('@context');
+  });
+
+  it('routes vc+sd-jwt to signSdJwtVc', async () => {
+    const signSdJwt = jest.fn().mockResolvedValue('sd.jwt');
+    const service = new CredentialFormatService({ signSdJwt } as any);
+
+    const result = await service.signInFormat(cred as any, 'did:rcw:issuer-1', 'vc+sd-jwt');
+    expect(signSdJwt).toHaveBeenCalled();
+    expect(result.enveloped).toBe('sd.jwt');
+  });
+
+  it('routes mso_mdoc to signMdoc', async () => {
+    const signMdoc = jest.fn().mockResolvedValue('mdoc_data');
+    const service = new CredentialFormatService({ signMdoc } as any);
+
+    const result = await service.signInFormat(cred as any, 'did:rcw:issuer-1', 'mso_mdoc', {
+      docType: 'org.iso.18013.5.1',
+      namespaces: { ns: { k: 'v' } },
+    });
+    expect(signMdoc).toHaveBeenCalled();
+    expect(result.enveloped).toBe('mdoc_data');
+  });
+
+  it('throws for unsupported format', async () => {
+    const service = new CredentialFormatService({} as any);
+    await expect(service.signInFormat(cred as any, 'did:rcw:issuer-1', 'unsupported' as any)).rejects.toThrow('Unsupported format');
+  });
+
+  it('defaults to ldp_vc when format is omitted', async () => {
+    const signVC = jest.fn().mockResolvedValue({ proof: {} });
+    const service = new CredentialFormatService({ signVC } as any);
+
+    await service.signInFormat(cred as any, 'did:rcw:issuer-1');
+    expect(signVC).toHaveBeenCalled();
+  });
+});
+
+describe('CredentialFormatService — signMdoc validation', () => {
+  it('throws when docType is missing', async () => {
+    const service = new CredentialFormatService({} as any);
+    const cred = { id: 'urn:uuid:1', type: ['VerifiableCredential'], credentialSubject: {} };
+    await expect(
+      service.signInFormat(cred as any, 'did:rcw:issuer', 'mso_mdoc', { namespaces: { ns: {} } })
+    ).rejects.toThrow('mso_mdoc requires docType and namespaces');
+  });
+
+  it('throws when namespaces is missing', async () => {
+    const service = new CredentialFormatService({} as any);
+    const cred = { id: 'urn:uuid:1', type: ['VerifiableCredential'], credentialSubject: {} };
+    await expect(
+      service.signInFormat(cred as any, 'did:rcw:issuer', 'mso_mdoc', { docType: 'org.iso.18013.5.1' })
+    ).rejects.toThrow('mso_mdoc requires docType and namespaces');
+  });
+});
+
+describe('CredentialFormatService — toEpoch', () => {
+  it('returns current epoch when dateStr is undefined', () => {
+    const service = new CredentialFormatService({} as any);
+    const before = Math.floor(Date.now() / 1000);
+    const result = (service as any).toEpoch(undefined);
+    const after = Math.floor(Date.now() / 1000);
+    expect(result).toBeGreaterThanOrEqual(before);
+    expect(result).toBeLessThanOrEqual(after);
+  });
+
+  it('converts ISO date string to epoch seconds', () => {
+    const service = new CredentialFormatService({} as any);
+    const result = (service as any).toEpoch('2026-01-01T00:00:00Z');
+    expect(result).toBe(1767225600);
+  });
+
+  it('floors to whole seconds', () => {
+    const service = new CredentialFormatService({} as any);
+    const result = (service as any).toEpoch('2026-01-01T00:00:00.999Z');
+    expect(result).toBe(1767225600);
+  });
+
+  it('falls back to current time for invalid date string', () => {
+    const service = new CredentialFormatService({} as any);
+    const before = Math.floor(Date.now() / 1000);
+    const result = (service as any).toEpoch('not-a-date');
+    const after = Math.floor(Date.now() / 1000);
+    expect(result).toBeGreaterThanOrEqual(before);
+    expect(result).toBeLessThanOrEqual(after);
+  });
+});
+
+describe('CredentialFormatService — envelope', () => {
+  it('returns W3C VC Data Model 2.0 EnvelopedVerifiableCredential', () => {
+    const service = new CredentialFormatService({} as any);
+    const result = (service as any).envelope('urn:uuid:cred-1', 'data:application/vc+jwt,abc');
+
+    expect(result).toEqual({
+      '@context': ['https://www.w3.org/ns/credentials/v2'],
+      id: 'data:application/vc+jwt,abc',
+      type: 'EnvelopedVerifiableCredential',
+      credentialId: 'urn:uuid:cred-1',
+    });
+  });
+});
+
+describe('CredentialFormatService — signSdJwtVc disclosable & vct', () => {
+  let signSdJwt: jest.Mock;
+
+  beforeEach(() => {
+    signSdJwt = jest.fn().mockResolvedValue('sd.jwt');
+  });
+
+  const makeService = () => new CredentialFormatService({ signSdJwt } as any);
+
+  it('uses explicit disclosable array when provided', async () => {
+    const service = makeService();
+    const cred = {
+      id: 'urn:uuid:1',
+      type: ['VerifiableCredential'],
+      issuer: { id: 'did:rcw:issuer' },
+      issuanceDate: '2026-01-01T00:00:00Z',
+      credentialSubject: { id: 'did:key:h', name: 'Alice', grade: 'A' },
+    };
+
+    await (service as any).signSdJwtVc(cred, { id: 'did:rcw:issuer' }, { disclosable: ['name'] });
+    const disclosable = signSdJwt.mock.calls[0][2];
+    expect(disclosable).toEqual(['name']);
+  });
+
+  it('defaults disclosable to all subject keys except id', async () => {
+    const service = makeService();
+    const cred = {
+      id: 'urn:uuid:1',
+      type: ['VerifiableCredential'],
+      issuer: { id: 'did:rcw:issuer' },
+      issuanceDate: '2026-01-01T00:00:00Z',
+      credentialSubject: { id: 'did:key:h', grade: 'A', programme: 'CS' },
+    };
+
+    await (service as any).signSdJwtVc(cred, { id: 'did:rcw:issuer' }, {});
+    const disclosable = signSdJwt.mock.calls[0][2];
+    expect(disclosable).toEqual(['grade', 'programme']);
+  });
+
+  it('uses explicit vct when provided', async () => {
+    const service = makeService();
+    const cred = {
+      id: 'urn:uuid:1',
+      type: ['VerifiableCredential', 'AgeCredential'],
+      issuer: { id: 'did:rcw:issuer' },
+      issuanceDate: '2026-01-01T00:00:00Z',
+      credentialSubject: { id: 'did:key:h' },
+    };
+
+    await (service as any).signSdJwtVc(cred, { id: 'did:rcw:issuer' }, { vct: 'CustomVct' });
+    const payload = signSdJwt.mock.calls[0][1];
+    expect(payload.vct).toBe('CustomVct');
+  });
+
+  it('derives vct from last element of type array', async () => {
+    const service = makeService();
+    const cred = {
+      id: 'urn:uuid:1',
+      type: ['VerifiableCredential', 'AgeCredential'],
+      issuer: { id: 'did:rcw:issuer' },
+      issuanceDate: '2026-01-01T00:00:00Z',
+      credentialSubject: { id: 'did:key:h' },
+    };
+
+    await (service as any).signSdJwtVc(cred, { id: 'did:rcw:issuer' }, {});
+    const payload = signSdJwt.mock.calls[0][1];
+    expect(payload.vct).toBe('AgeCredential');
+  });
+
+  it('falls back to VerifiableCredential when type is empty', async () => {
+    const service = makeService();
+    const cred = {
+      id: 'urn:uuid:1',
+      type: [],
+      issuer: { id: 'did:rcw:issuer' },
+      issuanceDate: '2026-01-01T00:00:00Z',
+      credentialSubject: { id: 'did:key:h' },
+    };
+
+    await (service as any).signSdJwtVc(cred, { id: 'did:rcw:issuer' }, {});
+    const payload = signSdJwt.mock.calls[0][1];
+    expect(payload.vct).toBe('VerifiableCredential');
+  });
+});

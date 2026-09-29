@@ -17,8 +17,15 @@ describe('PrismaService', () => {
   });
 
   describe('onModuleInit', () => {
-    it('should connect to the database', async () => {
+    it('connects to the database', async () => {
+      const connectSpy = jest.spyOn(prismaService, '$connect').mockResolvedValue(undefined);
       await expect(prismaService.onModuleInit()).resolves.not.toThrow();
+      expect(connectSpy).toHaveBeenCalled();
+    });
+
+    it('propagates a connection failure', async () => {
+      jest.spyOn(prismaService, '$connect').mockRejectedValue(new Error('connection refused'));
+      await expect(prismaService.onModuleInit()).rejects.toThrow('connection refused');
     });
   });
 

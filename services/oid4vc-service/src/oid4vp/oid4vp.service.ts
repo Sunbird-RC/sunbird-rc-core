@@ -14,6 +14,8 @@ import { IdentityClient } from '../clients/identity.client';
 import { CredentialsClient } from '../clients/credentials.client';
 import { TokenService } from '../oid4vci/token.service';
 import { DcqlService } from './dcql.service';
+import { PexService } from './pex.service';
+import { resolveJsonPath } from './jsonpath.util';
 import { loadConfig } from '../config/configuration';
 import * as jose from 'jose';
 import { buildSessionTranscript, verifyMdocPresentation } from './mdoc-presentation.util';
@@ -24,7 +26,9 @@ import {
 } from '../utils/self-contained-did.util';
 
 interface VpTxn {
-  dcqlQuery: any;
+  queryMode: 'dcql' | 'pex';
+  dcqlQuery?: any;
+  presentationDefinition?: any;
   nonce: string;
   state: string;
   status: 'pending' | 'verified' | 'failed';
@@ -50,6 +54,7 @@ export class Oid4vpService {
     private readonly credentials: CredentialsClient,
     private readonly tokens: TokenService,
     private readonly dcql: DcqlService,
+    private readonly pex: PexService,
   ) {}
 
   // client_id / scheme history, condensed from live interop testing against
@@ -76,7 +81,7 @@ export class Oid4vpService {
     responseUri: string,
     nonce: string,
     state: string,
-    dcqlQuery: any,
+    queryPayload: Record<string, any>,
     signed: boolean,
   ): Promise<{ mode: VpRequestMode; clientId: string; payload: any; jws?: string }> {
     if (this.config.vpLegacyClientIdScheme) {
@@ -88,7 +93,7 @@ export class Oid4vpService {
         response_uri: responseUri,
         nonce,
         state,
-        dcql_query: dcqlQuery,
+        ...queryPayload,
       };
       return { mode: 'legacy', clientId: payload.client_id, payload };
     }
@@ -101,7 +106,7 @@ export class Oid4vpService {
       response_uri: responseUri,
       nonce,
       state,
-      dcql_query: dcqlQuery,
+      ...queryPayload,
     };
 
     if (!signed) {
@@ -144,9 +149,24 @@ export class Oid4vpService {
     return { mode: 'signed', clientId: didClientId, payload: signedPayload, jws };
   }
 
-  // Verifier creates a presentation request.
-  async createRequest(body: { dcql_query: any; signed?: boolean }) {
-    if (!body?.dcql_query) throw new BadRequestException('dcql_query required');
+  // Verifier creates a presentation request — DCQL or PEX, mutually exclusive.
+  async createRequest(body: {
+    dcql_query?: any;
+    presentation_definition?: any;
+    signed?: boolean;
+    client_metadata?: any;
+  }) {
+    const hasDcql = !!body?.dcql_query;
+    const hasPex = !!body?.presentation_definition;
+    if (hasDcql === hasPex) {
+      throw new BadRequestException('exactly one of dcql_query or presentation_definition is required');
+    }
+    const queryMode: 'dcql' | 'pex' = hasDcql ? 'dcql' : 'pex';
+    const queryPayload = {
+      ...(hasDcql ? { dcql_query: body.dcql_query } : { presentation_definition: body.presentation_definition }),
+      ...(body.client_metadata ? { client_metadata: body.client_metadata } : {}),
+    };
+
     const id = uuid();
     const nonce = crypto.randomBytes(24).toString('base64url');
     const state = crypto.randomBytes(16).toString('base64url');
@@ -157,11 +177,17 @@ export class Oid4vpService {
       responseUri,
       nonce,
       state,
-      body.dcql_query,
+      queryPayload,
       signed,
     );
 
-    const txn: VpTxn = { dcqlQuery: body.dcql_query, nonce, state, status: 'pending' };
+    const txn: VpTxn = {
+      queryMode,
+      ...(hasDcql ? { dcqlQuery: body.dcql_query } : { presentationDefinition: body.presentation_definition }),
+      nonce,
+      state,
+      status: 'pending',
+    };
     await this.store.set(
       `oid4vp:txn:${id}`,
       { ...txn, requestObject: payload, requestObjectJws: jws, requestMode: mode, clientId, responseUri },
@@ -171,9 +197,14 @@ export class Oid4vpService {
     await this.store.set(`oid4vp:state:${state}`, { id }, this.config.ttl.vpTxn);
 
     const requestUri = `${this.config.publicUrl}/vp/request-object/${id}`;
-    const link = `openid4vp://?client_id=${encodeURIComponent(
-      clientId,
-    )}&request_uri=${encodeURIComponent(requestUri)}`;
+    const link =
+      mode === 'signed'
+        ? `openid4vp://authorize?client_id=${encodeURIComponent(clientId)}&request=${encodeURIComponent(jws!)}`
+        : `openid4vp://authorize?${new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(payload).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]),
+            ),
+          ).toString()}`;
 
     return { transaction_id: id, request_uri: requestUri, qr_data: link };
   }
@@ -215,268 +246,104 @@ export class Oid4vpService {
 
     const checks: Record<string, string> = {};
     try {
-      let vpToken = body.vp_token;
-      if (!vpToken) throw new Error('missing vp_token');
-
-      // direct_post sends the Authorization Response as
-      // application/x-www-form-urlencoded (OID4VP §Response Mode
-      // "direct_post"), so `vp_token` arrives as a JSON-encoded STRING, not a
-      // pre-parsed object — Fastify's form parser has no notion of a nested
-      // JSON value. A real wallet's POST body has `vp_token: '{"q":["..."]}'`
-      // (a string); JSON.parse it before treating it as the DCQL-keyed object.
-      if (typeof vpToken === 'string') {
-        try {
-          vpToken = JSON.parse(vpToken);
-        } catch {
-          throw new Error('vp_token is not valid JSON');
-        }
-      }
-
-      // Per OID4VP §Response Parameters, `vp_token` is a JSON object keyed by
-      // the DCQL credential query `id`, each value an array of Presentations
-      // — NOT a bare JWT or an array of JWTs. A real wallet's response is
-      // `{ [queryId]: [presentation, ...] }`; treating the whole object as a
-      // single JWT-VP instead throws a token/header parsing error before any
-      // per-credential parsing even starts.
-      if (typeof vpToken !== 'object' || Array.isArray(vpToken)) {
-        throw new Error(
-          "vp_token must be a DCQL-keyed object of the form { [queryId]: [presentation, ...] }",
-        );
-      }
-
-      const dcqlCredentials = txn.dcqlQuery?.credentials || [];
-      if (!dcqlCredentials.length) throw new Error('txn has no DCQL credential queries');
+      if (!body.vp_token) throw new Error('missing vp_token');
 
       let holderDid: string | undefined;
       const presented: Array<any> = [];
+      let matched: Record<string, any> = {};
 
-      for (const cq of dcqlCredentials) {
-        const entries = vpToken[cq.id];
-        if (!Array.isArray(entries) || !entries.length) {
-          throw new Error(`no presentation submitted for query '${cq.id}'`);
+      if (txn.queryMode === 'pex') {
+        const vpTokenArr = this.normalizePexVpToken(body.vp_token);
+        let submission = body.presentation_submission;
+        if (typeof submission === 'string') {
+          try {
+            submission = JSON.parse(submission);
+          } catch {
+            throw new Error('presentation_submission is not valid JSON');
+          }
         }
-        const entry = entries[0];
+        if (!submission || !Array.isArray(submission.descriptor_map)) {
+          throw new Error('missing or invalid presentation_submission');
+        }
 
-        if (cq.format === 'mso_mdoc') {
-          // mso_mdoc presentation: the entry is a base64url CBOR
-          // DeviceResponse, not a JWT-VP wrapper — a genuinely different wire
-          // shape from the other formats (see mdoc-presentation.util.ts).
-          const mdocGeneratedNonce = body.mdoc_generated_nonce;
-          if (!mdocGeneratedNonce) throw new Error('missing mdoc_generated_nonce');
-          const clientId = txn.requestObject?.client_id;
-          const responseUri = txn.requestObject?.response_uri;
-          const transcript = buildSessionTranscript(mdocGeneratedNonce, clientId, responseUri, txn.nonce);
-          const mdocResult = await verifyMdocPresentation(entry, transcript);
-          if (!mdocResult.verified) throw new Error(`mdoc presentation invalid: ${mdocResult.error}`);
-          if (!mdocResult.documents.length) throw new Error('no documents in mdoc presentation');
-
-          // @auth0/mdl's Verifier.verify() already covers, in one call: the
-          // issuer's COSE signature + per-item digests (credentialSignatures),
-          // and the device's COSE signature against deviceKeyInfo.deviceKey
-          // computed over the session transcript we built from txn.nonce
-          // (holderSignature + nonce + holderBinding all at once — a mismatch
-          // in ANY of client_id/response_uri/nonce produces different
-          // transcript bytes than what the wallet actually signed over, so
-          // Verifier.verify() fails there instead of a separate explicit check).
-          checks.holderSignature = 'OK';
-          checks.nonce = 'OK';
-          checks.credentialSignatures = 'OK';
-          checks.holderBinding = 'OK';
-          checks.revocation = 'OK'; // no mdoc revocation mechanism wired yet — same default as other formats
-          presented.push(
-            ...mdocResult.documents.map((doc) => ({
-              types: [],
-              docType: doc.docType,
-              format: 'mso_mdoc',
-              claims: doc.claims,
-            })),
+        const descriptors = txn.presentationDefinition?.input_descriptors || [];
+        for (const dm of submission.descriptor_map) {
+          const descriptor = descriptors.find((d: any) => d.id === dm.id);
+          if (!descriptor) throw new Error(`unknown descriptor id '${dm.id}' in presentation_submission`);
+          const resolved = this.resolveDescriptorMapEntry(vpTokenArr, dm);
+          const { presented: push, holderDid: hd } = await this.verifyPresentationEntry(
+            resolved.value,
+            resolved.format,
+            txn,
+            body,
+            checks,
           );
-          continue;
+          presented.push(...push);
+          if (!holderDid && hd) holderDid = hd;
         }
 
-        if (cq.format === 'dc+sd-jwt' || cq.format === 'vc+sd-jwt') {
-          // The Presentation *is* the SD-JWT+KB compact string directly —
-          // there is no outer VP-JWT wrapper for this format. The Key Binding
-          // JWT trailing it carries the `nonce`/`aud` that prove holder
-          // binding + replay protection (OID4VP "IETF SD-JWT VC" Presentation
-          // Response). Delegate that whole check to credentials-service,
-          // which already implements it end-to-end via identity-service's
-          // verifySdJwt (issuer signature, disclosure digests, KB-JWT
-          // signature against the issuer-embedded `cnf.jwk`, and nonce/aud) —
-          // the same call path already used for issuance-time PoP, just with
-          // challenge/domain now supplied.
-          const verifyRes = await this.credentials.verify(entry, {
-            challenge: txn.nonce,
-            domain: txn.clientId,
-          });
-          const vcChecks = verifyRes?.checks?.[0] || {};
-          if (vcChecks.proof !== 'OK') {
-            throw new Error('SD-JWT+KB presentation invalid (signature, nonce, or audience)');
-          }
-          if (vcChecks.revoked === 'NOK') throw new Error('embedded VC revoked');
-          checks.holderSignature = 'OK';
-          checks.nonce = 'OK';
-          checks.audience = 'OK';
-          checks.credentialSignatures = 'OK';
-          checks.holderBinding = 'OK';
-          checks.revocation = 'OK';
+        const pexResult = this.pex.evaluate(txn.presentationDefinition, presented);
+        if (!pexResult.satisfied) throw new Error(`PEX not satisfied: ${pexResult.reason}`);
+        checks.pex = 'OK';
+        matched = pexResult.matched;
+      } else {
+        let vpToken = body.vp_token;
 
-          // Claim reconstruction is independent of the trust check above —
-          // extractCredentials() already tolerates a trailing KB-JWT segment
-          // (silently skipped as an unparseable "disclosure").
-          const [parsed] = this.extractCredentials({ verifiableCredential: [entry] });
-          if (!parsed) throw new Error('unable to parse SD-JWT claims');
-          if (!holderDid && parsed.subjectId) holderDid = parsed.subjectId;
-          presented.push({ types: parsed.types, vct: parsed.vct, format: cq.format, claims: parsed.claims });
-          continue;
+        // direct_post sends the Authorization Response as
+        // application/x-www-form-urlencoded (OID4VP §Response Mode
+        // "direct_post"), so `vp_token` arrives as a JSON-encoded STRING, not
+        // a pre-parsed object — Fastify's form parser has no notion of a
+        // nested JSON value. A real wallet's POST body has
+        // `vp_token: '{"q":["..."]}'` (a string); JSON.parse it before
+        // treating it as the DCQL-keyed object.
+        if (typeof vpToken === 'string') {
+          try {
+            vpToken = JSON.parse(vpToken);
+          } catch {
+            throw new Error('vp_token is not valid JSON');
+          }
         }
 
-        // jwt_vc_json / ldp_vc: the Presentation is itself a Verifiable
-        // Presentation carrying its own nonce/aud (JWT-VP) or challenge/domain
-        // (LD-proof VP), wrapping the embedded credential(s).
-        if (typeof entry === 'string') {
-          const vpHeader = jose.decodeProtectedHeader(entry);
-          const vpClaims: any = jose.decodeJwt(entry);
-
-          const holderKid = vpHeader.kid as string;
-          let entryHolderDid = holderKid ? holderKid.split('#')[0] : vpClaims.iss;
-          let holderPublicJwk: any = vpHeader.jwk as any;
-
-          // did:jwk wallets commonly sign with an inline `jwk` header and no
-          // `kid`/`iss`, or a self-contained `did:jwk:...` DID; others present
-          // with the `did:key` they bound at issuance. Neither is resolvable
-          // via identity-service's registry, which only knows its own DB plus
-          // did:web (see did.service.ts resolveDID: any other method 404s).
-          // Both methods are deterministic by spec — the public key is
-          // embedded in the identifier — so resolve locally instead of
-          // round-tripping to identity-service. Mirrors the same fallback
-          // applied to the issuance-side PoP check in pop.service.ts.
-          //
-          // An inline `jwk` header is self-asserted; if `kid`/`iss` also
-          // claims a holder DID, that DID's actual key — not the header —
-          // must be trusted. Verify the two agree for self-contained DIDs;
-          // reject an inline jwk alongside any registry-resolved DID method
-          // outright, since its real key can only come from resolution.
-          // Otherwise the holder-binding check below (subjectId ===
-          // entryHolderDid) compares the embedded VC's subject against a DID
-          // the presenter never actually proved control of.
-          if (holderPublicJwk && entryHolderDid) {
-            if (isSelfContainedDid(entryHolderDid)) {
-              if (!jwkPublicKeyEquals(resolveSelfContainedDidToJwk(entryHolderDid), holderPublicJwk)) {
-                throw new Error('holder DID does not match inline jwk header');
-              }
-            } else {
-              throw new Error('inline jwk header not permitted alongside a registry-resolved holder DID');
-            }
-          }
-          if (!holderPublicJwk) {
-            holderPublicJwk = resolveSelfContainedDidToJwk(entryHolderDid);
-          }
-          if (!holderPublicJwk) {
-            const holderDidDoc = await this.identity.resolveDID(entryHolderDid);
-            const holderVm = (holderDidDoc.verificationMethod || []).find(
-              (m: any) => (holderKid ? m.id === holderKid : true) && m.publicKeyJwk,
-            );
-            if (!holderVm) throw new Error('holder key not resolvable');
-            holderPublicJwk = holderVm.publicKeyJwk;
-          }
-          if (!entryHolderDid) {
-            entryHolderDid = `did:jwk:${Buffer.from(JSON.stringify(holderPublicJwk)).toString('base64url')}`;
-          }
-          const holderKey = await jose.importJWK(holderPublicJwk, (vpHeader.alg as string) || 'ES256');
-          await jose.compactVerify(entry, holderKey);
-          checks.holderSignature = 'OK';
-
-          if (vpClaims.nonce !== txn.nonce) throw new Error('nonce mismatch');
-          checks.nonce = 'OK';
-
-          // A VP token bound to a different verifier's client_id (e.g. replayed
-          // against this endpoint after being obtained by another relying
-          // party) must be rejected here — the request's own client_id is the
-          // only value that anchors "who this presentation was made to".
-          const aud = vpClaims.aud;
-          const audMatches = Array.isArray(aud) ? aud.includes(txn.clientId) : aud === txn.clientId;
-          if (!audMatches) throw new Error('audience mismatch');
-          checks.audience = 'OK';
-
-          const vp = vpClaims.vp || vpClaims;
-          const embedded = this.extractCredentials(vp);
-          if (!embedded.length) throw new Error('no verifiable credentials in VP');
-
-          // Per-VC signature verify (delegated) + holder binding + status.
-          //
-          // Deliberately NOT passing {challenge: txn.nonce, domain: ...} here.
-          // That was found live to break every ldp_vc presentation: the embedded
-          // VC's proof is a static assertion signature created once at issuance
-          // time, long before this (or any) presentation's nonce existed, so
-          // credentials-service's checkChallengeDomain() would require an
-          // impossible match and always fail proof:'OK'. Replay/freshness
-          // protection for the PRESENTATION is already correctly enforced above
-          // (the JWT-VP wrapper's own `nonce` claim check) — passing the
-          // presentation's nonce down into the embedded credential's own
-          // signature check applies that protection at the wrong layer.
-          for (const vc of embedded) {
-            const verifyRes = await this.credentials.verify(vc.raw);
-            const proofOk = verifyRes?.checks?.[0]?.proof === 'OK';
-            const notRevoked = verifyRes?.checks?.[0]?.revoked !== 'NOK';
-            if (!proofOk) throw new Error('embedded VC signature invalid');
-            if (!notRevoked) throw new Error('embedded VC revoked');
-
-            // holder binding: subject id must equal the VP signer. Fail closed
-            // (rather than skip) when the embedded VC carries no subject id at
-            // all — otherwise a credential with no credentialSubject.id/sub
-            // would silently report holderBinding: 'OK' with nothing actually
-            // compared.
-            const subjectId = vc.claims?.id || vc.claims?.sub || vc.subjectId;
-            if (!subjectId || subjectId !== entryHolderDid) {
-              throw new Error('holder binding failed: missing or mismatched subject id');
-            }
-            presented.push({
-              types: vc.types,
-              vct: vc.vct,
-              format: vc.format,
-              claims: vc.claims,
-            });
-          }
-          if (!holderDid) holderDid = entryHolderDid;
-          checks.credentialSignatures = 'OK';
-          checks.holderBinding = 'OK';
-          checks.revocation = 'OK';
-        } else {
-          // ldp_vc as a plain Data Integrity VP object — challenge/domain
-          // live on the LD proof itself rather than JWT claims.
-          const proof = entry?.proof || {};
-          if (proof.challenge && proof.challenge !== txn.nonce) throw new Error('nonce mismatch');
-          if (proof.domain && proof.domain !== txn.clientId) throw new Error('audience mismatch');
-          checks.nonce = 'OK';
-          checks.audience = 'OK';
-          const verifyRes = await this.credentials.verify(entry, {
-            challenge: txn.nonce,
-            domain: txn.clientId,
-          });
-          const proofOk = verifyRes?.checks?.[0]?.proof === 'OK';
-          if (!proofOk) throw new Error('ldp_vc presentation invalid');
-          checks.holderSignature = 'OK';
-          checks.credentialSignatures = 'OK';
-          // This branch has no separate outer-VP holder signature distinct
-          // from the credential's own proof — the closest thing to a holder
-          // binding check available here is requiring a subject id to exist
-          // at all, rather than unconditionally reporting 'OK'.
-          const subject = entry.credentialSubject || {};
-          if (!subject.id) throw new Error('holder binding failed: missing subject id');
-          checks.holderBinding = 'OK';
-          checks.revocation = 'OK';
-          presented.push({ types: entry.type || ['VerifiableCredential'], format: 'ldp_vc', claims: subject });
+        // Per OID4VP §Response Parameters, `vp_token` is a JSON object keyed
+        // by the DCQL credential query `id`, each value an array of
+        // Presentations — NOT a bare JWT or an array of JWTs. A real
+        // wallet's response is `{ [queryId]: [presentation, ...] }`;
+        // treating the whole object as a single JWT-VP instead throws a
+        // token/header parsing error before any per-credential parsing even
+        // starts.
+        if (typeof vpToken !== 'object' || Array.isArray(vpToken)) {
+          throw new Error(
+            "vp_token must be a DCQL-keyed object of the form { [queryId]: [presentation, ...] }",
+          );
         }
+
+        const dcqlCredentials = txn.dcqlQuery?.credentials || [];
+        if (!dcqlCredentials.length) throw new Error('txn has no DCQL credential queries');
+
+        for (const cq of dcqlCredentials) {
+          const entries = vpToken[cq.id];
+          if (!Array.isArray(entries) || !entries.length) {
+            throw new Error(`no presentation submitted for query '${cq.id}'`);
+          }
+          const { presented: push, holderDid: hd } = await this.verifyPresentationEntry(
+            entries[0],
+            cq.format,
+            txn,
+            body,
+            checks,
+          );
+          presented.push(...push);
+          if (!holderDid && hd) holderDid = hd;
+        }
+
+        const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented);
+        if (!dcqlResult.satisfied) throw new Error(`DCQL not satisfied: ${dcqlResult.reason}`);
+        checks.dcql = 'OK';
+        matched = dcqlResult.matched;
       }
 
-      // DCQL satisfaction.
-      const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented);
-      if (!dcqlResult.satisfied) throw new Error(`DCQL not satisfied: ${dcqlResult.reason}`);
-      checks.dcql = 'OK';
-
       // Store the result.
-      const result = { verified: true, checks, claims: dcqlResult.matched, holderDid };
+      const result = { verified: true, checks, claims: matched, holderDid };
       await this.store.set(key, { ...txn, status: 'verified', result }, this.config.ttl.vpTxn);
       return { redirect_uri: null, status: 'ok' };
     } catch (err) {
@@ -485,6 +352,326 @@ export class Oid4vpService {
       await this.store.set(key, { ...txn, status: 'failed', result }, this.config.ttl.vpTxn);
       throw new ForbiddenException(result);
     }
+  }
+
+  // Verifies one presented entry (one credential/presentation, already
+  // resolved from either a DCQL credential-query slot or a PEX
+  // descriptor_map entry) and returns the presented[]-shaped items it
+  // yields plus any holder DID it establishes. Shared by both query modes —
+  // the per-format checks below don't care which query language selected
+  // this entry.
+  private async verifyPresentationEntry(
+    entry: any,
+    format: string,
+    txn: any,
+    body: any,
+    checks: Record<string, string>,
+  ): Promise<{ presented: any[]; holderDid?: string }> {
+    if (format === 'mso_mdoc') {
+      // mso_mdoc presentation: the entry is a base64url CBOR DeviceResponse,
+      // not a JWT-VP wrapper — a genuinely different wire shape from the
+      // other formats (see mdoc-presentation.util.ts).
+      const mdocGeneratedNonce = body.mdoc_generated_nonce;
+      if (!mdocGeneratedNonce) throw new Error('missing mdoc_generated_nonce');
+      const clientId = txn.requestObject?.client_id;
+      const responseUri = txn.requestObject?.response_uri;
+      const transcript = buildSessionTranscript(mdocGeneratedNonce, clientId, responseUri, txn.nonce);
+      const mdocResult = await verifyMdocPresentation(entry, transcript);
+      if (!mdocResult.verified) throw new Error(`mdoc presentation invalid: ${mdocResult.error}`);
+      if (!mdocResult.documents.length) throw new Error('no documents in mdoc presentation');
+
+      // @auth0/mdl's Verifier.verify() already covers, in one call: the
+      // issuer's COSE signature + per-item digests (credentialSignatures),
+      // and the device's COSE signature against deviceKeyInfo.deviceKey
+      // computed over the session transcript we built from txn.nonce
+      // (holderSignature + nonce + holderBinding all at once — a mismatch
+      // in ANY of client_id/response_uri/nonce produces different
+      // transcript bytes than what the wallet actually signed over, so
+      // Verifier.verify() fails there instead of a separate explicit check).
+      checks.holderSignature = 'OK';
+      checks.nonce = 'OK';
+      checks.credentialSignatures = 'OK';
+      checks.holderBinding = 'OK';
+      checks.revocation = 'OK'; // no mdoc revocation mechanism wired yet — same default as other formats
+      return {
+        presented: mdocResult.documents.map((doc) => ({
+          types: [],
+          docType: doc.docType,
+          format: 'mso_mdoc',
+          claims: doc.claims,
+        })),
+      };
+    }
+
+    if (format === 'dc+sd-jwt' || format === 'vc+sd-jwt') {
+      // The Presentation *is* the SD-JWT+KB compact string directly — there
+      // is no outer VP-JWT wrapper for this format. The Key Binding JWT
+      // trailing it carries the `nonce`/`aud` that prove holder binding +
+      // replay protection (OID4VP "IETF SD-JWT VC" Presentation Response).
+      // Delegate that whole check to credentials-service, which already
+      // implements it end-to-end via identity-service's verifySdJwt (issuer
+      // signature, disclosure digests, KB-JWT signature against the
+      // issuer-embedded `cnf.jwk`, and nonce/aud) — the same call path
+      // already used for issuance-time PoP, just with challenge/domain now
+      // supplied.
+      const verifyRes = await this.credentials.verify(entry, {
+        challenge: txn.nonce,
+        domain: txn.clientId,
+      });
+      const vcChecks = verifyRes?.checks?.[0] || {};
+      if (vcChecks.proof !== 'OK') {
+        throw new Error('SD-JWT+KB presentation invalid (signature, nonce, or audience)');
+      }
+      if (vcChecks.revoked === 'NOK') throw new Error('embedded VC revoked');
+      checks.holderSignature = 'OK';
+      checks.nonce = 'OK';
+      checks.audience = 'OK';
+      checks.credentialSignatures = 'OK';
+      checks.holderBinding = 'OK';
+      checks.revocation = 'OK';
+
+      // Claim reconstruction is independent of the trust check above —
+      // extractCredentials() already tolerates a trailing KB-JWT segment
+      // (silently skipped as an unparseable "disclosure").
+      const [parsed] = this.extractCredentials({ verifiableCredential: [entry] });
+      if (!parsed) throw new Error('unable to parse SD-JWT claims');
+      return {
+        presented: [{ types: parsed.types, vct: parsed.vct, format, claims: parsed.claims }],
+        holderDid: parsed.subjectId,
+      };
+    }
+
+    // jwt_vc_json / ldp_vc: the Presentation is itself a Verifiable
+    // Presentation carrying its own nonce/aud (JWT-VP) or challenge/domain
+    // (LD-proof VP), wrapping the embedded credential(s).
+    if (typeof entry === 'string') {
+      const vpHeader = jose.decodeProtectedHeader(entry);
+      const vpClaims: any = jose.decodeJwt(entry);
+
+      const holderKid = vpHeader.kid as string;
+      let entryHolderDid = holderKid ? holderKid.split('#')[0] : vpClaims.iss;
+      let holderPublicJwk: any = vpHeader.jwk as any;
+
+      // did:jwk wallets commonly sign with an inline `jwk` header and no
+      // `kid`/`iss`, or a self-contained `did:jwk:...` DID; others present
+      // with the `did:key` they bound at issuance. Neither is resolvable
+      // via identity-service's registry, which only knows its own DB plus
+      // did:web (see did.service.ts resolveDID: any other method 404s).
+      // Both methods are deterministic by spec — the public key is
+      // embedded in the identifier — so resolve locally instead of
+      // round-tripping to identity-service. Mirrors the same fallback
+      // applied to the issuance-side PoP check in pop.service.ts.
+      //
+      // An inline `jwk` header is self-asserted; if `kid`/`iss` also
+      // claims a holder DID, that DID's actual key — not the header —
+      // must be trusted. Verify the two agree for self-contained DIDs;
+      // reject an inline jwk alongside any registry-resolved DID method
+      // outright, since its real key can only come from resolution.
+      // Otherwise the holder-binding check below (subjectId ===
+      // entryHolderDid) compares the embedded VC's subject against a DID
+      // the presenter never actually proved control of.
+      if (holderPublicJwk && entryHolderDid) {
+        if (isSelfContainedDid(entryHolderDid)) {
+          if (!jwkPublicKeyEquals(resolveSelfContainedDidToJwk(entryHolderDid), holderPublicJwk)) {
+            throw new Error('holder DID does not match inline jwk header');
+          }
+        } else {
+          throw new Error('inline jwk header not permitted alongside a registry-resolved holder DID');
+        }
+      }
+      if (!holderPublicJwk) {
+        holderPublicJwk = resolveSelfContainedDidToJwk(entryHolderDid);
+      }
+      if (!holderPublicJwk) {
+        const holderDidDoc = await this.identity.resolveDID(entryHolderDid);
+        const holderVm = (holderDidDoc.verificationMethod || []).find(
+          (m: any) => (holderKid ? m.id === holderKid : true) && m.publicKeyJwk,
+        );
+        if (!holderVm) throw new Error('holder key not resolvable');
+        holderPublicJwk = holderVm.publicKeyJwk;
+      }
+      if (!entryHolderDid) {
+        entryHolderDid = `did:jwk:${Buffer.from(JSON.stringify(holderPublicJwk)).toString('base64url')}`;
+      }
+      const holderKey = await jose.importJWK(holderPublicJwk, (vpHeader.alg as string) || 'ES256');
+      await jose.compactVerify(entry, holderKey);
+      checks.holderSignature = 'OK';
+
+      if (vpClaims.nonce !== txn.nonce) throw new Error('nonce mismatch');
+      checks.nonce = 'OK';
+
+      // A VP token bound to a different verifier's client_id (e.g. replayed
+      // against this endpoint after being obtained by another relying
+      // party) must be rejected here — the request's own client_id is the
+      // only value that anchors "who this presentation was made to".
+      const aud = vpClaims.aud;
+      const audMatches = Array.isArray(aud) ? aud.includes(txn.clientId) : aud === txn.clientId;
+      if (!audMatches) throw new Error('audience mismatch');
+      checks.audience = 'OK';
+
+      const vp = vpClaims.vp || vpClaims;
+      const embedded = this.extractCredentials(vp);
+      if (!embedded.length) throw new Error('no verifiable credentials in VP');
+
+      // Per-VC signature verify (delegated) + holder binding + status.
+      //
+      // Deliberately NOT passing {challenge: txn.nonce, domain: ...} here.
+      // That was found live to break every ldp_vc presentation: the embedded
+      // VC's proof is a static assertion signature created once at issuance
+      // time, long before this (or any) presentation's nonce existed, so
+      // credentials-service's checkChallengeDomain() would require an
+      // impossible match and always fail proof:'OK'. Replay/freshness
+      // protection for the PRESENTATION is already correctly enforced above
+      // (the JWT-VP wrapper's own `nonce` claim check) — passing the
+      // presentation's nonce down into the embedded credential's own
+      // signature check applies that protection at the wrong layer.
+      const presented: any[] = [];
+      for (const vc of embedded) {
+        const verifyRes = await this.credentials.verify(vc.raw);
+        const proofOk = verifyRes?.checks?.[0]?.proof === 'OK';
+        const notRevoked = verifyRes?.checks?.[0]?.revoked !== 'NOK';
+        if (!proofOk) throw new Error('embedded VC signature invalid');
+        if (!notRevoked) throw new Error('embedded VC revoked');
+
+        // holder binding: subject id must equal the VP signer. Fail closed
+        // (rather than skip) when the embedded VC carries no subject id at
+        // all — otherwise a credential with no credentialSubject.id/sub
+        // would silently report holderBinding: 'OK' with nothing actually
+        // compared.
+        const subjectId = vc.claims?.id || vc.claims?.sub || vc.subjectId;
+        if (!subjectId || subjectId !== entryHolderDid) {
+          throw new Error('holder binding failed: missing or mismatched subject id');
+        }
+        presented.push({
+          types: vc.types,
+          vct: vc.vct,
+          format: vc.format,
+          claims: vc.claims,
+        });
+      }
+      checks.credentialSignatures = 'OK';
+      checks.holderBinding = 'OK';
+      checks.revocation = 'OK';
+      return { presented, holderDid: entryHolderDid };
+    }
+
+    // ldp_vc as a full Data Integrity VerifiablePresentation object — `entry`
+    // is the VP wrapper, not the credential (confirmed live against a real
+    // wallet: it submits { type: ['VerifiablePresentation'], holder,
+    // verifiableCredential: [...], proof: { challenge, domain, proofPurpose:
+    // 'authentication', ... } }). The VP's own holder-binding proof carries
+    // challenge/domain; each embedded VC has its own separate (static,
+    // issuance-time, no challenge/domain) assertion proof — same split the
+    // jwt_vc_json/ldp_vc-JWT branch above already applies via extractCredentials().
+    const holderDid: string | undefined = (
+      typeof entry.holder === 'string' ? entry.holder : entry.holder?.id
+    )?.split('#')[0];
+    const proof = entry?.proof || {};
+    if (proof.challenge && proof.challenge !== txn.nonce) throw new Error('nonce mismatch');
+    if (proof.domain && proof.domain !== txn.clientId) throw new Error('audience mismatch');
+    checks.nonce = 'OK';
+    checks.audience = 'OK';
+
+    // Verifies the VP's OWN proof (holder-binding, `authentication` purpose)
+    // — not any embedded VC's assertion proof.
+    const vpVerifyRes = await this.credentials.verify(entry, {
+      challenge: txn.nonce,
+      domain: txn.clientId,
+    });
+    if (vpVerifyRes?.checks?.[0]?.proof !== 'OK') throw new Error('ldp_vc presentation invalid');
+    checks.holderSignature = 'OK';
+
+    const embedded = this.extractCredentials(entry);
+    if (!embedded.length) throw new Error('no verifiable credentials in VP');
+
+    const presented: any[] = [];
+    for (const vc of embedded) {
+      // Deliberately NOT passing {challenge, domain} here — same reasoning
+      // as the jwt_vc_json/ldp_vc-JWT branch above: the embedded VC's proof
+      // is a static assertion signature from issuance time, long before this
+      // presentation's nonce existed.
+      const verifyRes = await this.credentials.verify(vc.raw);
+      const proofOk = verifyRes?.checks?.[0]?.proof === 'OK';
+      const notRevoked = verifyRes?.checks?.[0]?.revoked !== 'NOK';
+      if (!proofOk) throw new Error('embedded VC signature invalid');
+      if (!notRevoked) throw new Error('embedded VC revoked');
+
+      const subjectId = vc.claims?.id || vc.claims?.sub || vc.subjectId;
+      if (!subjectId || subjectId !== holderDid) {
+        throw new Error('holder binding failed: missing or mismatched subject id');
+      }
+      presented.push({ types: vc.types, vct: vc.vct, format: vc.format, claims: vc.claims });
+    }
+    checks.credentialSignatures = 'OK';
+    checks.holderBinding = 'OK';
+    checks.revocation = 'OK';
+    return { presented, holderDid };
+  }
+
+  // PEX's vp_token wire shape differs from DCQL's: with exactly one
+  // presentation, vp_token is the raw presentation itself — for
+  // string-shaped formats (compact JWT-VP, SD-JWT+KB, base64url mdoc) that
+  // means it is NOT JSON at all, so JSON.parse failing here means "bare
+  // compact-string presentation," not an error (unlike DCQL's vp_token,
+  // which is always a JSON-encoded object).
+  private normalizePexVpToken(raw: any): any[] {
+    let v = raw;
+    if (typeof v === 'string') {
+      try {
+        v = JSON.parse(v);
+      } catch {
+        return [raw];
+      }
+    }
+    return Array.isArray(v) ? v : [v];
+  }
+
+  // Resolves one presentation_submission descriptor_map entry (path +
+  // optional path_nested chain) against the normalized vp_token array.
+  private resolveDescriptorMapEntry(vpTokenArr: any[], dm: any): { value: any; format: string } {
+    let value = this.resolveTopLevelPath(vpTokenArr, dm.path);
+    if (value === undefined) throw new Error(`presentation_submission path '${dm.path}' did not resolve`);
+    let format = dm.format;
+    let nested = dm.path_nested;
+
+    if (format === 'ldp_vp') return { value, format: 'ldp_vc' };
+
+    // ponytail: no depth cap beyond the chain's own length — a definition
+    // author controls their own definition's nesting depth.
+    while (nested) {
+      if (format === 'mso_mdoc' || format === 'vc+sd-jwt' || format === 'dc+sd-jwt') {
+        throw new Error(`path_nested is not supported for format '${format}'`);
+      }
+      const decoded = this.decodeForTraversal(value);
+      value = resolveJsonPath(decoded, nested.path);
+      if (value === undefined) throw new Error(`presentation_submission path_nested '${nested.path}' did not resolve`);
+      format = nested.format || format;
+      nested = nested.path_nested;
+    }
+    return { value, format };
+  }
+
+  // descriptor_map[].path only ever needs to index the top-level vp_token
+  // array — `$` for the single-presentation case, `$[n]` for the multiple
+  // case. Deeper paths belong to path_nested, resolved separately against
+  // the presentation's own decoded content.
+  private resolveTopLevelPath(vpTokenArr: any[], path: string): any {
+    if (path === '$') return vpTokenArr[0];
+    const m = /^\$\[(\d+)\]$/.exec(path);
+    if (m) return vpTokenArr[Number(m[1])];
+    throw new Error(`unsupported presentation_submission path: ${path}`);
+  }
+
+  // Decodes one layer of a W3C VP wrapper so path_nested can descend into
+  // its embedded credentials — compact JWT-VP -> its claims payload, plain
+  // ldp_vc VP object -> itself. mso_mdoc/SD-JWT+KB are rejected before
+  // reaching here (path_nested doesn't apply to non-VP-wrapping formats).
+  private decodeForTraversal(entry: any): any {
+    if (typeof entry === 'string') {
+      const claims: any = jose.decodeJwt(entry);
+      return claims.vp || claims;
+    }
+    return entry;
   }
 
   async getStatus(id: string) {

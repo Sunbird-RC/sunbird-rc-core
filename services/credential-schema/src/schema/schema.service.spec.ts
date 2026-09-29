@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { randomUUID } from 'crypto';
 import { SchemaService } from './schema.service';
 import { UtilsService } from '../utils/utils.service';
 import { PrismaClient, SchemaStatus } from '@prisma/client';
@@ -17,7 +18,17 @@ describe('SchemaService', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
-      providers: [SchemaService, UtilsService, PrismaClient],
+      providers: [
+        SchemaService,
+        PrismaClient,
+        {
+          provide: UtilsService,
+          useValue: {
+            generateDID: jest.fn().mockImplementation(async () => ({ id: `did:mock:${randomUUID()}` })),
+            sign: jest.fn(),
+          },
+        },
+      ],
     }).compile();
     service = module.get<SchemaService>(SchemaService);
     prisma = module.get<PrismaClient>(PrismaClient);
@@ -255,6 +266,126 @@ describe('SchemaService', () => {
       const schema = await service.createCredentialSchema(credSchemaPayload);
       await expect(() => updateSchemaState('UNKNOWN', schema)).rejects
         .toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('updateSchemaStatus', () => {
+    it('sets REVOKED status directly', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await service.createCredentialSchema(credSchemaPayload);
+
+      const updated = await service.updateSchemaStatus(
+        { id_version: { id: schema.schema.id, version: schema.schema.version } },
+        'REVOKED',
+      );
+      expect(updated.status).toEqual('REVOKED');
+    });
+
+    it('defaults to DRAFT status for an unrecognized status value', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await service.createCredentialSchema(credSchemaPayload);
+
+      const updated = await service.updateSchemaStatus(
+        { id_version: { id: schema.schema.id, version: schema.schema.version } },
+        'NOT_A_REAL_STATUS',
+      );
+      expect(updated.status).toEqual('DRAFT');
+    });
+  });
+
+  describe('getOid4vciConfigs', () => {
+    it('returns only PUBLISHED schemas opted into OID4VCI, mapped to issuer metadata', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      (credSchemaPayload as any).oid4vciConfig = {
+        oid4vciEnabled: true,
+        oid4vciFormats: ['jwt_vc_json'],
+        vct: 'TestVct',
+        display: [{ name: 'Test Display' }],
+      };
+      const created = await service.createCredentialSchema(credSchemaPayload);
+      await service.updateSchemaStatus(
+        { id_version: { id: created.schema.id, version: created.schema.version } },
+        'PUBLISHED',
+      );
+
+      const draftDidBody = generateTestDIDBody();
+      const draftDid = await utilsService.generateDID(draftDidBody);
+      const draftPayload = generateCredentialSchemaTestBody();
+      draftPayload.schema.author = draftDid.id;
+      const draftCreated = await service.createCredentialSchema(draftPayload);
+
+      const configs = await service.getOid4vciConfigs();
+      const config = configs.find((c) => c.schemaId === created.schema.id);
+      expect(config).toBeDefined();
+      expect(config.formats).toEqual(['jwt_vc_json']);
+      expect(config.vct).toEqual('TestVct');
+      expect(config.author).toEqual(created.schema.author);
+      expect(configs.some((c) => c.schemaId === draftCreated.schema.id)).toBe(false);
+    });
+
+    it('throws InternalServerErrorException when the Prisma read fails', async () => {
+      jest.spyOn(prisma.verifiableCredentialSchema, 'findMany').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.getOid4vciConfigs()).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('error paths backed by the real database', () => {
+    it('throws InternalServerErrorException when reading a schema fails', async () => {
+      jest.spyOn(prisma.verifiableCredentialSchema, 'findUnique').mockRejectedValueOnce(new Error('db down'));
+      await expect(
+        service.getCredentialSchemaByIdAndVersion({ id_version: { id: 'any', version: '1.0.0' } }),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it('throws InternalServerErrorException when saving a new schema fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+
+      jest.spyOn(prisma.verifiableCredentialSchema, 'create').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.createCredentialSchema(credSchemaPayload)).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it('throws InternalServerErrorException when creating the new version during an update fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await service.createCredentialSchema(credSchemaPayload);
+
+      jest.spyOn(prisma.verifiableCredentialSchema, 'create').mockRejectedValueOnce(new Error('db down'));
+      await expect(
+        service.updateCredentialSchema(
+          { id_version: { id: schema.schema.id, version: schema.schema.version } },
+          { schema: null, status: null, tags: ['t1'] },
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it('throws InternalServerErrorException when marking the previous version as deprecated fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await service.createCredentialSchema(credSchemaPayload);
+
+      jest.spyOn(prisma.verifiableCredentialSchema, 'update').mockRejectedValueOnce(new Error('db down'));
+      await expect(
+        service.updateCredentialSchema(
+          { id_version: { id: schema.schema.id, version: schema.schema.version } },
+          { schema: null, status: null, tags: ['t1'] },
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 

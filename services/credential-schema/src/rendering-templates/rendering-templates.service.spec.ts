@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { randomUUID } from 'crypto';
 import { RenderingTemplatesService } from './rendering-templates.service';
 import { ValidateTemplateService } from './validate-template.service';
 import { SchemaService } from '../schema/schema.service';
@@ -15,6 +16,7 @@ describe('RenderingTemplatesService', () => {
   let service: RenderingTemplatesService;
   let schemaService: SchemaService;
   let utilsService: UtilsService;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,13 +26,20 @@ describe('RenderingTemplatesService', () => {
         PrismaClient,
         ValidateTemplateService,
         SchemaService,
-        UtilsService,
+        {
+          provide: UtilsService,
+          useValue: {
+            generateDID: jest.fn().mockImplementation(async () => ({ id: `did:mock:${randomUUID()}` })),
+            sign: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<RenderingTemplatesService>(RenderingTemplatesService);
     schemaService = module.get<SchemaService>(SchemaService);
     utilsService = module.get<UtilsService>(UtilsService);
+    prisma = module.get<PrismaClient>(PrismaClient);
   });
 
   it('should be defined', () => {
@@ -132,5 +141,52 @@ describe('RenderingTemplatesService', () => {
     await expect(
       service.getTemplateById(template.template.templateId),
     ).rejects.toThrowError();
+  });
+
+  describe('error paths backed by the real database', () => {
+    it('throws InternalServerErrorException when fetching templates by schemaID fails', async () => {
+      jest.spyOn(prisma.template, 'findMany').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.getTemplateBySchemaID('schema-1')).rejects.toThrowError();
+    });
+
+    it('throws InternalServerErrorException when creating a template fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await schemaService.createCredentialSchema(credSchemaPayload);
+      const templatePayload = templatePayloadGenerator(schema.schema.id, schema.schema.version);
+
+      jest.spyOn(prisma.template, 'create').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.addTemplate(templatePayload)).rejects.toThrowError();
+    });
+
+    it('throws InternalServerErrorException when updating a template fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await schemaService.createCredentialSchema(credSchemaPayload);
+      const templatePayload = templatePayloadGenerator(schema.schema.id, schema.schema.version);
+      const template = await service.addTemplate(templatePayload);
+
+      jest.spyOn(prisma.template, 'update').mockRejectedValueOnce(new Error('db down'));
+      await expect(
+        service.updateTemplate(template.template.templateId, templatePayload),
+      ).rejects.toThrowError();
+    });
+
+    it('throws InternalServerErrorException when deleting a template fails', async () => {
+      const didBody = generateTestDIDBody();
+      const did = await utilsService.generateDID(didBody);
+      const credSchemaPayload = generateCredentialSchemaTestBody();
+      credSchemaPayload.schema.author = did.id;
+      const schema = await schemaService.createCredentialSchema(credSchemaPayload);
+      const templatePayload = templatePayloadGenerator(schema.schema.id, schema.schema.version);
+      const template = await service.addTemplate(templatePayload);
+
+      jest.spyOn(prisma.template, 'delete').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.deleteTemplate(template.template.templateId)).rejects.toThrowError();
+    });
   });
 });

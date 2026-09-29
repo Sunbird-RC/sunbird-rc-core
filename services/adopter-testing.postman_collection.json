@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Sunbird RC - OID4VC (VCI + VP) Flows",
-    "description": "Full OID4VCI issuance + OID4VP presentation flows against oid4vc-service, identity-service, credential-schema, and credentials-service. Run folders top-to-bottom via Collection Runner. Requires the stack up per TESTING.md (db, vault, redis, identity, credential-schema, credential, oid4vc-service).",
+    "name": "Sunbird RC - Adopter Testing (Identity, Schema, Credentials, OID4VC)",
+    "description": "Adopter-facing CRUD smoke tests for identity-service, credential-schema, and credentials-service, plus full OID4VCI issuance + OID4VP presentation flows against oid4vc-service. Run folders top-to-bottom via Collection Runner. Requires the stack up per TESTING.md (db, vault, redis, identity, credential-schema, credential, oid4vc-service). identity-service and credential-schema default to ENABLE_AUTH=true if unset (all routes require a bearer token) — set ENABLE_AUTH=false in your stack's env for a no-auth smoke run, or populate {{crud_access_token}}.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -108,11 +108,563 @@
     {
       "key": "sdjwt_credential",
       "value": ""
+    },
+    {
+      "key": "crud_did_id",
+      "value": ""
+    },
+    {
+      "key": "template_id",
+      "value": ""
+    },
+    {
+      "key": "crud_schema_id",
+      "value": ""
+    },
+    {
+      "key": "crud_schema_version",
+      "value": ""
+    },
+    {
+      "key": "crud_credential_id",
+      "value": ""
+    },
+    {
+      "key": "crud_access_token",
+      "value": ""
+    },
+    {
+      "key": "pex_vp_transaction_id",
+      "value": ""
+    },
+    {
+      "key": "pex_vp_request_uri",
+      "value": ""
+    },
+    {
+      "key": "pex_vp_nonce",
+      "value": ""
+    },
+    {
+      "key": "pex_vp_state",
+      "value": ""
+    },
+    {
+      "key": "pex_vp_jwt",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "0. Discovery",
+      "name": "0. Identity Service - CRUD & Utils",
+      "description": "Skipped: /utils/sign-mdoc, /utils/verify-mdoc — already exercised end-to-end by folder 3.6 mso_mdoc flow.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{identity_base}}/health"
+          }
+        },
+        {
+          "name": "Generate DID",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/did/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":[{\"alsoKnownAs\":[\"postman-crud-did\"],\"services\":[],\"method\":\"rcw\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_did_id', json[0].id);",
+                  "pm.test('DID generated', () => pm.expect(json[0].id).to.include('did:rcw:'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve DID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/did/resolve/{{crud_did_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('DID resolves', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('crud_did_id'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate web DID (for did.json lookup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/did/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":[{\"alsoKnownAs\":[\"postman-crud-webdid\"],\"services\":[],\"method\":\"web\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const fullDid = json[0].id;",
+                  "pm.collectionVariables.set('crud_web_did_bare_id', fullDid.substring(fullDid.lastIndexOf(':') + 1));",
+                  "pm.test('web DID generated', () => pm.expect(fullDid).to.include('did:web:'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get DID document (well-known)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/{{crud_web_did_bare_id}}/did.json"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('web DID document resolves', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/utils/sign",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{crud_did_id}}\",\n  \"payload\": {\n    \"@context\": [\n      \"https://www.w3.org/2018/credentials/v1\",\n      \"https://www.w3.org/2018/credentials/examples/v1\"\n    ],\n    \"id\": \"did:example:postman-sign-test\",\n    \"type\": [\"VerifiableCredential\"],\n    \"issuer\": \"{{crud_did_id}}\",\n    \"credentialSubject\": { \"id\": \"{{crud_did_id}}\" }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_signed_payload', JSON.stringify(json));",
+                  "pm.test('signed', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(json.proof).to.not.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify signed payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/utils/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{crud_did_id}}\",\n  \"payload\": {{crud_signed_payload}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('signature valid', () => pm.expect(pm.response.text()).to.eql('true'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/utils/verify-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{crud_did_id}}\",\n  \"jwt\": \"{{pop_jwt}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign SD-JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/utils/sign-sd-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{crud_did_id}}\",\n  \"payload\": { \"name\": \"Postman Holder\" },\n  \"disclosureFrame\": { \"_sd\": [\"name\"] }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_sd_jwt', json.jwt || json.signed);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify SD-JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{identity_base}}/utils/verify-sd-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jwt\": \"{{crud_sd_jwt}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "JWKS",
+          "request": {
+            "method": "GET",
+            "url": "{{identity_base}}/.well-known/jwks.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Credential Schema - CRUD",
+      "description": "Skipped: DELETE /template/:templateId, PUT /credential-schema/deprecate/:id/:ver, PUT /credential-schema/revoke/:id/:ver — destructive/terminal-state transitions, out of scope for a smoke-test collection.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{schema_base}}/health"
+          }
+        },
+        {
+          "name": "Add new schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"version\": \"1.0.0\",\n    \"id\": \"{{$guid}}\",\n    \"name\": \"Postman CRUD Credential\",\n    \"author\": \"{{crud_did_id}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"PostmanCrudCredential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"description\": \"CRUD smoke-test credential\",\n      \"type\": \"object\",\n      \"properties\": { \"name\": { \"type\": \"string\" } },\n      \"required\": [\"name\"],\n      \"additionalProperties\": true\n    }\n  },\n  \"tags\": [\"postman-crud\"],\n  \"status\": \"DRAFT\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_schema_id', json.schema.id);",
+                  "pm.collectionVariables.set('crud_schema_version', json.schema.version);",
+                  "pm.test('schema created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List schemas",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema"
+          }
+        },
+        {
+          "name": "Get schema by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema/{{crud_schema_id}}"
+          }
+        },
+        {
+          "name": "Get schema by id and version",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema/{{crud_schema_id}}/{{crud_schema_version}}"
+          }
+        },
+        {
+          "name": "Add new template",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/template",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemaId\": \"{{crud_schema_id}}\",\n  \"schemaVersion\": \"{{crud_schema_version}}\",\n  \"template\": \"<div>{{name}}</div>\",\n  \"type\": \"Handlebar\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('template_id', json.template.templateId);",
+                  "pm.test('template created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get template by templateId",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/template/{{template_id}}"
+          }
+        },
+        {
+          "name": "List templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/template"
+          }
+        },
+        {
+          "name": "Update template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/template/{{template_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template\": \"<div>{{name}} updated</div>\",\n  \"type\": \"Handlebar\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update schema",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema/{{crud_schema_id}}/{{crud_schema_version}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": {\n    \"type\": \"https://w3c-ccg.github.io/vc-json-schemas/\",\n    \"id\": \"{{crud_schema_id}}\",\n    \"version\": \"{{crud_schema_version}}\",\n    \"name\": \"Postman CRUD Credential (updated)\",\n    \"author\": \"{{crud_did_id}}\",\n    \"authored\": \"2026-01-01T00:00:00.000Z\",\n    \"schema\": {\n      \"$id\": \"PostmanCrudCredential-1.0\",\n      \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n      \"type\": \"object\",\n      \"properties\": { \"name\": { \"type\": \"string\" } },\n      \"required\": [\"name\"],\n      \"additionalProperties\": true\n    }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_schema_version', json.schema.version);",
+                  "pm.test('schema updated', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish schema",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{crud_access_token}}" }
+            ],
+            "url": "{{schema_base}}/credential-schema/publish/{{crud_schema_id}}/{{crud_schema_version}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('schema published', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('PUBLISHED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Credentials Service - CRUD",
+      "description": "Skipped: DELETE /credentials/:id, GET /credentials/revocation-list — destructive/low-value for smoke scope. POST /credentials/verify is already covered under folder 3 flows.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{credential_base}}/health"
+          }
+        },
+        {
+          "name": "Issue a credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{credential_base}}/credentials/issue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential\": {\n    \"@context\": [\n      \"https://www.w3.org/2018/credentials/v1\",\n      \"https://www.w3.org/2018/credentials/examples/v1\"\n    ],\n    \"type\": [\"VerifiableCredential\"],\n    \"issuer\": \"{{crud_did_id}}\",\n    \"issuanceDate\": \"2026-01-01T00:00:00.000Z\",\n    \"credentialSubject\": {\n      \"id\": \"{{crud_did_id}}\",\n      \"name\": \"Postman CRUD Holder\"\n    }\n  },\n  \"credentialSchemaId\": \"{{crud_schema_id}}\",\n  \"credentialSchemaVersion\": \"{{crud_schema_version}}\",\n  \"tags\": [\"postman-crud\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('crud_credential_id', json.credential.id);",
+                  "pm.test('credential issued', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List credentials",
+          "request": {
+            "method": "GET",
+            "url": "{{credential_base}}/credentials"
+          }
+        },
+        {
+          "name": "Get credential by id",
+          "request": {
+            "method": "GET",
+            "url": "{{credential_base}}/credentials/{{crud_credential_id}}"
+          }
+        },
+        {
+          "name": "Search credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{credential_base}}/credentials/search",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"issuer\": { \"id\": \"{{crud_did_id}}\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify credential by id",
+          "request": {
+            "method": "GET",
+            "url": "{{credential_base}}/credentials/{{crud_credential_id}}/verify"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('proof OK', () => pm.expect(json.checks[0].proof).to.eql('OK'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get status list",
+          "request": {
+            "method": "GET",
+            "url": "{{credential_base}}/credentials/status-list/{{crud_credential_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. OID4VC Service",
+      "description": "Deferred issuance (/oid4vc/deferred), notifications, and render-template/context/vct discovery endpoints are not exercised here; add if adopters need async-issuance or wallet-metadata testing.",
+      "item": [
+    {
+      "name": "3.0 Discovery",
       "item": [
         {
           "name": "Health check",
@@ -155,7 +707,7 @@
       ]
     },
     {
-      "name": "1. Setup - Schema + DIDs",
+      "name": "3.1 Setup - Schema + DIDs",
       "item": [
         {
           "name": "Generate issuer DID",
@@ -296,7 +848,7 @@
       ]
     },
     {
-      "name": "2. OID4VCI - VC Issuance Flow (jwt_vc_json)",
+      "name": "3.2 OID4VCI - VC Issuance Flow (jwt_vc_json)",
       "item": [
         {
           "name": "Create offer",
@@ -492,7 +1044,7 @@
       ]
     },
     {
-      "name": "3. OID4VCI - Negative Tests",
+      "name": "3.3 OID4VCI - Negative Tests",
       "item": [
         {
           "name": "N1 - Replay pre-auth code",
@@ -634,7 +1186,7 @@
       ]
     },
     {
-      "name": "4. OID4VP - VP Presentation Flow",
+      "name": "3.4 OID4VP - VP Presentation Flow",
       "item": [
         {
           "name": "Verifier creates DCQL request",
@@ -705,7 +1257,7 @@
             "url": "{{identity_base}}/utils/sign-jwt",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"redirect_uri:{{oid4vc_base}}/vp/response\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
             }
           },
           "event": [
@@ -733,7 +1285,7 @@
             "url": "{{oid4vc_base}}/vp/response",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{\\\"pilot_cred\\\": [\\\"{{vp_jwt}}\\\"]}\"\n}"
             }
           },
           "event": [
@@ -776,7 +1328,145 @@
       ]
     },
     {
-      "name": "5. OID4VP - Negative Tests",
+      "name": "3.4b OID4VP - PEX Presentation Flow",
+      "item": [
+        {
+          "name": "Verifier creates PEX request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"presentation_definition\": {\n    \"id\": \"pex_pilot\",\n    \"input_descriptors\": [\n      {\n        \"id\": \"pilot_cred\",\n        \"format\": { \"ldp_vc\": {} },\n        \"constraints\": { \"fields\": [{ \"path\": [\"$.credentialSubject.name\"] }] }\n      }\n    ]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('pex_vp_transaction_id', json.transaction_id);",
+                  "pm.collectionVariables.set('pex_vp_request_uri', json.request_uri);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wallet fetches request object",
+          "request": {
+            "method": "GET",
+            "url": "{{pex_vp_request_uri}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const payload = pm.response.json();",
+                  "pm.collectionVariables.set('pex_vp_nonce', payload.nonce);",
+                  "pm.collectionVariables.set('pex_vp_state', payload.state);",
+                  "pm.test('request object has nonce+state+presentation_definition', () => {",
+                  "  pm.expect(payload.nonce).to.not.be.undefined;",
+                  "  pm.expect(payload.presentation_definition).to.not.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign VP token (via identity-service, stand-in for wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{identity_base}}/utils/sign-jwt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"DID\": \"{{holder_did}}\",\n  \"payload\": {\n    \"aud\": \"redirect_uri:{{oid4vc_base}}/vp/response\",\n    \"nonce\": \"{{pex_vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('pex_vp_jwt', json.jwt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit VP + presentation_submission (direct_post)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{oid4vc_base}}/vp/response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"{{pex_vp_state}}\",\n  \"vp_token\": \"{{pex_vp_jwt}}\",\n  \"presentation_submission\": {\n    \"id\": \"{{$guid}}\",\n    \"definition_id\": \"pex_pilot\",\n    \"descriptor_map\": [{ \"id\": \"pilot_cred\", \"format\": \"ldp_vc\", \"path\": \"$\" }]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status ok', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verifier polls status",
+          "request": {
+            "method": "GET",
+            "url": "{{oid4vc_base}}/vp/status/{{pex_vp_transaction_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('all 6 checks OK incl. pex', () => {",
+                  "  pm.expect(json.verified).to.eql(true);",
+                  "  ['holderSignature','nonce','credentialSignatures','holderBinding','revocation','pex'].forEach(k => {",
+                  "    pm.expect(json.checks[k]).to.eql('OK');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.5 OID4VP - Negative Tests",
       "item": [
         {
           "name": "N14 - Unknown state",
@@ -835,7 +1525,7 @@
             "url": "{{oid4vc_base}}/vp/response",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+              "raw": "{\n  \"state\": \"{{pex_vp_state}}\",\n  \"vp_token\": \"{{pex_vp_jwt}}\"\n}"
             }
           },
           "event": [
@@ -912,7 +1602,7 @@
             "url": "{{identity_base}}/utils/sign-jwt",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"DID\": \"{{impostor_did}}\",\n  \"payload\": {\n    \"aud\": \"{{oid4vc_base}}\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
+              "raw": "{\n  \"DID\": \"{{impostor_did}}\",\n  \"payload\": {\n    \"aud\": \"redirect_uri:{{oid4vc_base}}/vp/response\",\n    \"nonce\": \"{{vp_nonce}}\",\n    \"vp\": { \"verifiableCredential\": [\"{{issued_credential}}\"] }\n  },\n  \"header\": { \"typ\": \"JWT\" }\n}"
             }
           },
           "event": [
@@ -939,7 +1629,7 @@
             "url": "{{oid4vc_base}}/vp/response",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{{vp_jwt}}\"\n}"
+              "raw": "{\n  \"state\": \"{{vp_state}}\",\n  \"vp_token\": \"{\\\"pilot_cred\\\": [\\\"{{vp_jwt}}\\\"]}\"\n}"
             }
           },
           "event": [
@@ -959,7 +1649,7 @@
       ]
     },
     {
-      "name": "6. mso_mdoc - Issuance & Verification",
+      "name": "3.6 mso_mdoc - Issuance & Verification",
       "description": "ISO/IEC 18013-5 mobile-document format. NOTE: mdoc *presentation* (OID4VP) is intentionally NOT covered here \u2014 it requires the wallet to build a CBOR DeviceResponse signed with COSE, which cannot be produced in a Postman sandbox. That half is covered by the self-driven e2e harness (see README \u00a710). This folder covers mdoc issuance end-to-end plus standalone verification.",
       "item": [
         {
@@ -1250,7 +1940,7 @@
       ]
     },
     {
-      "name": "7. W3C VC Render Method",
+      "name": "3.7 W3C VC Render Method",
       "description": "W3C VC Render Method (https://www.w3.org/TR/vc-render-method/). Issues a jwt_vc_json credential from a schema carrying an inline SVG render template, asserts the renderMethod entry is embedded with a digestMultibase, then fetches the hosted template and recomputes the digest to confirm it matches.",
       "item": [
         {
@@ -1466,7 +2156,7 @@
       ]
     },
     {
-      "name": "8. vc+sd-jwt - Issuance & Verification",
+      "name": "3.8 vc+sd-jwt - Issuance & Verification",
       "description": "IETF SD-JWT VC format with real selective disclosure. Issues, confirms the credential is an SD-JWT (contains '~' disclosure separators), and verifies it.",
       "item": [
         {
@@ -1658,6 +2348,8 @@
             }
           ]
         }
+      ]
+    }
       ]
     }
   ]

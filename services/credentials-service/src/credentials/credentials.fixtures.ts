@@ -95,8 +95,8 @@ export const generateCredentialRequestPayload = (
       ],
       type: ['VerifiableCredential', 'UniversityDegreeCredential'],
       issuer: issuerid,
-      issuanceDate: '2023-02-06T11:56:27.259Z',
-      expirationDate: '2023-02-08T11:56:27.259Z',
+      issuanceDate: new Date().toISOString(),
+      expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       credentialSubject: {
         id: subjectid,
         type: "UniversityDegreeCredential",
@@ -141,8 +141,8 @@ export const generateV2CredentialRequestPayload = (
       ],
       type: ['VerifiableCredential', 'UniversityDegreeCredential'],
       issuer: issuerid,
-      validFrom: '2023-02-06T11:56:27.259Z',
-      validUntil: '2023-02-08T11:56:27.259Z',
+      validFrom: new Date().toISOString(),
+      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       credentialSubject: {
         id: subjectid,
         type: "UniversityDegreeCredential",
@@ -226,6 +226,7 @@ export const issueCredentialReturnTypeSchema = {
       type: 'array',
       items: [{ type: 'string' }],
     },
+    format: { type: 'string' },
   },
   required: [
     'credential',
@@ -235,6 +236,7 @@ export const issueCredentialReturnTypeSchema = {
     'updatedAt',
     'createdBy',
     'updatedBy',
+    'format',
   ],
   additionalProperties: false,
 };

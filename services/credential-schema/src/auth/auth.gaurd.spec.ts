@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from './auth.guard';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
@@ -70,7 +72,80 @@ describe('AuthGuard', () => {
       expect(result).toEqual(false);
     });
 
-    // Add more test cases as needed to cover different scenarios
+    it('should warn and continue when ENABLE_AUTH is not set', async () => {
+      delete process.env.ENABLE_AUTH;
+      jest.spyOn(reflector, 'get').mockReturnValue(false);
+      const request = { headers: {} };
+      const result = await guard.canActivate({ getHandler: jest.fn(), switchToHttp: () => ({ getRequest: () => request }) });
+      expect(result).toEqual(false);
+    });
+
+    describe('with a real Bearer token', () => {
+      let publicKeyPem: string;
+      let privateKeyPem: string;
+      const kid = 'test-kid-1';
+
+      beforeAll(() => {
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+        publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+        privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
+      });
+
+      function requestWithBearer(token: string) {
+        return {
+          getHandler: jest.fn(),
+          switchToHttp: () => ({
+            getRequest: () => ({ headers: { authorization: `Bearer ${token}` } }),
+          }),
+        };
+      }
+
+      beforeEach(() => {
+        jest.spyOn(reflector, 'get').mockReturnValue(false);
+      });
+
+      it('returns true for a token signed by the key the JWKS endpoint resolves', async () => {
+        (guard as any).client = {
+          getSigningKey: (_kid: string, cb: any) => cb(null, { publicKey: publicKeyPem }),
+        };
+        const token = jwt.sign({ sub: 'user-1' }, privateKeyPem, { algorithm: 'RS256', keyid: kid });
+
+        const result = await guard.canActivate(requestWithBearer(token));
+        expect(result).toBe(true);
+      });
+
+      it('returns false for an expired token', async () => {
+        (guard as any).client = {
+          getSigningKey: (_kid: string, cb: any) => cb(null, { publicKey: publicKeyPem }),
+        };
+        const token = jwt.sign({ sub: 'user-1' }, privateKeyPem, { algorithm: 'RS256', keyid: kid, expiresIn: -10 });
+
+        const result = await guard.canActivate(requestWithBearer(token));
+        expect(result).toBe(false);
+      });
+
+      it('returns false for a token signed by a different key than the one JWKS resolves', async () => {
+        const { publicKey: otherPublicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+        (guard as any).client = {
+          getSigningKey: (_kid: string, cb: any) =>
+            cb(null, { publicKey: otherPublicKey.export({ type: 'spki', format: 'pem' }) }),
+        };
+        const token = jwt.sign({ sub: 'user-1' }, privateKeyPem, { algorithm: 'RS256', keyid: kid });
+
+        const result = await guard.canActivate(requestWithBearer(token));
+        expect(result).toBe(false);
+      });
+
+      it('returns false when the JWKS client fails to resolve a signing key', async () => {
+        (guard as any).client = {
+          getSigningKey: (_kid: string, cb: any) => cb(new Error('key not found'), null),
+        };
+        const token = jwt.sign({ sub: 'user-1' }, privateKeyPem, { algorithm: 'RS256', keyid: kid });
+
+        const result = await guard.canActivate(requestWithBearer(token));
+        expect(result).toBe(false);
+      });
+    });
   });
 
   afterEach(() => {

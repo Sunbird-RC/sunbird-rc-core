@@ -1,44 +1,63 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { PrismaClient } from '@prisma/client';
+import { HealthCheckService } from '@nestjs/terminus';
 import { HealthCheckUtilsService } from './credentials/utils/healthcheck.utils.service';
-import { HealthCheckError, HealthCheckService, TerminusModule } from '@nestjs/terminus';
-import { HttpModule, HttpService } from '@nestjs/axios';
-import { AXIOS_INSTANCE_TOKEN } from '@nestjs/axios/dist/http.constants';
-import axios from 'axios';
-import { HealthCheckExecutor } from '@nestjs/terminus/dist/health-check/health-check-executor.service';
-import { getErrorLoggerProvider } from '@nestjs/terminus/dist/health-check/error-logger/error-logger.provider';
-import { getLoggerProvider } from '@nestjs/terminus/dist/health-check/logger/logger.provider';
-
-const mockAxiosInstance = axios.create(); // Create a mock Axios instance
-
-const mockHttpService = {
-  provide: AXIOS_INSTANCE_TOKEN,
-  useValue: mockAxiosInstance,
-};
 
 describe('AppController', () => {
-  let appController: AppController;
+  let controller: AppController;
+  let healthCheckService: { check: jest.Mock };
+  let healthCheckUtils: { [K in keyof HealthCheckUtilsService]?: jest.Mock };
 
-  beforeAll(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      imports: [TerminusModule, HttpModule],
+  beforeEach(async () => {
+    healthCheckService = { check: jest.fn() };
+    healthCheckUtils = {
+      prismaIsHealthy: jest.fn(),
+      identityIsHealthy: jest.fn(),
+      credSchemaIsHealthy: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
-        getLoggerProvider(),
-        getErrorLoggerProvider(),
-        HealthCheckExecutor,
-        HealthCheckError,
-        mockHttpService, HealthCheckService, AppService, PrismaClient, HealthCheckUtilsService],
+        { provide: HealthCheckService, useValue: healthCheckService },
+        { provide: HealthCheckUtilsService, useValue: healthCheckUtils },
+      ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    controller = module.get<AppController>(AppController);
   });
 
-  describe('App Controller', () => {
-    it('Expect controller to be defined', () => {
-      expect(appController).toBeDefined()
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  it('delegates to healthCheckService.check with the db, identity, and schema indicators', async () => {
+    const expectedResult = { status: 'ok', info: {}, error: {}, details: {} };
+    healthCheckService.check.mockImplementation(async (indicators: Array<() => Promise<any>>) => {
+      await Promise.all(indicators.map((indicator) => indicator()));
+      return expectedResult;
     });
+    healthCheckUtils.prismaIsHealthy.mockResolvedValue({ db: { status: 'up' } });
+    healthCheckUtils.identityIsHealthy.mockResolvedValue({ 'identity-service': { status: 'up' } });
+    healthCheckUtils.credSchemaIsHealthy.mockResolvedValue({ 'credential-schema-service': { status: 'up' } });
+
+    const result = await controller.checkHealth();
+
+    expect(result).toBe(expectedResult);
+    expect(healthCheckService.check).toHaveBeenCalledWith([
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+    ]);
+    expect(healthCheckUtils.prismaIsHealthy).toHaveBeenCalledWith('db');
+    expect(healthCheckUtils.identityIsHealthy).toHaveBeenCalledWith('identity-service');
+    expect(healthCheckUtils.credSchemaIsHealthy).toHaveBeenCalledWith('credential-schema-service');
+  });
+
+  it('propagates a rejection when healthCheckService.check fails (degraded/unhealthy)', async () => {
+    const error = new Error('degraded');
+    healthCheckService.check.mockRejectedValue(error);
+
+    await expect(controller.checkHealth()).rejects.toThrow('degraded');
   });
 });

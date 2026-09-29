@@ -7,7 +7,6 @@ import { VerifyCredentialDTO } from './dto/verify-credential.dto';
 import { Request } from 'express';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
 import { BadRequestException } from '@nestjs/common';
-import { string, undefined } from 'zod';
 import { HttpModule } from '@nestjs/axios';
 
 describe('CredentialsController', () => {
@@ -30,6 +29,7 @@ describe('CredentialsController', () => {
             verifyCredentialById: jest.fn(),
             verifyCredential: jest.fn(),
             getRevocationList: jest.fn(),
+            getStatusListCredential: jest.fn(),
           },
         },
       ],
@@ -110,7 +110,7 @@ describe('CredentialsController', () => {
       const id = '1';
       const req = { headers: { accept: 'application/pdf' } } as Request;
 
-      await expect(async () => controller.getCredentialById(id, req)).rejects.toThrow(new BadRequestException("Template id is required"));
+      await expect(async () => controller.getCredentialById(id, req)).rejects.toThrow(new BadRequestException("Template id or template is required"));
     });
   });
 
@@ -167,7 +167,11 @@ describe('CredentialsController', () => {
 
         const result = await controller.verifyCredential(verifyRequest);
         expect(result).toBe(expectedResult);
-        expect(service.verifyCredential).toHaveBeenCalledWith(verifyRequest.verifiableCredential);
+        expect(service.verifyCredential).toHaveBeenCalledWith(
+          verifyRequest.verifiableCredential,
+          undefined,
+          verifyRequest.options,
+        );
       });
   });
 
@@ -186,6 +190,59 @@ describe('CredentialsController', () => {
         issuerId,
         1,
         1000
+      );
+    });
+
+    it('should default page to 1 and limit to 1000 when NaN', async () => {
+      jest.spyOn(service, 'getRevocationList').mockResolvedValue([]);
+      await controller.getRevocationList('issuer', 'abc', 'xyz');
+      expect(service.getRevocationList).toHaveBeenCalledWith('issuer', 1, 1000);
+    });
+  });
+
+  describe('getStatusListCredential', () => {
+    it('should return a status list credential', async () => {
+      const expectedResult = { id: 'list-1', proof: {} };
+      jest.spyOn(service, 'getStatusListCredential').mockResolvedValue(expectedResult as any);
+
+      const result = await controller.getStatusListCredential('list-1');
+      expect(result).toBe(expectedResult);
+      expect(service.getStatusListCredential).toHaveBeenCalledWith('list-1');
+    });
+  });
+
+  describe('getCredentialById — text/html without template', () => {
+    it('should throw BadRequestException for text/html without template', async () => {
+      const req = { headers: { accept: 'text/html' } } as Request;
+      await expect(async () => controller.getCredentialById('1', req)).rejects.toThrow(
+        new BadRequestException('Template id or template is required')
+      );
+    });
+
+    it('should throw BadRequestException for application/pdf without template', async () => {
+      const req = { headers: { accept: 'application/pdf' } } as Request;
+      await expect(async () => controller.getCredentialById('1', req)).rejects.toThrow(
+        new BadRequestException('Template id or template is required')
+      );
+    });
+  });
+
+  describe('getCredentials — defaults', () => {
+    it('should default page to 1 and limit to 10 when NaN', async () => {
+      jest.spyOn(service, 'getCredentials').mockResolvedValue([]);
+      await controller.getCredentials('tag1', 'NaN', 'NaN');
+      expect(service.getCredentials).toHaveBeenCalledWith(['tag1'], 1, 10);
+    });
+  });
+
+  describe('getCredentialsBySubject — defaults', () => {
+    it('should default page to 1 and limit to 10 when NaN', async () => {
+      jest.spyOn(service, 'getCredentialsBySubjectOrIssuer').mockResolvedValue([]);
+      await controller.getCredentialsBySubject({ subject: { id: 'x' } }, 'NaN', 'NaN');
+      expect(service.getCredentialsBySubjectOrIssuer).toHaveBeenCalledWith(
+        { subject: { id: 'x' } },
+        1,
+        10
       );
     });
   });

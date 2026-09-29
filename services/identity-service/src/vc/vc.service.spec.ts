@@ -1,33 +1,54 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 import { VaultService } from '../utils/vault.service';
+import { VerificationKeyType } from '../did/dtos/GenerateDidRequest.dto';
+import { createPrismaServiceOrMock, createVaultServiceOrMock } from '../utils/test-infra.util';
 
-describe('DidService', () => {
+describe('VcService', () => {
   let service: VcService;
+  let prisma: PrismaService;
+  let vault: VaultService;
   let didService: DidService;
-  let signingDID: string;
-  let signPayload = {
-    "@context": {
-      "name": "http://schema.org/name"
+  let didDoc: any;
+  let ed2018Doc: any;
+  let rsaDoc: any;
+
+  const signPayload = {
+    '@context': {
+      name: 'http://schema.org/name',
     },
-    "name": "Hello!"
-  }
+    name: 'Hello!',
+  };
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [VcService, PrismaService, DidService, VaultService],
-    }).compile();
+    prisma = await createPrismaServiceOrMock();
+    vault = await createVaultServiceOrMock();
+    didService = new DidService(prisma, vault);
+    didService.signingAlgorithm = 'Ed25519Signature2020';
 
-    service = module.get<VcService>(VcService);
-    didService = module.get<DidService>(DidService);
-    const testDidDoc = await didService.generateDID({
+    didDoc = await didService.generateDID({ alsoKnownAs: [], services: [], method: 'test' });
+    ed2018Doc = await didService.generateDID({
       alsoKnownAs: [],
       services: [],
-      method: 'test'
+      method: 'test',
+      keyPairType: VerificationKeyType.Ed25519VerificationKey2018,
     });
-    signingDID = testDidDoc.id;
+    rsaDoc = await didService.generateDID({
+      alsoKnownAs: [],
+      services: [],
+      method: 'test',
+      keyPairType: VerificationKeyType.RsaVerificationKey2018,
+    });
+  });
+
+  beforeEach(async () => {
+    service = new VcService(prisma, didService, vault);
+    await service.init();
+  });
+
+  afterEach(() => {
     jest.restoreAllMocks();
   });
 
@@ -36,24 +57,71 @@ describe('DidService', () => {
   });
 
   it('should sign a payload', async () => {
-    const signedPayload = await service.sign(signingDID, signPayload);
+    const signedPayload = await service.sign(didDoc.id, signPayload);
     expect(signedPayload).toBeDefined();
     expect(signedPayload.proof).toBeDefined();
   });
 
   it('should verify a signed payload successfully', async () => {
-    const signedPayload = await service.sign(signingDID, signPayload);
-    const verified = await service.verify(signingDID, signedPayload);
+    const signedPayload = await service.sign(didDoc.id, signPayload);
+    const verified = await service.verify(didDoc.id, signedPayload);
     expect(verified).toBeDefined();
     expect(verified).toBeTruthy();
     expect(verified).toEqual(true);
   });
-  it('should fail to verify a signed payload', async () => {
-    const signedPayload = await service.sign(signingDID, signPayload);
-    signedPayload.name = "Hello changed";
-    const verified = await service.verify(signingDID, signedPayload);
+
+  it('should fail to verify a tampered payload', async () => {
+    const signedPayload = await service.sign(didDoc.id, signPayload);
+    signedPayload.name = 'Hello changed';
+    const verified = await service.verify(didDoc.id, signedPayload);
     expect(verified).toBeDefined();
     expect(verified).toBeFalsy();
     expect(verified).toEqual(false);
+  });
+
+  describe('additional signature suites', () => {
+    it('signs and verifies with RsaSignature2018 (RsaVerificationKey2018)', async () => {
+      const signed = await service.sign(rsaDoc.id, signPayload);
+      expect(signed.proof).toBeDefined();
+      const verified = await service.verify(rsaDoc.id, signed);
+      expect(verified).toEqual(true);
+    });
+
+    it('signs and verifies with Ed25519Signature2018 (Ed25519VerificationKey2018)', async () => {
+      const signed = await service.sign(ed2018Doc.id, signPayload);
+      expect(signed.proof).toBeDefined();
+      const verified = await service.verify(ed2018Doc.id, signed);
+      expect(verified).toEqual(true);
+    });
+  });
+
+  describe('getSuite', () => {
+    it('throws NotFoundException for an unsupported signature type', async () => {
+      await expect(
+        service.getSuite({ type: 'Ed25519VerificationKey2020' }, 'NoSuchSignature2099'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when the verification method type is not supported by the signature type', async () => {
+      await expect(
+        service.getSuite({ type: 'RsaVerificationKey2018' }, 'Ed25519Signature2020'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('error paths', () => {
+    it('throws InternalServerErrorException when the Prisma read fails during sign', async () => {
+      jest.spyOn(prisma.identity, 'findUnique').mockRejectedValueOnce(new Error('db down'));
+      await expect(service.sign(didDoc.id, signPayload)).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it('throws NotFoundException when the signer DID does not exist', async () => {
+      await expect(service.sign('did:does-not-exist', signPayload)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws InternalServerErrorException when resolving the signer DID fails during verify', async () => {
+      jest.spyOn(didService, 'resolveDID').mockRejectedValueOnce(new Error('resolve failed'));
+      await expect(service.verify(didDoc.id, {})).rejects.toThrow(InternalServerErrorException);
+    });
   });
 });

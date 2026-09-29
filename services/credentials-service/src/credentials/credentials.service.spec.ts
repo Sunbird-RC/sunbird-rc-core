@@ -5,6 +5,9 @@ import { UnsignedVCValidator, VCValidator } from './types/validators';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { CredentialFormatService } from './utils/credential-format.service';
+import { StatusListService } from './utils/status-list.service';
+import { RevocationListImpl } from '../revocation-list/revocation-list.impl';
 import { PrismaClient } from '@prisma/client';
 import {
   generateCredentialRequestPayload,
@@ -17,6 +20,18 @@ import {
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
 import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule, HttpService } from '@nestjs/axios';
+import { execSync } from 'child_process';
+import { NotFoundException } from '@nestjs/common';
+import { DOCUMENTS } from './documents';
+
+const hasWkhtmltopdf = (() => {
+  try {
+    execSync('which wkhtmltopdf', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 // setup ajv
 const ajv = new Ajv2019({ strictTuples: false });
@@ -57,6 +72,9 @@ describe('CredentialsService', () => {
         RenderingUtilsService,
         SchemaUtilsSerivce,
         IdentityUtilsService,
+        CredentialFormatService,
+        StatusListService,
+        RevocationListImpl,
       ],
     }).compile();
 
@@ -130,8 +148,8 @@ describe('CredentialsService', () => {
     );
     const v2Cred = await service.issueCredential(v2Payload);
 
-    const v1Result = await service.verifyCredential(v1Cred.credential as any);
-    const v2Result = await service.verifyCredential(v2Cred.credential as any);
+    const v1Result: any = await service.verifyCredential(v1Cred.credential as any);
+    const v2Result: any = await service.verifyCredential(v2Cred.credential as any);
 
     expect(v1Result.checks?.[0]?.proof).toBe('OK');
     expect(v2Result.checks?.[0]?.proof).toBe('OK');
@@ -164,7 +182,8 @@ describe('CredentialsService', () => {
       expect(cred).toBeDefined()
     });
 
-    it('should get a credential in PDF', async () => {
+    const itPdf = hasWkhtmltopdf ? it : it.skip;
+    itPdf('should get a credential in PDF', async () => {
       const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
       const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
       const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, null, RENDER_OUTPUT.PDF);
@@ -185,10 +204,13 @@ describe('CredentialsService', () => {
     await expect(service.verifyCredentialById('did:ulp:123')).rejects.toThrow();
   });
 
-  it('should verify an issued credential', async () => {
-    const newCred = await service.issueCredential(sampleCredReqPayload);
-    const res = {checks: [{expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
-    const verifyRes = await service.verifyCredentialById((newCred.credential as any)['id']);
+  it('should verify an issued credential (expired)', async () => {
+    const expiredPayload = JSON.parse(JSON.stringify(sampleCredReqPayload));
+    expiredPayload.credential.issuanceDate = '2023-02-06T11:56:27.259Z';
+    expiredPayload.credential.expirationDate = '2023-02-08T11:56:27.259Z';
+
+    const newCred = await service.issueCredential(expiredPayload);
+    const verifyRes: any = await service.verifyCredentialById((newCred.credential as any)['id']);
     expect(verifyRes.status).toEqual("ISSUED");
     expect(verifyRes.checks[0].expired).toEqual("NOK");
     expect(verifyRes.checks[0].proof).toEqual("NOK");
@@ -196,10 +218,8 @@ describe('CredentialsService', () => {
   });
 
   it('should return an empty revocation list', async () => {
-    let res = []
-    expect(
-      await service.getRevocationList(undefined)
-    ).toEqual(res);
+    const res = await service.getRevocationList('did:nonexistent:empty-test');
+    expect(res).toEqual([]);
   });
 
   it('should say revoked', async () => {
@@ -274,4 +294,156 @@ describe('CredentialsService', () => {
     ).rejects.toThrow();
   });
 
+});
+
+// Mocked-unit coverage for branches the real-DB/real-HTTP suite above can't
+// reliably reach (error paths, format dispatch, presentation holder-binding).
+// Every dependency is mocked here — no DB, no identity-service/credential-schema HTTP.
+describe('CredentialsService — mocked unit branches', () => {
+  const makeService = async (overrides: any = {}) => {
+    const service = new CredentialsService(
+      (overrides.prisma || {}) as any,
+      (overrides.identityUtilsService || {}) as any,
+      (overrides.renderingUtilsService || {}) as any,
+      (overrides.schemaUtilsService || {}) as any,
+      (overrides.credentialFormatService || {}) as any,
+      (overrides.statusListService || {}) as any,
+    );
+    await service.init();
+    return service;
+  };
+
+  describe('getSuite', () => {
+    it('throws NotFoundException for an unsupported signature type', async () => {
+      const service = await makeService();
+      await expect(
+        service.getSuite({ type: 'Ed25519VerificationKey2020' } as any, 'NoSuchSignature2099'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when the verification method type is not supported by the signature type', async () => {
+      const service = await makeService();
+      await expect(
+        service.getSuite({ type: 'RsaVerificationKey2018' } as any, 'Ed25519Signature2020'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getDocumentLoader', () => {
+    it('resolves the DID document itself for a self-reference URL', async () => {
+      const service = await makeService();
+      const didDoc = { id: 'did:rcw:issuer-1' };
+      const loader = service.getDocumentLoader(didDoc as any);
+      const result = await loader('did:rcw:issuer-1');
+      expect(result.document).toBe(didDoc);
+    });
+
+    it('resolves a known static document from the DOCUMENTS map', async () => {
+      const service = await makeService();
+      const loader = service.getDocumentLoader({ id: 'did:x' } as any);
+      const knownUrl = Object.keys(DOCUMENTS)[0];
+      const result = await loader(knownUrl);
+      expect(result.document).toBe((DOCUMENTS as any)[knownUrl]);
+    });
+  });
+
+  describe('checkChallengeDomain', () => {
+    it('returns checked:false, ok:true when no options are supplied', async () => {
+      const service = await makeService();
+      const result = (service as any).checkChallengeDomain({ challenge: 'x' }, undefined);
+      expect(result).toEqual({ checked: false, ok: true });
+    });
+
+    it('passes when challenge and domain both match', async () => {
+      const service = await makeService();
+      const result = (service as any).checkChallengeDomain(
+        { challenge: 'c1', domain: 'd1' },
+        { challenge: 'c1', domain: 'd1' },
+      );
+      expect(result).toEqual({ checked: true, ok: true });
+    });
+
+    it('fails when the challenge mismatches', async () => {
+      const service = await makeService();
+      const result = (service as any).checkChallengeDomain(
+        { challenge: 'wrong' },
+        { challenge: 'c1' },
+      );
+      expect(result).toEqual({ checked: true, ok: false });
+    });
+
+    it('fails when the domain mismatches', async () => {
+      const service = await makeService();
+      const result = (service as any).checkChallengeDomain(
+        { domain: 'wrong' },
+        { domain: 'd1' },
+      );
+      expect(result).toEqual({ checked: true, ok: false });
+    });
+  });
+
+  describe('verifyCredential — enveloped formats (verifyEnvelopedCredential)', () => {
+    it('verifies a JWT-enveloped credential (two dots, no ~)', async () => {
+      const verifyJwt = jest.fn().mockResolvedValue({
+        verified: true,
+        payload: { vc: { expirationDate: new Date(Date.now() + 100000).toISOString() } },
+      });
+      const service = await makeService({ identityUtilsService: { verifyJwt } });
+      const result: any = await service.verifyCredential('header.payload.signature');
+      expect(verifyJwt).toHaveBeenCalledWith('header.payload.signature');
+      expect(result.checks[0].proof).toBe('OK');
+    });
+
+    it('verifies an SD-JWT-enveloped credential (contains ~)', async () => {
+      const verifySdJwt = jest.fn().mockResolvedValue({ verified: true, claims: {} });
+      const service = await makeService({ identityUtilsService: { verifySdJwt } });
+      const result: any = await service.verifyCredential('sd.jwt.value~disclosure');
+      expect(verifySdJwt).toHaveBeenCalled();
+      expect(result.checks[0].proof).toBe('OK');
+    });
+
+    it('verifies an mdoc-enveloped credential (no dots, no ~)', async () => {
+      const verifyMdoc = jest.fn().mockResolvedValue({ verified: true, claims: {}, docType: 'org.iso.18013.5.1' });
+      const service = await makeService({ identityUtilsService: { verifyMdoc } });
+      const result: any = await service.verifyCredential('mdoc_base64_no_separators');
+      expect(verifyMdoc).toHaveBeenCalled();
+      expect(result.docType).toBe('org.iso.18013.5.1');
+      expect(result.checks[0].proof).toBe('OK');
+    });
+
+    it('reports proof NOK when the JWT signature does not verify', async () => {
+      const verifyJwt = jest.fn().mockResolvedValue({ verified: false });
+      const service = await makeService({ identityUtilsService: { verifyJwt } });
+      const result: any = await service.verifyCredential('a.b.c');
+      expect(result.checks[0].proof).toBe('NOK');
+    });
+
+    it('returns errors when the identity-service call rejects', async () => {
+      const verifyJwt = jest.fn().mockRejectedValue(new Error('network down'));
+      const service = await makeService({ identityUtilsService: { verifyJwt } });
+      const result: any = await service.verifyCredential('a.b.c');
+      expect(result.errors).toBeDefined();
+    });
+  });
+
+  describe('verifyCredential — VerifiablePresentation (verifyPresentation)', () => {
+    it('returns errors for an unsupported VP proof type', async () => {
+      const service = await makeService();
+      const vp = { type: ['VerifiablePresentation'], proof: { type: 'Ed25519Signature2020' } };
+      const result: any = await service.verifyCredential(vp as any);
+      expect(result.errors).toBeDefined();
+    });
+
+    it('returns errors when the holder public key cannot be resolved', async () => {
+      const resolveDID = jest.fn().mockResolvedValue({ verificationMethod: [] });
+      const service = await makeService({ identityUtilsService: { resolveDID } });
+      const vp = {
+        type: ['VerifiablePresentation'],
+        proof: { type: 'JsonWebSignature2020', verificationMethod: 'did:web:example.com#key-1' },
+      };
+      const result: any = await service.verifyCredential(vp as any);
+      expect(resolveDID).toHaveBeenCalledWith('did:web:example.com');
+      expect(result.errors).toBeDefined();
+    });
+  });
 });
