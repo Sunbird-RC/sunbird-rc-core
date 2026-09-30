@@ -1,0 +1,69 @@
+name: "\U0001F4DA Documentation"
+description: Something in the docs is wrong, missing, or hard to follow
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentation fixes are real contributions and an ideal first one.
+
+        Most user-facing documentation lives on [https://rc.sunbird.org/](https://rc.sunbird.org/)
+        rather than in this repository — report it here either way, and a maintainer
+        will route it.
+
+  - type: dropdown
+    id: location
+    attributes:
+      label: Where is it?
+      options:
+        - Documentation site — installation and getting started
+        - Documentation site — API reference
+        - Documentation site — schemas, credentials or attestation
+        - Documentation site — somewhere else
+        - README.md
+        - CONTRIBUTING.md
+        - A service's own README under services/
+        - Comments in code, Makefile or compose files
+    validations:
+      required: true
+
+  - type: input
+    id: link
+    attributes:
+      label: Link or file path
+      placeholder: https://rc.sunbird.org/use/getting-started/install-sunbird-rc
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem-type
+    attributes:
+      label: What's the problem?
+      options:
+        - It's wrong or out of date
+        - Something is missing
+        - The steps didn't work when I followed them
+        - A version number doesn't match what's required
+        - It's confusing or hard to follow
+        - Broken link or formatting
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: What needs changing?
+      description: What the docs say now, and what they should say instead. If a step failed, include your JDK, Docker and Compose versions and the exact error.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contributing
+    attributes:
+      label: Would you like to fix this?
+      options:
+        - I'd like to submit the fix myself
+        - I'd like guidance before trying
+        - I'm only reporting it
+    validations:
+      required: true

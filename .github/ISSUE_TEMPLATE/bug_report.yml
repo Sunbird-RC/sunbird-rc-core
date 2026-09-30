@@ -1,0 +1,120 @@
+name: "\U0001F41E Bug report"
+description: Something in the registry or one of its services isn't working
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Please don't report security vulnerabilities here.** Use the
+        **Security → Report a vulnerability** tab instead.
+
+        **Redact before you paste:** credentials, tokens, realm secrets, signing keys
+        and anything from your `.env`. Registry entries may contain personal data —
+        replace real values with dummy ones.
+
+  - type: checkboxes
+    id: prechecks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched existing issues and this isn't already reported
+          required: true
+        - label: I checked the [documentation](https://rc.sunbird.org/) and the installation guide
+          required: true
+        - label: This belongs in this repository — not another Sunbird RC repository, and not upstream in Keycloak, PostgreSQL, Elasticsearch, Kafka or ClickHouse
+          required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Which service?
+      options:
+        - Registry core
+        - Claim service
+        - Identity service
+        - Credential schema service
+        - Credentials service
+        - OID4VC service
+        - Notification service
+        - Metrics service
+        - ID generation service
+        - Encryption service
+        - Build, Makefile or Docker Compose setup
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: When did it happen?
+      options:
+        - Building (make build / mvnw)
+        - Starting the stack (docker compose up)
+        - Running tests (make test)
+        - Using the API at runtime
+        - Credential issuance or verification
+        - Authentication or Keycloak
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what actually happened instead.
+      placeholder: I expected ... but instead ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the request you sent, with real values replaced by dummy ones.
+      placeholder: |
+        1. Start the stack with ...
+        2. POST to ...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: JDK version, Docker and Compose versions, OS, and the branch or tag you're on.
+      placeholder: |
+        JDK: 11
+        Docker: 27.3.1
+        Compose: v2.29.7
+        Branch: v2.1.1
+    validations:
+      required: true
+
+  - type: input
+    id: compose-config
+    attributes:
+      label: Compose file and environment file
+      description: Which compose file, and which file from `test_environments/` if any.
+      placeholder: docker-compose-v1.yml with test_with_asyncCreate_events_notifications.env
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Container logs for the failing service. Redact secrets first.
+      render: shell
+
+  - type: dropdown
+    id: contributing
+    attributes:
+      label: Would you like to work on this?
+      options:
+        - I'd like to fix it myself
+        - I'd like guidance before trying
+        - I'm only reporting it
+    validations:
+      required: true

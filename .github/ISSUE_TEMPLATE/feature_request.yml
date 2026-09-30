@@ -1,0 +1,98 @@
+name: "\U0001F680 Feature request"
+description: Suggest a new capability or an improvement to an existing one
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sunbird RC is used to build registries in many different contexts, so changes
+        that serve adopters generally land more easily than ones serving a single
+        deployment.
+
+        **Agree the approach here before writing significant code.**
+
+  - type: checkboxes
+    id: prechecks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched existing issues and discussions, and this isn't already suggested
+          required: true
+        - label: I checked the [documentation](https://rc.sunbird.org/) in case this is already possible through configuration
+          required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Which service would this change?
+      options:
+        - Registry core (java/registry)
+        - Claim service
+        - Identity service
+        - Credential schema service
+        - Credentials service
+        - OID4VC service
+        - Notification service
+        - Metrics service
+        - ID generation service
+        - Encryption service
+        - Build, Makefile or Docker Compose setup
+        - Several, or not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation you're stuck in, not the solution you have in mind.
+      placeholder: When building a registry for ... I can't ... because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: standard
+    attributes:
+      label: Related specification
+      description: If this touches credential formats, attestation or verification, name the specification it follows — W3C VC, OID4VC, DID method, or similar.
+      placeholder: W3C VC Data Model 2.0
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Would this break existing registries?
+      description: Say whether existing schemas, stored credentials or API consumers would need to change. "No" is a fine answer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: who-benefits
+    attributes:
+      label: Who benefits from this?
+      description: Which adopters, and in what situations. If it's specific to one deployment, say so.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Workarounds you're using now, or projects that solved this well.
+
+  - type: dropdown
+    id: contributing
+    attributes:
+      label: Would you like to build this?
+      options:
+        - I'd like to build it myself
+        - I'd like guidance before trying
+        - I'm only suggesting it
+    validations:
+      required: true
