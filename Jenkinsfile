@@ -31,7 +31,7 @@ node {
                 app.push("${env.BUILD_NUMBER}")
                 app.push("latest")
            }
-           docker.withRegistry('ghrc.io', 'sunbird-rc') {
+           docker.withRegistry('ghcr.io', 'sunbird-rc') {
                claimApp.push("${env.BUILD_NUMBER}")
                claimApp.push("latest")
           }
