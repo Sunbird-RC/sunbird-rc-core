@@ -1,0 +1,62 @@
+version: 2
+
+# Covers the code that ships. The sample apps under ui-sample/ and the helper
+# scripts in scripts/ are left out on purpose -- they are demonstration code,
+# and automated bumps there would be noise nobody acts on.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # java/ is the multi-module registry build; the other two are standalone services.
+  - package-ecosystem: maven
+    directories:
+      - /java
+      - /services/encryption-service
+      - /services/id-gen-service
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      maven-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directories:
+      - /services/credential-schema
+      - /services/credentials-service
+      - /services/identity-service
+      - /services/oid4vc-service
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: gomod
+    directories:
+      - /services/metrics
+      - /services/notification-service
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      gomod-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Base images for the shipped containers.
+  - package-ecosystem: docker
+    directories:
+      - /java
+      - /services/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      docker:
+        patterns: ["*"]
