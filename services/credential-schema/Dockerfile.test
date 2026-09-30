@@ -12,4 +12,8 @@ COPY --from=install /app/node_modules ./node_modules
 RUN npx prisma generate
 COPY . .
 EXPOSE 3000
+
+# [Auto-Remediation CWE-250] Enforce non-root execution
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
 CMD [ "yarn", "test:migrate"]

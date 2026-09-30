@@ -61,4 +61,8 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules ./node_modules
 EXPOSE 3000
+
+# [Auto-Remediation CWE-250] Enforce non-root execution
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
 CMD [ "npm", "run", "start:migrate:prod" ]
