@@ -49,7 +49,9 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
 
 public class ElasticServiceImpl implements IElasticService {
-    private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
+    // Concurrent requests read this map while createClient adds to it; a plain HashMap
+    // can lose or duplicate entries, and every duplicate is a client with its own IO threads.
+    private static Map<String, RestHighLevelClient> esClient = new java.util.concurrent.ConcurrentHashMap<>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
     private static String connectionInfo;
@@ -88,7 +90,7 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indexName      for ElasticSearch
      * @param connectionInfo of ElasticSearch
      */
-    private static void createClient(String indexName, String connectionInfo) {
+    private static synchronized void createClient(String indexName, String connectionInfo) {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
