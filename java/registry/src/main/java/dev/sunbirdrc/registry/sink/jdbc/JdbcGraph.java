@@ -2,6 +2,8 @@ package dev.sunbirdrc.registry.sink.jdbc;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.slf4j.Logger;
@@ -19,6 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JdbcGraph implements Graph {
     private static final Logger logger = LoggerFactory.getLogger(JdbcGraph.class);
+
+    // Read V().hasLabel(x).has(k, v) from V_x with a WHERE clause instead of loading every table.
+    private static final TraversalStrategies STRATEGIES = TraversalStrategies.GlobalCache
+            .getStrategies(Graph.class).clone().addStrategies(JdbcGraphStepStrategy.instance());
+
+    static {
+        TraversalStrategies.GlobalCache.registerStrategies(JdbcGraph.class, STRATEGIES);
+    }
 
     private final DataSource dataSource;
     private final JdbcGraphFeatures features;
@@ -474,6 +484,15 @@ public class JdbcGraph implements Graph {
         throw Graph.Exceptions.graphComputerNotSupported();
     }
 
+    /**
+     * Traversals carry JdbcGraphStepStrategy explicitly: TinkerPop's global strategy cache
+     * is keyed by exact class, so a subclass of JdbcGraph would otherwise lose it.
+     */
+    @Override
+    public GraphTraversalSource traversal() {
+        return new GraphTraversalSource(this, STRATEGIES);
+    }
+
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
         if (vertexIds.length == 0) {
@@ -672,6 +691,40 @@ public class JdbcGraph implements Graph {
                         label, propertyKey, propertyValue, tablesToQuery);
         }
 
+        return vertices.iterator();
+    }
+
+    /**
+     * Get the vertices of one label by reading only that label's table (V_{label}).
+     *
+     * graph.traversal().V().hasLabel(label) cannot be pushed down to SQL here: it calls
+     * vertices() with no ids, which loads every row of every vertex table into memory
+     * and filters afterwards. Callers that know the label should use this instead.
+     *
+     * @param label the vertex label
+     * @return the vertices with that label, or an empty iterator if its table does not exist
+     */
+    public Iterator<Vertex> getVerticesByLabel(String label) {
+        String tableName = getVertexTableName(label);
+        if (!existingVertexTables.contains(tableName)) {
+            refreshVertexTableCache();
+            if (!existingVertexTables.contains(tableName)) {
+                return Collections.emptyIterator();
+            }
+        }
+
+        List<Vertex> vertices = new ArrayList<>();
+        String sql = "SELECT * FROM \"" + tableName + "\"";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                vertices.add(resultSetToVertex(rs, label));
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get vertices from table: " + tableName, e);
+            throw new RuntimeException("Failed to get vertices from table: " + tableName, e);
+        }
         return vertices.iterator();
     }
 
