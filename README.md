@@ -1,6 +1,8 @@
 # Sunbird Registry and Credentials
 
 ![Build](https://github.com/Sunbird-RC/sunbird-rc-core/actions/workflows/maven.yml/badge.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Sunbird-RC_sunbird-rc-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Sunbird-RC_sunbird-rc-core)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Sunbird-RC/sunbird-rc-core/badge)](https://scorecard.dev/viewer/?uri=github.com/Sunbird-RC/sunbird-rc-core)
 
 Sunbird RC is an open-source software framework for rapidly building electronic
 registries, enable atestation capabilities, and build verifiable credentialling
