@@ -81,17 +81,23 @@ public class KeycloakAdminUtil implements IdentityManager {
     private String createOrUpdateRealmGroup(String entityName) {
         RoleRepresentation roleRepresentation = createOrGetRealmRole(entityName);
         GroupsResource groupsResource = keycloak.realm(providerConfiguration.getRealm()).groups();
-        GroupRepresentation groupRepresentation = new GroupRepresentation();
-        groupRepresentation.setName(entityName);
-        Response groupAddResponse = groupsResource.add(groupRepresentation);
-        String groupId = "";
-        if (groupAddResponse.getStatus() == 409) {
-            Optional<GroupRepresentation> groupRepresentationOptional = groupsResource.groups().stream().filter(gp -> gp.getName().equalsIgnoreCase(entityName)).findFirst();
-            if (groupRepresentationOptional.isPresent()) {
-                groupId = groupRepresentationOptional.get().getId();
-            }
+        Optional<GroupRepresentation> existingGroup = groupsResource.groups().stream()
+                .filter(gp -> gp.getName().equalsIgnoreCase(entityName)).findFirst();
+        String groupId;
+        if (existingGroup.isPresent()) {
+            groupId = existingGroup.get().getId();
         } else {
-            groupId = groupAddResponse.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+            GroupRepresentation groupRepresentation = new GroupRepresentation();
+            groupRepresentation.setName(entityName);
+            try (Response groupAddResponse = groupsResource.add(groupRepresentation)) {
+                if (groupAddResponse.getStatus() == 409) {
+                    groupId = groupsResource.groups().stream()
+                            .filter(gp -> gp.getName().equalsIgnoreCase(entityName)).findFirst()
+                            .map(GroupRepresentation::getId).orElse("");
+                } else {
+                    groupId = groupAddResponse.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+                }
+            }
         }
         groupsResource.group(groupId)
                 .roles().realmLevel().add(Collections.singletonList(roleRepresentation));
