@@ -39,3 +39,19 @@ export function normalizeVct(rawVct: string, publicUrl: string): string {
   if (!slug) return rawVct; // nothing sluggable (e.g. all punctuation) — leave as-is
   return `${publicUrl.replace(/\/+$/, '')}/vct/${slug}`;
 }
+
+/**
+ * The last path segment of a vct, which is the part that identifies the TYPE
+ * rather than the instance that published it.
+ *
+ * Needed because normalizeVct() resolves a relative schema vct against the
+ * calling instance's own publicUrl: with several path-scoped issuers on one host
+ * the same credential type reads as `<host>/school/vct/x` from one and
+ * `<host>/college/vct/x` from another. Comparing full vcts across instances is
+ * therefore always false, which is not obvious from either value.
+ */
+export function vctSlug(vct?: string): string | undefined {
+  if (!vct) return undefined;
+  const trimmed = String(vct).replace(/\/+$/, '');
+  return trimmed.split('/').pop() || undefined;
+}

@@ -336,14 +336,24 @@ export class Oid4vpService {
           if (!holderDid && hd) holderDid = hd;
         }
 
-        const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented);
+        const dcqlResult = this.dcql.evaluate(txn.dcqlQuery, presented, {
+          rejectUnrequestedDisclosures: this.config.rejectUnrequestedDisclosures,
+        });
         if (!dcqlResult.satisfied) throw new Error(`DCQL not satisfied: ${dcqlResult.reason}`);
         checks.dcql = 'OK';
         matched = dcqlResult.matched;
       }
 
-      // Store the result.
-      const result = { verified: true, checks, claims: matched, holderDid };
+      // Store the result. `algs` carries the signature algorithms observed on
+      // each presentation, for verifiers enforcing an algorithm policy.
+      const algs = [...new Set(presented.flatMap((p: any) => p.algs || []))];
+      const result = {
+        verified: true,
+        checks,
+        claims: matched,
+        holderDid,
+        ...(algs.length ? { algs } : {}),
+      };
       await this.store.set(key, { ...txn, status: 'verified', result }, this.config.ttl.vpTxn);
       return { redirect_uri: null, status: 'ok' };
     } catch (err) {
@@ -435,8 +445,22 @@ export class Oid4vpService {
       // (silently skipped as an unparseable "disclosure").
       const [parsed] = this.extractCredentials({ verifiableCredential: [entry] });
       if (!parsed) throw new Error('unable to parse SD-JWT claims');
+      // `algs` surfaces the algorithms actually used so a verifier can hold an
+      // algorithm allowlist. `disclosedNames` is carried through, not
+      // recomputed: the over-disclosure check needs what the holder revealed in
+      // the `~` segments, and `claims` is a merged view that also contains the
+      // signed payload's registered claims.
       return {
-        presented: [{ types: parsed.types, vct: parsed.vct, format, claims: parsed.claims }],
+        presented: [
+          {
+            types: parsed.types,
+            vct: parsed.vct,
+            format,
+            claims: parsed.claims,
+            algs: this.presentationAlgs(entry),
+            disclosedNames: parsed.disclosedNames,
+          },
+        ],
         holderDid: parsed.subjectId,
       };
     }
@@ -680,6 +704,33 @@ export class Oid4vpService {
     return { status: txn.status, ...(txn.result || {}) };
   }
 
+  /**
+   * The signature algorithms on an SD-JWT+KB presentation: the issuer's JWS and
+   * the Key Binding JWT.
+   *
+   * Header inspection only — both signatures are verified elsewhere. This exists
+   * so a relying party can apply an algorithm allowlist, which it otherwise
+   * cannot do: `alg` lives in the JWS header and never reaches the claim set.
+   */
+  private presentationAlgs(sdJwt: string): string[] {
+    const parts = String(sdJwt).split('~');
+    const jws = parts[0];
+    // No trailing '~' means the last segment is the KB-JWT.
+    const kbJwt = String(sdJwt).endsWith('~') ? undefined : parts[parts.length - 1];
+    const algs: string[] = [];
+    for (const token of [jws, kbJwt]) {
+      if (!token) continue;
+      try {
+        const alg = jose.decodeProtectedHeader(token)?.alg;
+        if (typeof alg === 'string') algs.push(alg);
+      } catch {
+        // Unparseable header: the signature checks above already gate trust, and
+        // an absent alg must not be reported as an acceptable one.
+      }
+    }
+    return [...new Set(algs)];
+  }
+
   // Pulls embedded credentials out of a VP, normalising the claim shape across
   // ldp_vc (JSON-LD object) and jwt_vc_json / vc+sd-jwt (compact strings).
   private extractCredentials(vp: any): Array<{
@@ -689,6 +740,18 @@ export class Oid4vpService {
     format: string;
     claims: Record<string, any>;
     subjectId?: string;
+    // The claim names the HOLDER chose to reveal, for SD-JWT only.
+    //
+    // Kept separate from `claims` because `claims` is a merged view: the signed
+    // payload's registered claims (iss, iat, sub, vct, cnf, ...) plus the
+    // disclosed values. Comparing that against what a query asked for would
+    // flag `iss` as an unrequested disclosure and refuse every presentation.
+    // Only the `~` segments say what the holder actually disclosed.
+    //
+    // Undefined for formats that have no selective disclosure, where the
+    // question does not arise: an ldp_vc or jwt_vc_json credential carries all
+    // of its claims by construction and the holder chose nothing.
+    disclosedNames?: string[];
   }> {
     let list = vp.verifiableCredential || vp.verifiable_credential || [];
     if (!Array.isArray(list)) list = [list];
@@ -720,12 +783,17 @@ export class Oid4vpService {
           delete claims._sd;
           delete claims._sd_alg;
           const disclosed: Record<string, any> = { ...claims };
+          const disclosedNames: string[] = [];
           for (const d of parts.slice(1).filter((p) => p.length > 0)) {
             try {
               const [, name, value] = JSON.parse(
                 Buffer.from(d, 'base64url').toString('utf8'),
               );
               disclosed[name] = value;
+              // A three-element array is a disclosure; the trailing segment of a
+              // presentation is the Key Binding JWT, which parses as neither and
+              // lands in the catch below.
+              if (typeof name === 'string') disclosedNames.push(name);
             } catch {
               // malformed disclosure — ignore, digest check in verify() below still gates trust
             }
@@ -737,6 +805,7 @@ export class Oid4vpService {
             format: 'vc+sd-jwt',
             claims: disclosed,
             subjectId: disclosed?.sub,
+            disclosedNames,
           };
         }
         // jwt_vc_json: W3C VC-JWT convention, claims nested under `vc`.

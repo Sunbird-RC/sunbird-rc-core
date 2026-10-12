@@ -77,6 +77,9 @@ describe('TokenService', () => {
   });
 
   describe('validateAccessToken', () => {
+    // A decodable JWT: the service reads the unverified `iss` to route to a verifier
+    const TOKEN = `Bearer e30.${Buffer.from('{"iss":"https://issuer.example"}').toString('base64url')}.sig`;
+
     function makeService() {
       const service = new TokenService(identity);
       return service;
@@ -98,15 +101,15 @@ describe('TokenService', () => {
       const payload = { exp: Math.floor(Date.now() / 1000) + 100, iss: 'https://issuer.example' };
       identity.verifyJwt.mockResolvedValue({ verified: true, payload });
 
-      const result = await service.validateAccessToken('Bearer sometoken');
-      expect(result).toBe(payload);
+      const result = await service.validateAccessToken(TOKEN);
+      expect(result).toEqual({ payload, source: 'preauth' });
     });
 
     it('throws UnauthorizedException("Invalid access token") when verified:false', async () => {
       const service = makeService();
       identity.verifyJwt.mockResolvedValue({ verified: false, error: 'bad sig' });
 
-      await expect(service.validateAccessToken('Bearer sometoken')).rejects.toThrow(
+      await expect(service.validateAccessToken(TOKEN)).rejects.toThrow(
         'Invalid access token',
       );
     });
@@ -118,7 +121,7 @@ describe('TokenService', () => {
         payload: { exp: Math.floor(Date.now() / 1000) - 100, iss: 'https://issuer.example' },
       });
 
-      await expect(service.validateAccessToken('Bearer sometoken')).rejects.toThrow(
+      await expect(service.validateAccessToken(TOKEN)).rejects.toThrow(
         'Invalid access token',
       );
     });
@@ -130,7 +133,7 @@ describe('TokenService', () => {
         payload: { exp: Math.floor(Date.now() / 1000) + 100, iss: 'https://someone-else.example' },
       });
 
-      await expect(service.validateAccessToken('Bearer sometoken')).rejects.toThrow(
+      await expect(service.validateAccessToken(TOKEN)).rejects.toThrow(
         'Invalid access token',
       );
     });

@@ -22,6 +22,7 @@ describe('Oid4vciService', () => {
       getIssuerDid: jest.fn().mockReturnValue('did:rcw:issuer1'),
       mintAccessToken: jest.fn().mockResolvedValue('minted.access.token'),
       validateAccessToken: jest.fn(),
+      authorizationServers: jest.fn().mockReturnValue(['https://issuer.example']),
     };
     pop = { verifyJwtProof: jest.fn() };
   });
@@ -31,7 +32,7 @@ describe('Oid4vciService', () => {
   });
 
   function makeService() {
-    return new Oid4vciService(store as any, credentials, schema, tokens, pop);
+    return new Oid4vciService(store as any, credentials, schema, tokens, pop, {} as any);
   }
 
   function makeSchemaConfig(overrides: Partial<Oid4vciSchemaConfig> = {}): Oid4vciSchemaConfig {
@@ -117,7 +118,7 @@ describe('Oid4vciService', () => {
       const meta = await service.getVctTypeMetadata('teacher-credential');
       expect(meta.vct).toBe(normalizeVct('Teacher Credential', 'https://issuer.example'));
       expect(meta.name).toBe('Teacher Credential');
-      expect(meta.display).toEqual([{ name: 'Teacher' }]);
+      expect(meta.display).toEqual([{ name: 'Teacher', locale: 'en-US' }]);
     });
 
     it('throws NotFoundException when no vc+sd-jwt config matches the slug', async () => {
@@ -376,7 +377,7 @@ describe('Oid4vciService', () => {
         credential_configuration_id: 'did:schema:teacher',
         claims: { name: 'Alice' },
       });
-      tokens.validateAccessToken.mockResolvedValue({ sub: created.offer_id });
+      tokens.validateAccessToken.mockResolvedValue({ payload: { sub: created.offer_id }, source: 'preauth' });
       return { service, created };
     }
 
@@ -479,7 +480,7 @@ describe('Oid4vciService', () => {
         credential_configuration_id: 'did:schema:teacher',
         claims: { name: 'Alice' },
       });
-      tokens.validateAccessToken.mockResolvedValue({ sub: created.offer_id });
+      tokens.validateAccessToken.mockResolvedValue({ payload: { sub: created.offer_id }, source: 'preauth' });
       const nonce = await service.issueNonce();
       const proofJwt = `${Buffer.from(JSON.stringify({ alg: 'ES256' })).toString('base64url')}.${Buffer.from(
         JSON.stringify({ nonce }),
@@ -519,7 +520,7 @@ describe('Oid4vciService', () => {
       });
       const session = await store.get<any>(`oid4vc:offer:${created.offer_id}`);
       await store.set(`oid4vc:offer:${created.offer_id}`, { ...session, deferredClaimId: 'claim-1' }, 600);
-      tokens.validateAccessToken.mockResolvedValue({ sub: created.offer_id });
+      tokens.validateAccessToken.mockResolvedValue({ payload: { sub: created.offer_id }, source: 'preauth' });
 
       const txId = 'txn-1';
       await store.set(
@@ -570,7 +571,7 @@ describe('Oid4vciService', () => {
   describe('notification', () => {
     it('resolves without throwing when validateAccessToken succeeds', async () => {
       const service = makeService();
-      tokens.validateAccessToken.mockResolvedValue({ sub: 'offer-1' });
+      tokens.validateAccessToken.mockResolvedValue({ payload: { sub: 'offer-1' }, source: 'preauth' });
 
       await expect(service.notification('Bearer tok', { event: 'credential_accepted' })).resolves.toBeUndefined();
     });
