@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Institute": { "$ref": "#/definitions/Institute" }
+  },
+  "required": ["Institute"],
+  "title": "Institute",
+  "definitions": {
+    "Institute": {
+      "$id": "#/properties/Institute",
+      "type": "object",
+      "title": "The Institute Schema",
+      "required": ["instituteName", "instituteType", "institutionCode"],
+      "properties": {
+        "instituteName": { "type": "string", "title": "Institute Name" },
+        "instituteType": {
+          "type": "string",
+          "title": "Institute Type",
+          "enum": ["SCHOOL", "COLLEGE", "UNIVERSITY"]
+        },
+        "institutionCode": { "type": "string", "title": "Institution Code" },
+        "address": { "type": "string", "title": "Address" },
+        "headName": { "type": "string", "title": "Head Name" },
+        "contactEmail": { "type": "string", "title": "Contact Email" },
+        "phone": { "type": "string", "title": "Phone" },
+        "operatingStatus": { "type": "string", "title": "Operating Status" },
+        "educationStage": { "type": "string", "title": "Education Stage" },
+        "geoLocation": { "type": "string", "title": "Geographic Location" }
+      }
+    }
+  },
+  "_osConfig": {
+    "privateFields": [],
+    "internalFields": [],
+    "signedFields": [],
+    "indexFields": ["instituteName", "institutionCode"],
+    "uniqueIndexFields": ["institutionCode"],
+    "systemFields": [
+      "_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy",
+      "_osAttestedData", "_osClaimId", "_osState"
+    ],
+    "ownershipAttributes": [
+      { "email": "/contactEmail", "userId": "/contactEmail" }
+    ],
+    "inviteRoles": ["anonymous"],
+    "roles": ["anonymous"]
+  }
+}

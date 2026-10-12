@@ -22,9 +22,12 @@ import { DOCUMENTS } from './documents';
 import { RSAKeyPair } from 'crypto-ld';
 const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
 import {
-  W3CCredential, Verifiable, DIDDocument,
-  Proof, VerificationMethod
- } from 'vc.types';
+  W3CCredential,
+  Verifiable,
+  DIDDocument,
+  Proof,
+  VerificationMethod,
+} from 'vc.types';
 import { SignResult } from './utils/credential-format.service';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
 
@@ -38,9 +41,9 @@ export class CredentialsService {
     Ed25519Signature2018: null,
     RsaVerificationKey2018: null,
     RsaSignature2018: null,
-    vc: null
+    vc: null,
   };
-  documents: object
+  documents: object;
   // Status-list embedding is opt-in so the default ldp_vc path stays
   // byte-for-byte identical to today (regression requirement).
   private statusListEnabled = process.env.STATUS_LIST_ENABLED === 'true';
@@ -58,10 +61,18 @@ export class CredentialsService {
 
   async init() {
     const vc = await import('@digitalbazaar/vc');
-    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
-    const {Ed25519Signature2020} = await import('@digitalbazaar/ed25519-signature-2020');
-    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
-    const {Ed25519Signature2018} = await import('@digitalbazaar/ed25519-signature-2018');
+    const { Ed25519VerificationKey2020 } = await import(
+      '@digitalbazaar/ed25519-verification-key-2020'
+    );
+    const { Ed25519Signature2020 } = await import(
+      '@digitalbazaar/ed25519-signature-2020'
+    );
+    const { Ed25519VerificationKey2018 } = await import(
+      '@digitalbazaar/ed25519-verification-key-2018'
+    );
+    const { Ed25519Signature2018 } = await import(
+      '@digitalbazaar/ed25519-signature-2018'
+    );
     this.map.Ed25519VerificationKey2020 = Ed25519VerificationKey2020;
     this.map.JsonWebKey2020 = Ed25519VerificationKey2020;
     this.map.Ed25519Signature2020 = Ed25519Signature2020;
@@ -100,6 +111,7 @@ export class CredentialsService {
       const res = cred.signed;
       delete res['options'];
       res['id'] = cred.id;
+      res['subject'] = cred.subject;
       return res as W3CCredential;
     }) as ReadonlyArray<W3CCredential>;
   }
@@ -114,6 +126,7 @@ export class CredentialsService {
       where: { id: id },
       select: {
         signed: true,
+        subject: true,
       },
     });
     if (!credential) {
@@ -124,6 +137,7 @@ export class CredentialsService {
     const res = credential.signed;
     delete res['options'];
     res['id'] = id;
+    res['subject'] = credential.subject;
     let template = null;
 
     switch (output.toUpperCase()) {
@@ -135,13 +149,17 @@ export class CredentialsService {
       case RENDER_OUTPUT.PDF:
         // fetch the template
         // TODO: Add type here
-        template = externalTemplate || (await this.schemaUtilsService.getTemplateById(templateId))?.template;
+        template =
+          externalTemplate ||
+          (await this.schemaUtilsService.getTemplateById(templateId))?.template;
         return this.renderingUtilsService.renderAsPDF(
           res as W3CCredential,
           template
         );
       case RENDER_OUTPUT.HTML:
-        template = externalTemplate || (await this.schemaUtilsService.getTemplateById(templateId))?.template;
+        template =
+          externalTemplate ||
+          (await this.schemaUtilsService.getTemplateById(templateId))?.template;
         return await this.renderingUtilsService.compileHBSTemplate(
           res as W3CCredential,
           template
@@ -167,37 +185,44 @@ export class CredentialsService {
     }
     try {
       // calling identity service to verify the issuer DID
-      const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
+      const issuerId = (credToVerify.issuer?.id ||
+        credToVerify.issuer) as string;
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         issuerId
       );
-      const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
-        .find(d => d.indexOf("verificationMethod") > -1)]
+      const credVerificationMethod = (credToVerify?.proof || {})[
+        Object.keys(credToVerify?.proof || {}).find(
+          (d) => d.indexOf('verificationMethod') > -1
+        )
+      ];
 
       // VERIFYING THE JWS
-      const vm = did.verificationMethod?.find(d => (d.id === credVerificationMethod || d.id === credVerificationMethod?.id));
+      const vm = did.verificationMethod?.find(
+        (d) =>
+          d.id === credVerificationMethod || d.id === credVerificationMethod?.id
+      );
       const suite = await this.getSuite(vm, credToVerify?.proof?.type);
       let results;
-      if(credToVerify?.proof?.type === "RsaSignature2018") {
+      if (credToVerify?.proof?.type === 'RsaSignature2018') {
         this.map.vc._checkCredential({
-          credential: credToVerify
-        })
+          credential: credToVerify,
+        });
         results = await jsigs.verify(credToVerify, {
           purpose: new AssertionProofPurpose(),
           suite: [suite],
           documentLoader: this.getDocumentLoader(did),
           addSuiteContext: true,
-          compactProof: false
+          compactProof: false,
         });
       } else {
         results = await this.map.vc.verifyCredential({
           credential: credToVerify,
           purpose: new AssertionProofPurpose(),
           suite: [suite],
-          documentLoader: this.getDocumentLoader(did)
+          documentLoader: this.getDocumentLoader(did),
         });
       }
-      if(!results?.verified) {
+      if (!results?.verified) {
         this.logger.error('Error in verifying credentials: ', results);
       }
 
@@ -218,7 +243,9 @@ export class CredentialsService {
           {
             ...((status || statusListRevoked !== null) && { revoked }),
             expired:
-              new Date(credToVerify.expirationDate ?? (credToVerify as any).validUntil).getTime() < Date.now()
+              new Date(
+                credToVerify.expirationDate ?? (credToVerify as any).validUntil
+              ).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
             proof: proofOk ? 'OK' : 'NOK',
@@ -253,10 +280,14 @@ export class CredentialsService {
       let claims: any;
       let mdocDocType: string | undefined;
       if (isSdJwt) {
-        const res = await this.identityUtilsService.verifySdJwt(compact, undefined, {
-          nonce: options?.challenge,
-          audience: options?.domain,
-        });
+        const res = await this.identityUtilsService.verifySdJwt(
+          compact,
+          undefined,
+          {
+            nonce: options?.challenge,
+            audience: options?.domain,
+          }
+        );
         verified = res.verified;
         claims = res.claims;
       } else if (isMdoc) {
@@ -276,12 +307,19 @@ export class CredentialsService {
       // claims as JWT-shaped expiry fields.
       const expEpoch = isMdoc
         ? undefined
-        : claims?.exp || (claims?.expirationDate ? new Date(claims.expirationDate).getTime() / 1000 : undefined);
+        : claims?.exp ||
+          (claims?.expirationDate
+            ? new Date(claims.expirationDate).getTime() / 1000
+            : undefined);
       const expired = expEpoch && expEpoch * 1000 < Date.now() ? 'NOK' : 'OK';
 
-      const credentialStatus = claims?.credentialStatus || claims?.vc?.credentialStatus;
-      const statusListRevoked = await this.checkStatusListEntry(credentialStatus);
-      const revoked = status === VCStatus.REVOKED || statusListRevoked ? 'NOK' : 'OK';
+      const credentialStatus =
+        claims?.credentialStatus || claims?.vc?.credentialStatus;
+      const statusListRevoked = await this.checkStatusListEntry(
+        credentialStatus
+      );
+      const revoked =
+        status === VCStatus.REVOKED || statusListRevoked ? 'NOK' : 'OK';
 
       return {
         status,
@@ -321,7 +359,9 @@ export class CredentialsService {
     return this.checkStatusListEntry(cred?.credentialStatus);
   }
 
-  private async checkStatusListEntry(credentialStatus: any): Promise<boolean | null> {
+  private async checkStatusListEntry(
+    credentialStatus: any
+  ): Promise<boolean | null> {
     if (!this.statusListEnabled || !credentialStatus) return null;
     const listId = credentialStatus.revocationListCredential;
     const index = parseInt(credentialStatus.revocationListIndex, 10);
@@ -331,8 +371,7 @@ export class CredentialsService {
 
   async verifyCredentialById(credId: string) {
     // getting the credential from the db
-    const stored =
-      (await this.prisma.verifiableCredentials.findUnique({
+    const stored = (await this.prisma.verifiableCredentials.findUnique({
       where: {
         id: credId,
       },
@@ -342,7 +381,12 @@ export class CredentialsService {
         format: true,
         enveloped: true,
       },
-    })) as { signed: Verifiable<W3CCredential>; status: VCStatus; format?: string; enveloped?: string } | null;
+    })) as {
+      signed: Verifiable<W3CCredential>;
+      status: VCStatus;
+      format?: string;
+      enveloped?: string;
+    } | null;
 
     this.logger.debug('Fetched credntial from db to verify');
 
@@ -358,42 +402,54 @@ export class CredentialsService {
     return this.verifyCredential(stored.signed, stored.status);
   }
 
-  async getSuite(verificationMethod: VerificationMethod, signatureType: string) {
+  async getSuite(
+    verificationMethod: VerificationMethod,
+    signatureType: string
+  ) {
     const supportedSignatures = {
-      "Ed25519Signature2020": ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"],
-      "Ed25519Signature2018": ["Ed25519VerificationKey2018"],
-      "RsaSignature2018": ["RsaVerificationKey2018"],
+      Ed25519Signature2020: [
+        'Ed25519VerificationKey2020',
+        'JsonWebKey2020',
+        'Ed25519VerificationKey2018',
+      ],
+      Ed25519Signature2018: ['Ed25519VerificationKey2018'],
+      RsaSignature2018: ['RsaVerificationKey2018'],
     };
-    if(!(signatureType in supportedSignatures)) {
-      throw new NotFoundException("Suite for signature type not found");
+    if (!(signatureType in supportedSignatures)) {
+      throw new NotFoundException('Suite for signature type not found');
     }
-    if(!supportedSignatures[signatureType].includes(verificationMethod?.type)) {
-      throw new NotFoundException("Suite for verification type not found");
+    if (
+      !supportedSignatures[signatureType].includes(verificationMethod?.type)
+    ) {
+      throw new NotFoundException('Suite for verification type not found');
     }
-    if(!this.map[verificationMethod?.type]) await this.init();
-    if(!this.map[verificationMethod?.type]) throw new NotFoundException("Library not loaded");
-    let keyPair = await this.map[verificationMethod?.type].from(verificationMethod);
-    return new this.map[signatureType]({key: keyPair});
+    if (!this.map[verificationMethod?.type]) await this.init();
+    if (!this.map[verificationMethod?.type])
+      throw new NotFoundException('Library not loaded');
+    let keyPair = await this.map[verificationMethod?.type].from(
+      verificationMethod
+    );
+    return new this.map[signatureType]({ key: keyPair });
   }
 
   getDocumentLoader(didDoc: DIDDocument) {
-    return jsigs.extendContextLoader(async url => {
-      if(url === didDoc?.id) {
+    return jsigs.extendContextLoader(async (url) => {
+      if (url === didDoc?.id) {
         return {
           contextUrl: null,
           documentUrl: url,
-          document: didDoc
+          document: didDoc,
         };
       }
-      if(DOCUMENTS[url]) {
+      if (DOCUMENTS[url]) {
         return {
           contextUrl: null,
           documentUrl: url,
-          document: DOCUMENTS[url]
-        }
+          document: DOCUMENTS[url],
+        };
       }
       return await jsonld.documentLoaders.node()(url);
-    })
+    });
   }
 
   async issueCredential(issueRequest: IssueCredentialDTO) {
@@ -401,9 +457,9 @@ export class CredentialsService {
     const credInReq = issueRequest.credential;
     // VC 2.0 credentials (@context includes https://www.w3.org/ns/credentials/v2)
     // use validFrom/validUntil instead of issuanceDate/expirationDate.
-    const isV2Context = [].concat(credInReq['@context'] || []).includes(
-      'https://www.w3.org/ns/credentials/v2'
-    );
+    const isV2Context = []
+      .concat(credInReq['@context'] || [])
+      .includes('https://www.w3.org/ns/credentials/v2');
     // check for issuance date
     if (isV2Context) {
       if (!(credInReq as any).validFrom)
@@ -430,10 +486,7 @@ export class CredentialsService {
     this.logger.debug('validated schema');
     // generate the DID for credential
     const credDID: ReadonlyArray<DIDDocument> =
-      await this.identityUtilsService.generateDID(
-        [],
-        issueRequest.method
-      );
+      await this.identityUtilsService.generateDID([], issueRequest.method);
     this.logger.debug('generated DID');
     try {
       credInReq.id = credDID[0].id;
@@ -443,7 +496,8 @@ export class CredentialsService {
     }
 
     const format: CredentialFormat = issueRequest.format || 'ldp_vc';
-    const issuerId = (credInReq.issuer as any)?.id || (credInReq.issuer as string);
+    const issuerId =
+      (credInReq.issuer as any)?.id || (credInReq.issuer as string);
 
     // Optionally reserve a status-list index and embed credentialStatus
     // BEFORE signing so the proof covers it. Off by default → ldp_vc unchanged.
@@ -455,7 +509,10 @@ export class CredentialsService {
         statusListCredential = allocation.statusListCredential;
         statusListIndex = allocation.index;
         (credInReq as any).credentialStatus =
-          this.statusListService.buildCredentialStatus(statusListCredential, statusListIndex);
+          this.statusListService.buildCredentialStatus(
+            statusListCredential,
+            statusListIndex
+          );
       } catch (err) {
         this.logger.error('Error allocating status list index', err);
       }
@@ -497,7 +554,8 @@ export class CredentialsService {
         // VC 2.0 credentials carry validFrom/validUntil instead of
         // issuanceDate/expirationDate; store them in the same columns.
         issuanceDate: credInReq.issuanceDate ?? (credInReq as any).validFrom,
-        expirationDate: credInReq.expirationDate ?? (credInReq as any).validUntil,
+        expirationDate:
+          credInReq.expirationDate ?? (credInReq as any).validUntil,
         subject: credInReq.credentialSubject as JwtCredentialSubject,
         subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
         proof: proof,
@@ -592,6 +650,7 @@ export class CredentialsService {
       select: {
         id: true,
         signed: true,
+        subject: true,
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -610,7 +669,7 @@ export class CredentialsService {
       // formatting the output as per the spec
       delete signed['id'];
       delete signed['options'];
-      return { id: cred.id, ...signed };
+      return { id: cred.id, subject: cred.subject, ...signed };
     });
   }
 
@@ -618,21 +677,20 @@ export class CredentialsService {
   // check revocation without contacting the issuer's DB (P0.6).
   async getStatusListCredential(id: string) {
     const signed = await this.statusListService.getStatusListCredential(id);
-    if (!signed) throw new NotFoundException('Status list credential not found');
+    if (!signed)
+      throw new NotFoundException('Status list credential not found');
     return signed;
   }
 
-  async getRevocationList(
-    issuerId: string,
-    page = 1,
-    limit= 1000,
-  ){
-    let revocationList: RevocationListDTO[]
+  async getRevocationList(issuerId: string, page = 1, limit = 1000) {
+    let revocationList: RevocationListDTO[];
 
-    if (issuerId === "") {
-      throw new InternalServerErrorException('Please provide a valid issuer ID');
+    if (issuerId === '') {
+      throw new InternalServerErrorException(
+        'Please provide a valid issuer ID'
+      );
     }
-    
+
     try {
       revocationList = await this.prisma.verifiableCredentials.findMany({
         where: {
@@ -641,20 +699,20 @@ export class CredentialsService {
         },
         select: {
           id: true,
-          tags : true,
-          issuer : true,
-          issuanceDate: true
+          tags: true,
+          issuer: true,
+          issuanceDate: true,
         },
-        skip: (page -1) * limit,
+        skip: (page - 1) * limit,
         take: limit,
         orderBy: {
           issuanceDate: 'desc',
         },
-      }); 
+      });
     } catch (error) {
       this.logger.error('Error fetching RevocationList');
       throw new InternalServerErrorException('Error fetching revocationList');
     }
-    return revocationList 
+    return revocationList;
   }
 }
