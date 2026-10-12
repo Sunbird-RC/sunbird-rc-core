@@ -50,6 +50,19 @@ async function bootstrap() {
   const port = process.env.PORT || 3400;
   await app.listen(port, '0.0.0.0');
   Logger.log(`🚀 oid4vc-service running on: http://0.0.0.0:${port}/`);
+
+  // PUBLIC_URL is baked into issuer metadata, `vct` URLs, credential offer URIs
+  // and the AS metadata `issuer` — so leaving it unset does not fail here, it
+  // fails much later inside a holder's wallet as an unresolvable vct. The
+  // localhost default is what makes `npm run start:dev` work with no env at all,
+  // which is worth keeping; announcing it is what stops it reaching a deployment.
+  if (!process.env.PUBLIC_URL) {
+    Logger.warn(
+      'PUBLIC_URL is not set — falling back to http://localhost:3400. Issuer metadata, ' +
+        'vct URLs and offer URIs will all point at localhost, so any credential issued ' +
+        'is unusable outside this machine. Set PUBLIC_URL to the public base URL.',
+    );
+  }
 }
 // A failed boot must be a clean non-zero exit, not an unhandled rejection —
 // the auth config is validated during startup and the container needs to see
