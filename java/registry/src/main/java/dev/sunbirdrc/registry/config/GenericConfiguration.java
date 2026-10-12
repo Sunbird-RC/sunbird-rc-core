@@ -417,7 +417,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		ElasticServiceImpl elasticService = new ElasticServiceImpl();
 
 		if (isElasticSearchEnabled()) {
-			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
 			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
 			elasticService.setUserName(username);
