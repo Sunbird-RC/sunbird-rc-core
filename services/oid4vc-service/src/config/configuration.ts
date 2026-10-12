@@ -15,6 +15,16 @@ export interface RegistrySources {
   subjectEntity: string;
   /** Field on that entity matching the token's subject claim. */
   subjectKey: string;
+  /**
+   * Field scoping the subject lookup to this pod's own institute (e.g.
+   * instituteOsid), so a subjectKey value shared across institutes (the same
+   * contactEmail enrolled at two schools) resolves to THIS pod's record
+   * instead of whichever one the registry happens to return first. Empty
+   * disables scoping — every subjectKey match is a candidate, today's behavior.
+   */
+  subjectScopeField: string;
+  /** This pod's own value for subjectScopeField. Empty disables scoping. */
+  subjectScopeValue: string;
   /** Entities holding the subject's supporting records, in precedence order. */
   related: RelatedEntitySpec[];
   /**
@@ -443,6 +453,8 @@ export const loadConfig = (): Oid4vcConfig => ({
     subjectEntity: process.env.REGISTRY_SUBJECT_ENTITY || '',
     subjectKey:
       process.env.REGISTRY_SUBJECT_KEY || process.env.KEYCLOAK_SUBJECT_CLAIM || '',
+    subjectScopeField: (process.env.REGISTRY_SUBJECT_SCOPE_FIELD || '').trim(),
+    subjectScopeValue: (process.env.REGISTRY_SUBJECT_SCOPE_VALUE || '').trim(),
     related: parseRelated(process.env.REGISTRY_RELATED_ENTITIES || ''),
     claimAliases: parseAliases(process.env.REGISTRY_CLAIM_ALIASES || '', (m) =>
       console.warn(`[configuration] ${m}`),
