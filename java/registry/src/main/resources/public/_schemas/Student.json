@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Student": { "$ref": "#/definitions/Student" }
+  },
+  "required": ["Student"],
+  "title": "Student",
+  "definitions": {
+    "Student": {
+      "$id": "#/properties/Student",
+      "type": "object",
+      "title": "The Student Schema",
+      "required": ["studentName", "instituteOsid", "completionStatus", "percentage"],
+      "properties": {
+        "studentName": { "type": "string", "title": "Student Name" },
+        "age": { "type": "integer", "title": "Age" },
+        "gender": { "type": "string", "title": "Gender" },
+        "contactEmail": { "type": "string", "title": "Contact Email" },
+        "phone": { "type": "string", "title": "Phone" },
+        "address": { "type": "string", "title": "Address" },
+        "nationality": { "type": "string", "title": "Nationality" },
+        "guardianName": { "type": "string", "title": "Guardian Name" },
+        "guardianRelationship": { "type": "string", "title": "Guardian Relationship" },
+        "guardianPhone": { "type": "string", "title": "Guardian Phone" },
+        "instituteOsid": { "type": "string", "title": "Institute OSID" },
+        "instituteName": { "type": "string", "title": "Institute Name" },
+        "program": { "type": "string", "title": "Program" },
+        "enrollmentDate": { "type": "string", "format": "date", "title": "Enrollment Date" },
+        "status": {
+          "type": "string",
+          "title": "Enrollment Status",
+          "enum": ["ACTIVE", "COMPLETED", "WITHDRAWN"]
+        },
+        "courseName": { "type": "string", "title": "Course Name" },
+        "completionStatus": {
+          "type": "string",
+          "title": "Completion Status",
+          "enum": ["COMPLETED", "IN_PROGRESS", "DISCONTINUED", "FAILED"]
+        },
+        "percentage": {
+          "type": "number",
+          "title": "Percentage",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "privateFields": [],
+    "internalFields": [],
+    "signedFields": [],
+    "indexFields": ["studentName", "instituteOsid"],
+    "systemFields": [
+      "_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy",
+      "_osAttestedData", "_osClaimId", "_osState"
+    ],
+    "ownershipAttributes": [
+      { "email": "/contactEmail", "userId": "/contactEmail" }
+    ],
+    "inviteRoles": ["anonymous"],
+    "roles": ["anonymous"]
+  }
+}
