@@ -35,6 +35,7 @@ export interface Oid4vciSchemaConfig {
   // mso_mdoc (ISO/IEC 18013-5) docType/namespace config, required if
   // `formats` includes 'mso_mdoc'.
   mdoc?: MdocConfig;
+  disclosable?: string[];
 }
 
 // Reads OID4VCI-enabled schema configs from credential-schema to build the
