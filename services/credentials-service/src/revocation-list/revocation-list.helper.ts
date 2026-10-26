@@ -9,10 +9,10 @@ type BitstringConstructorParam = {
 
 export class RevocationList {
   private bitstring: any;
-  constructor(
-    { length, buffer }: BitstringConstructorParam = { length: 100000 }
-  ) {
-    this.bitstring = new Bitstring({ length, buffer });
+  constructor({ length, buffer }: BitstringConstructorParam = {}) {
+    this.bitstring = buffer
+      ? new Bitstring({ buffer })
+      : new Bitstring({ length: length ?? 100000 });
   }
 
   setRevoked(index, revoked) {
