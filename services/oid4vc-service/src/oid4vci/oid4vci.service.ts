@@ -45,6 +45,7 @@ interface OfferSession {
   docType?: string;
   namespace?: string;
   elementMapping?: Record<string, { namespace: string; elementIdentifier: string }>;
+  disclosable?: string[];
 }
 
 // Core OID4VCI orchestration. Owns short-lived session state (offers, codes,
@@ -290,6 +291,7 @@ export class Oid4vciService {
       docType: cfg.mdoc?.docType,
       namespace: cfg.mdoc?.namespace,
       elementMapping: cfg.mdoc?.elementMapping,
+      disclosable: cfg.disclosable,
     };
     await this.store.set(`oid4vc:offer:${id}`, session, this.config.ttl.offer);
     // Index by pre-auth code for the token endpoint.
@@ -533,6 +535,7 @@ export class Oid4vciService {
       ...(session.format === 'mso_mdoc'
         ? { docType: session.docType, namespaces: this.buildMdocNamespaces(session) }
         : {}),
+      ...(session.disclosable?.length ? { disclosable: session.disclosable } : {}),
     });
 
     if (Array.isArray(res.credential?.['@context'])) {

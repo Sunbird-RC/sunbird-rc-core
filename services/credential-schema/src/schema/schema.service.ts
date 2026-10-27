@@ -103,6 +103,7 @@ export class SchemaService {
           // mso_mdoc (ISO/IEC 18013-5) docType/namespace config, if this
           // schema opts into that format.
           mdoc: cfg.mdoc,
+          disclosable: cfg.disclosable,
         };
       });
   }

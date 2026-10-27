@@ -464,6 +464,44 @@ describe('Oid4vciService', () => {
       expect(issueArg.format).toBe('ldp_vc');
       expect(created).toBeDefined();
     });
+
+    it('passes schema-config disclosable through to credentials.issue', async () => {
+      schema.getOid4vciConfigs.mockResolvedValue([
+        makeSchemaConfig({ disclosable: ['name', 'birthdate'] }),
+      ]);
+      const service = makeService();
+      const created = await service.createOffer({
+        credential_configuration_id: 'did:schema:teacher',
+        claims: { name: 'Alice' },
+      });
+      tokens.validateAccessToken.mockResolvedValue({ sub: created.offer_id });
+      const nonce = await service.issueNonce();
+      const proofJwt = `${Buffer.from(JSON.stringify({ alg: 'ES256' })).toString('base64url')}.${Buffer.from(
+        JSON.stringify({ nonce }),
+      ).toString('base64url')}.sig`;
+      pop.verifyJwtProof.mockResolvedValue({ valid: true, holderDid: 'did:jwk:holder1' });
+      credentials.issue.mockResolvedValue({ credential: { id: 'vc-1' } });
+
+      await service.credential('Bearer tok', { proof: { jwt: proofJwt } });
+
+      const issueArg = credentials.issue.mock.calls[0][0];
+      expect(issueArg.disclosable).toEqual(['name', 'birthdate']);
+    });
+
+    it('omits disclosable from credentials.issue when the schema config does not set it', async () => {
+      const { service } = await seedOfferAndToken();
+      const nonce = await service.issueNonce();
+      const proofJwt = `${Buffer.from(JSON.stringify({ alg: 'ES256' })).toString('base64url')}.${Buffer.from(
+        JSON.stringify({ nonce }),
+      ).toString('base64url')}.sig`;
+      pop.verifyJwtProof.mockResolvedValue({ valid: true, holderDid: 'did:jwk:holder1' });
+      credentials.issue.mockResolvedValue({ credential: { id: 'vc-1' } });
+
+      await service.credential('Bearer tok', { proof: { jwt: proofJwt } });
+
+      const issueArg = credentials.issue.mock.calls[0][0];
+      expect(issueArg).not.toHaveProperty('disclosable');
+    });
   });
 
   describe('deferred', () => {

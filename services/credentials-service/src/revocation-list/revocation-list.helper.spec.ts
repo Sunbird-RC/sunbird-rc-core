@@ -53,8 +53,20 @@ describe('RevocationList', () => {
     });
   });
 
-  // ponytail: encode/decode round-trip tests skipped — @techsavvyash/bitstring
-  // has a broken base64url dependency in this environment. The encode/decode
-  // path is covered by status-list.service.spec.ts integration tests.
-  describe.skip('encode / decode round-trip (skipped: broken bitstring dep)', () => {});
+  describe('encode / decode round-trip', () => {
+    it('round-trips revoked and unrevoked indices through encode/decode', async () => {
+      const list = new RevocationList({ length: 1000 });
+      list.setRevoked(10, true);
+      list.setRevoked(500, true);
+
+      const encoded = await list.encode();
+      const decoded = await RevocationList.decode({ encodedList: encoded });
+
+      expect(decoded.isRevoked(10)).toBe(true);
+      expect(decoded.isRevoked(500)).toBe(true);
+      expect(decoded.isRevoked(0)).toBe(false);
+      expect(decoded.isRevoked(11)).toBe(false);
+      expect(decoded.isRevoked(999)).toBe(false);
+    });
+  });
 });

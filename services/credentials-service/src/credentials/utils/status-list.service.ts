@@ -5,7 +5,7 @@ import { RevocationListImpl } from '../../revocation-list/revocation-list.impl';
 import { CredentialPayload, DIDDocument, IssuerType, Proof } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
 
-const LIST_LENGTH = 100000;
+const LIST_LENGTH = Number(process.env.STATUS_LIST_LENGTH) || 100000;
 
 // StatusList / RevocationList2020 handling, wired into issue / verify / revoke.
 // This finally makes the previously-dead bitstring code active:
