@@ -55,7 +55,8 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 			JsonNode searchResults = searchService.search(objectNode);
 			for (JsonNode schemaNode : searchResults.get(Schema)) {
 				try {
-					schemaService.addSchema(schemaNode);
+					// addSchema expects the record wrapped as {"Schema": {...}}, same as the create API path
+					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
 					logger.error("Failed loading schema to definition manager:", e);
 				}
