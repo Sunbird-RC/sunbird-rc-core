@@ -66,6 +66,14 @@ public class OSSchemaConfiguration {
     private List<OwnershipsAttributes> ownershipAttributes = new ArrayList<>();
 
     /**
+     * Holds field name -> target entity type name for fields that are real
+     * references to another top-level entity (resolved to a graph edge on write).
+     * */
+    private Map<String, String> entityReferences = new HashMap<>();
+
+    private Map<String, String> ownedReferences = new HashMap<>();
+
+    /**
      *
      * Holds attestableFields info,
      * Where key is the property name eg. education, certification, ...

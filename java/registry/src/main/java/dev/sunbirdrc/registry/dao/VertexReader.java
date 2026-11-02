@@ -11,6 +11,7 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -213,18 +215,42 @@ public class VertexReader {
      *
      * @param vertex
      * @param currLevel
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles
      */
-    private void loadOtherVertices(Vertex vertex, int currLevel) {
+    private void loadOtherVertices(Vertex vertex, int currLevel, Set<String> visitedUuids) {
         // NOTE: We can load selective vertices, but we don't know the labels
         // here.
         // So in the process, we will have loaded signature nodes as well here
+        //
+        // Reference edges (RefLabelHelper.REFERENCE_EDGE_PREFIX) are excluded: they are a
+        // distinct concern (entityReferences / ownedReferences), handled by
+        // inlineOwnedReferences, not this generic composition walk. Without this exclusion,
+        // this method claims an owned reference's target uuid into visitedUuids first, and
+        // inlineOwnedReferences's own cycle-guard then silently skips it as "already visited".
+        Set<Object> referenceEdgeTargetIds = new HashSet<>();
+        Iterator<Edge> refEdges = vertex.edges(Direction.OUT);
+        while (refEdges.hasNext()) {
+            Edge refEdge = refEdges.next();
+            if (refEdge.label().startsWith(RefLabelHelper.REFERENCE_EDGE_PREFIX)) {
+                referenceEdgeTargetIds.add(refEdge.inVertex().id());
+            }
+        }
+
         Iterator<Vertex> otherVertices = vertex.vertices(Direction.OUT);
 
         int tempCurrLevel = currLevel;
         while (otherVertices.hasNext()) {
             Vertex currVertex = otherVertices.next();
+            if (referenceEdgeTargetIds.contains(currVertex.id())) {
+                continue;
+            }
             if(currVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
                     currVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)){
+                continue;
+            }
+            String currUuid = databaseProvider.getId(currVertex);
+            if (!visitedUuids.add(currUuid)) {
+                logger.debug("Already visited vertex {}, skipping to avoid cycle", currUuid);
                 continue;
             }
             VertexProperty internalTypeProp = currVertex.property(Constants.INTERNAL_TYPE_KEYWORD);
@@ -248,17 +274,74 @@ public class VertexReader {
                     // Not incrementing levels here, because it is we who
                     // inserted a blank array_node
                     // for data modelling.
-                    loadOtherVertices(currVertex, tempCurrLevel);
+                    loadOtherVertices(currVertex, tempCurrLevel, visitedUuids);
                 }
 
                 if (canLoadVertex(++tempCurrLevel, configurator.getDepth())) {
                     logger.debug("Going to load children of {}", currVertex.label());
-                    loadOtherVertices(currVertex, tempCurrLevel);
+                    loadOtherVertices(currVertex, tempCurrLevel, visitedUuids);
                     logger.debug("End load children of {}", currVertex.label());
                     tempCurrLevel = currLevel;
                 }
             }
         }
+    }
+
+    /**
+     * Inlines every entity that OWNS-REFERENCES this vertex (dev.sunbirdrc.registry.util
+     * .OSSchemaConfiguration#ownedReferences), grouped by the referencer's own entity type, so a
+     * read of the target (e.g. Student) embeds its owned children (e.g. Records, Attendance)
+     * directly — no second call needed. Scoped tightly to the edges that feature forms: an edge
+     * whose label starts with RefLabelHelper.REFERENCE_EDGE_PREFIX ("ref_") and carries NO
+     * RefLabelHelper.REFERENCE_EDGE_MARKER property. A MARKED "ref_" edge is the separate,
+     * non-owning entityReferences case (e.g. this vertex's own outgoing reference to another
+     * entity) and must stay invisible on read, exactly as before this method existed.
+     *
+     * @param vertex the vertex being read
+     * @param node the ObjectNode already built for vertex, mutated in place
+     * @param currLevel current recursion depth, same counter constructObject's own expansion uses
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles —
+     *                     the SAME set instance used elsewhere in this read, not a fresh one
+     */
+    private void inlineOwnedReferences(Vertex vertex, ObjectNode node, int currLevel, Set<String> visitedUuids) {
+        if (!canLoadVertex(currLevel, configurator.getDepth())) {
+            return;
+        }
+        Set<Object> qualifyingIds = new HashSet<>();
+        Iterator<Edge> edges = vertex.edges(Direction.OUT);
+        while (edges.hasNext()) {
+            Edge edge = edges.next();
+            boolean hasPrefix = edge.label().startsWith(RefLabelHelper.REFERENCE_EDGE_PREFIX);
+            boolean hasMarker = edge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent();
+            if (hasPrefix && !hasMarker) {
+                qualifyingIds.add(edge.inVertex().id());
+            }
+        }
+        if (qualifyingIds.isEmpty()) {
+            return;
+        }
+        Map<String, ArrayNode> byEntityType = new LinkedHashMap<>();
+        Iterator<Vertex> otherVertices = vertex.vertices(Direction.OUT);
+        while (otherVertices.hasNext()) {
+            Vertex referencer = otherVertices.next();
+            if (!qualifyingIds.contains(referencer.id())) {
+                continue;
+            }
+            if (referencer.property(Constants.STATUS_KEYWORD).isPresent()
+                    && referencer.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)) {
+                continue;
+            }
+            String referencerUuid = databaseProvider.getId(referencer);
+            if (!visitedUuids.add(referencerUuid)) {
+                logger.debug("Already visited vertex {}, skipping to avoid cycle", referencerUuid);
+                continue;
+            }
+            ObjectNode referencerNode = constructObject(referencer);
+            inlineOwnedReferences(referencer, referencerNode, currLevel + 1, visitedUuids);
+            byEntityType.computeIfAbsent(referencer.label(), k -> JsonNodeFactory.instance.arrayNode())
+                    .add(referencerNode);
+        }
+        byEntityType.forEach(node::set);
     }
 
     private void printUuidNodeMap() {
@@ -267,9 +350,9 @@ public class VertexReader {
         });
     }
 
-    private ArrayNode expandChildObject(ObjectNode entityNode, int currentLevel) {
+    private ArrayNode expandChildObject(ObjectNode entityNode, int currentLevel, Set<String> visitedUuids) {
         if (currentLevel <= Constants.MAX_EXPAND_LEVEL) {
-            return expandChildObject(entityNode, null, currentLevel);
+            return expandChildObject(entityNode, null, currentLevel, visitedUuids);
         } else {
             logger.warn("Maximum expand level reached");
             return JsonNodeFactory.instance.arrayNode();
@@ -281,8 +364,9 @@ public class VertexReader {
      * content in the right paths
      *
      * @param entityNode
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles
      */
-    private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs, int currentLevel) {
+    private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs, int currentLevel, Set<String> visitedUuids) {
         ArrayNode resultArr = JsonNodeFactory.instance.arrayNode();
         if (currentLevel <= Constants.MAX_EXPAND_LEVEL) {
             if (entityNode == null) {
@@ -320,10 +404,10 @@ public class VertexReader {
                                 logger.debug("Provision for expansion");
                             }
 
-                            if (!processedUUIDs.contains(uuidVal)) {
+                            if (!processedUUIDs.contains(uuidVal) && visitedUuids.add(uuidVal)) {
                                 processedUUIDs.add(uuidVal);
                                 ObjectNode tmp = uuidNodeMap.get(uuidVal);
-                                ArrayNode result = expandChildObject(tmp, processedUUIDs, currentLevel + 1);
+                                ArrayNode result = expandChildObject(tmp, processedUUIDs, currentLevel + 1, visitedUuids);
                                 entityNode.setAll(tmp);
                             }
                         } else {
@@ -342,7 +426,9 @@ public class VertexReader {
                                         uuidPropertyValue = ArrayHelper.unquoteString(node.asText());
                                     }
                                     ObjectNode ovalue = uuidNodeMap.getOrDefault(uuidPropertyValue, null);
-                                    expandChildObject(ovalue, currentLevel + 1);
+                                    if (visitedUuids.add(uuidPropertyValue)) {
+                                        expandChildObject(ovalue, currentLevel + 1, visitedUuids);
+                                    }
                                     if (ovalue != null) {
                                         resultArr.add(ovalue);
                                     } else {
@@ -353,7 +439,7 @@ public class VertexReader {
                         }
                     } else if (entry.isObject()) {
                         logger.debug("Field {} is an object. Expanding further.", entry);
-                        ArrayNode expandChildObject = expandChildObject((ObjectNode) entry, currentLevel + 1);
+                        ArrayNode expandChildObject = expandChildObject((ObjectNode) entry, currentLevel + 1, visitedUuids);
                         if (expandChildObject.size() == 0 && entityNode.get(field).size() == 0) {
                             entityNode.remove(field);
                         }
@@ -472,9 +558,14 @@ public class VertexReader {
             rootNode.remove(Constants.SIGNATURES_STR);
         }
 
+        Set<String> visitedUuids = new HashSet<>();
+        visitedUuids.add(databaseProvider.getId(rootVertex));
+
         if (configurator.getDepth() > 0) {
-            loadOtherVertices(rootVertex, currLevel);
+            loadOtherVertices(rootVertex, currLevel, visitedUuids);
         }
+
+        inlineOwnedReferences(rootVertex, rootNode, currLevel, visitedUuids);
 
         printUuidNodeMap();
 
@@ -484,7 +575,7 @@ public class VertexReader {
         // For the entity Node, now go and replace the array values with actual
         // objects.
         // The properties could exist anywhere. Refer to the local arrMap.
-        expandChildObject(rootNode, 0);
+        expandChildObject(rootNode, 0, visitedUuids);
         if(expandReferenceObj)
             expandReferenceNodes(rootNode);
         entityNode.set(entityType, rootNode);

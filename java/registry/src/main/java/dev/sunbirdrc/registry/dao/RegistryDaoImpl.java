@@ -7,6 +7,7 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
+import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -140,6 +141,11 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     public void deleteEntity(Vertex vertex) {
         if (null != vertex) {
+            vertex.edges(Direction.OUT).forEachRemaining(d -> {
+                if (!d.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                    this.deleteEntity(d.inVertex());
+                }
+            });
             vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
@@ -150,7 +156,12 @@ public class RegistryDaoImpl implements IRegistryDao {
     public void hardDeleteEntity(Vertex vertex) {
         if (vertex != null) {
             vertex.edges(Direction.OUT).forEachRemaining(d -> {
-                this.hardDeleteEntity(d.inVertex());
+                // Property check, not the label prefix: a schema field literally named "ref"
+                // can produce the same "ref_<uuidPropertyName>" label as a plain containment
+                // edge, so the label alone can't safely gate cascade-delete.
+                if (!d.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                    this.hardDeleteEntity(d.inVertex());
+                }
             });
             vertex.remove();
         } else {

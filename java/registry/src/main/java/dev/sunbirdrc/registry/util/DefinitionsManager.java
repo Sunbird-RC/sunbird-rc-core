@@ -130,6 +130,26 @@ public class DefinitionsManager implements IDefinitionsManager {
 		}
 	}
 
+	@Override
+	public Map<String, String> getEntityReferenceFields(String entity) {
+		Definition entityDefinition = definitionMap.get(entity);
+		if (entityDefinition != null) {
+			return entityDefinition.getOsSchemaConfiguration().getEntityReferences();
+		} else {
+			return Collections.emptyMap();
+		}
+	}
+
+	@Override
+	public Map<String, String> getOwnedReferenceFields(String entity) {
+		Definition entityDefinition = definitionMap.get(entity);
+		if (entityDefinition != null) {
+			return entityDefinition.getOsSchemaConfiguration().getOwnedReferences();
+		} else {
+			return Collections.emptyMap();
+		}
+	}
+
 	public boolean isValidEntityName(String entityName) {
 		return definitionMap.containsKey(entityName);
 	}
