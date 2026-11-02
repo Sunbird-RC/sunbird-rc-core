@@ -104,8 +104,7 @@ export class CredentialFormatService {
     const subject = (credInReq.credentialSubject || {}) as Record<string, any>;
     // Flatten subject claims to top level for SD-JWT selective disclosure.
     const disclosable =
-      opts.disclosable ??
-      Object.keys(subject).filter((k) => k !== 'id');
+      opts.disclosable ?? Object.keys(subject).filter((k) => k !== 'id');
     const payload: Record<string, any> = {
       iss: (issuer as any)?.id || issuer,
       ...(subject.id ? { sub: subject.id } : {}),
@@ -113,6 +112,12 @@ export class CredentialFormatService {
       ...(credInReq.expirationDate ? { exp: this.toEpoch(credInReq.expirationDate) } : {}),
       vct: opts.vct || (credInReq.type && credInReq.type[credInReq.type.length - 1]) || 'VerifiableCredential',
       jti: credInReq.id,
+      // Revocation status must stay plaintext (never disclosable) so a verifier
+      // holding only the SD-JWT can check it. Placed before ...subject so an
+      // arbitrary subject claim cannot clobber it.
+      ...(credInReq.credentialStatus
+        ? { credentialStatus: credInReq.credentialStatus }
+        : {}),
       ...subject,
       // Key binding must be expressed the same way the wallet requested it.
       // A DID-bound request (proof header carried a `kid`) has to be echoed as
@@ -146,7 +151,7 @@ export class CredentialFormatService {
       issuer,
       opts.docType,
       opts.namespaces,
-      opts.holderJwk,
+      opts.holderJwk
     );
     return { signed: this.envelope(credInReq.id, `data:application/mdoc,${mdoc}`), enveloped: mdoc };
   }
