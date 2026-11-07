@@ -105,6 +105,9 @@ export class CredentialFormatService {
     // Flatten subject claims to top level for SD-JWT selective disclosure.
     const disclosable =
       opts.disclosable ?? Object.keys(subject).filter((k) => k !== 'id');
+    const statusListClaim = this.sdJwtStatusListClaim(
+      (credInReq as any).credentialStatus
+    );
     const payload: Record<string, any> = {
       iss: (issuer as any)?.id || issuer,
       ...(subject.id ? { sub: subject.id } : {}),
@@ -118,6 +121,10 @@ export class CredentialFormatService {
       ...(credInReq.credentialStatus
         ? { credentialStatus: credInReq.credentialStatus }
         : {}),
+      // SD-JWT VC verifiers resolve revocation through the IETF Token Status
+      // List claim (draft-ietf-oauth-status-list), not the W3C entry above —
+      // mirror the same allocation as `status.status_list`, also plaintext.
+      ...(statusListClaim ? { status: statusListClaim } : {}),
       ...subject,
       // Key binding must be expressed the same way the wallet requested it.
       // A DID-bound request (proof header carried a `kid`) has to be echoed as
@@ -158,6 +165,25 @@ export class CredentialFormatService {
 
   // W3C VC Data Model 2.0 EnvelopedVerifiableCredential wrapper — lets the
   // stored `signed` field stay a JSON object for all formats.
+  // IETF Token Status List reference for the SD-JWT payload
+  // (draft-ietf-oauth-status-list). The status allocation embedded as the
+  // W3C `credentialStatus` entry (RevocationList2020Status) is mirrored as
+  // `status.status_list` with a numeric `idx`, which is the claim SD-JWT VC
+  // verifiers actually resolve. Returns undefined when the credential
+  // carries no usable status entry (e.g. status list disabled).
+  private sdJwtStatusListClaim(
+    credentialStatus: any
+  ): { status_list: { idx: number; uri: string } } | undefined {
+    const entry = Array.isArray(credentialStatus)
+      ? credentialStatus[0]
+      : credentialStatus;
+    if (!entry || typeof entry !== 'object') return undefined;
+    const uri = entry.revocationListCredential ?? entry.statusListCredential;
+    const idx = Number(entry.revocationListIndex ?? entry.statusListIndex);
+    if (!uri || !Number.isInteger(idx) || idx < 0) return undefined;
+    return { status_list: { idx, uri } };
+  }
+
   private envelope(id: string, dataUri: string): Record<string, any> {
     return {
       '@context': ['https://www.w3.org/ns/credentials/v2'],

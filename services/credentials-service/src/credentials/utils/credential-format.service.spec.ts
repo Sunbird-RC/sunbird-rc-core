@@ -136,6 +136,32 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
 
       expect('credentialStatus' in payloadOf()).toBe(false);
     });
+
+    it('mirrors the status allocation into the IETF status.status_list claim', async () => {
+      const status = {
+        id: 'did:rcw:list-1#5',
+        type: 'RevocationList2020Status',
+        revocationListIndex: '5',
+        revocationListCredential: 'did:rcw:list-1',
+      };
+      await (service as any).signSdJwtVc(
+        credential({ credentialStatus: status }),
+        { id: 'did:rcw:issuer-1' },
+        {}
+      );
+
+      expect(payloadOf().status).toEqual({
+        status_list: { idx: 5, uri: 'did:rcw:list-1' },
+      });
+      // Plaintext like credentialStatus: never selectively disclosable.
+      expect(signSdJwt.mock.calls[0][2]).not.toContain('status');
+    });
+
+    it('omits the status claim when no status entry is embedded', async () => {
+      await signSd({});
+
+      expect('status' in payloadOf()).toBe(false);
+    });
   });
 
   it('keeps iss/sub/jti bound to the credential', async () => {
