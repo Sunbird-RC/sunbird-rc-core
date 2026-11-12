@@ -129,6 +129,45 @@
             <artifactId>sunbirdrc-actors</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!-- OSGi httpcomponents bundles conflict with OpenSearch at runtime; exclude from fat jar -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <version>4.5.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore-osgi</artifactId>
+            <version>4.4.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- httpcore-nio pinned to match httpcore 4.4.16 required by OpenSearch 2.x -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore-nio</artifactId>
+            <version>4.4.16</version>
+        </dependency>
+
+        <!-- Force Jackson 2.18.x: OpenSearch 2.19.5 requires StreamWriteConstraints (added in 2.16).
+             Spring Boot 2.3.x ships 2.11.x which lacks this class. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.18.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.18.2</version>
+        </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>divoc-external-plugin</artifactId>
@@ -168,7 +207,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.8</version>
+            <version>4.4.16</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -484,6 +523,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.apache.httpcomponents</groupId>
+                            <artifactId>httpclient-osgi</artifactId>
+                        </exclude>
+                        <exclude>
+                            <groupId>org.apache.httpcomponents</groupId>
+                            <artifactId>httpcore-osgi</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
