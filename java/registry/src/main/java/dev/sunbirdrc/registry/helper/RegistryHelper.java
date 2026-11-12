@@ -294,6 +294,15 @@ public class RegistryHelper {
 
     public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures,
                                ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
+        return readEntity(userId, entityType, label, includeSignatures, viewTemplate, requireLDResponse, Collections.emptySet());
+    }
+
+    /**
+     * @param expandTypes entity types whose referencing entities (entityReferences) are inlined
+     *                    under the entity; already validated and authorized by {@link #authorizeExpand}
+     */
+    public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures,
+                               ViewTemplate viewTemplate, boolean requireLDResponse, Set<String> expandTypes) throws Exception {
         boolean includePrivateFields = false;
         JsonNode resultNode = null;
         RecordIdentifier recordId = RecordIdentifier.parse(label);
@@ -306,11 +315,15 @@ public class RegistryHelper {
             includePrivateFields = viewTemplateManager.isPrivateFieldEnabled(viewTemplate, entityType);
         }
         configurator.setIncludeEncryptedProp(includePrivateFields);
+        configurator.setExpandReferencers(expandTypes);
         resultNode = readService.getEntity(shard, userId, recordId.getUuid(), entityType, configurator);
         if (!isOwner(resultNode.get(entityType), userId)) {
 //            throw new Exception("Unauthorized");
             //TODO: return public fields
         }
+        // Before the parent's own decryption / view transform below: inlined children belong to
+        // other entity types and are checked and decrypted with their own definitions.
+        filterInlinedChildren(resultNode.get(entityType), expandTypes, userId, false);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
             if (viewTemplateDecryptPrivateFields) {
@@ -328,6 +341,86 @@ public class RegistryHelper {
             registryService.maskAndEmitEvent(resultNode.get(entityType), entityType, EventType.READ, userId, label);
         }
         return resultNode;
+    }
+
+    /**
+     * Validates the entity types a caller asked to inline under entityName (the "expand" request
+     * parameter, comma separated) and checks the caller's roles for each of them.
+     *
+     * @throws IllegalArgumentException when a type does not declare an entityReferences field to entityName
+     * @throws UnAuthorizedException when the caller lacks a role of a requested type
+     */
+    public Set<String> authorizeExpand(HttpServletRequest request, String entityName, String expand) throws Exception {
+        if (expand == null || expand.trim().isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<String> referencing = definitionsManager.getReferencingEntityTypes(entityName);
+        Set<String> expandTypes = new LinkedHashSet<>();
+        for (String type : expand.split(",")) {
+            type = type.trim();
+            if (type.isEmpty()) {
+                continue;
+            }
+            if (!referencing.contains(type)) {
+                throw new IllegalArgumentException("Cannot expand '" + type + "' on " + entityName);
+            }
+            List<String> roles = getManageRoles(type);
+            if (securityEnabled && !roles.isEmpty() && !roles.contains(ROLE_ANONYMOUS)) {
+                authorizeUserRole(getUserRolesFromRequest(request), roles);
+            }
+            expandTypes.add(type);
+        }
+        return expandTypes;
+    }
+
+    private Set<String> authorizeSearchExpand(JsonNode inputJson) throws Exception {
+        Set<String> requested = ISearchService.getExpandTypes(inputJson);
+        if (requested.isEmpty()) {
+            return requested;
+        }
+        String expand = String.join(",", requested);
+        Set<String> authorized = requested;
+        for (JsonNode entity : inputJson.get(ENTITY_TYPE)) {
+            authorized = authorizeExpand(null, entity.asText(), expand);
+        }
+        return authorized;
+    }
+
+    /**
+     * Applies, to the entities inlined under entityNode for expandTypes, what a direct read of
+     * that type applies: children the caller does not own are dropped when the child type has
+     * ownershipAttributes, and private fields are decrypted (read) or private and internal fields
+     * stripped (search) using the child's own definition. Roles were checked by authorizeExpand.
+     */
+    public void filterInlinedChildren(JsonNode entityNode, Set<String> expandTypes, String userId, boolean forSearch) throws Exception {
+        if (expandTypes.isEmpty() || entityNode == null || !entityNode.isObject()) {
+            return;
+        }
+        ObjectNode entity = (ObjectNode) entityNode;
+        for (String type : expandTypes) {
+            JsonNode inlined = entity.get(type);
+            if (inlined == null || !(inlined.isArray() || inlined.isObject())) {
+                continue;
+            }
+            boolean oneToOne = inlined.isObject();
+            boolean checkOwnership = securityEnabled && doesEntityContainOwnershipAttributes(type);
+            ArrayNode kept = JsonNodeFactory.instance.arrayNode();
+            for (JsonNode child : oneToOne ? Collections.singletonList(inlined) : inlined) {
+                if (checkOwnership && !isOwner(child, userId)) {
+                    continue;
+                }
+                if (forSearch) {
+                    kept.add(JSONUtil.removeNodesByPath(child, definitionsManager.getExcludingFieldsForEntity(type)));
+                } else {
+                    kept.add(encryptionEnabled ? decryptionHelper.getDecryptedJson(type, child) : child);
+                }
+            }
+            if (kept.size() == 0) {
+                entity.remove(type);
+            } else {
+                entity.set(type, oneToOne ? kept.get(0) : kept);
+            }
+        }
     }
 
     private boolean isOwner(JsonNode entity, String userId) {
@@ -364,10 +457,22 @@ public class RegistryHelper {
     private JsonNode searchEntity(JsonNode inputJson, ISearchService service, String userId, boolean skipRemoveNonPublicFields) throws Exception {
         logger.debug("searchEntity starts");
         ObjectNode resultNode;
+        // Validated and role-checked before the search runs, so the search service only ever
+        // inlines types the caller may read.
+        Set<String> expandTypes = authorizeSearchExpand(inputJson);
         if(skipRemoveNonPublicFields && service instanceof NativeSearchService) {
             resultNode = (ObjectNode) ((NativeSearchService) service).search(inputJson, userId, true);
         } else {
             resultNode = (ObjectNode) service.search(inputJson, userId);
+        }
+        if (!expandTypes.isEmpty()) {
+            String readerUserId = userId != null ? userId : getUserId(inputJson.get(ENTITY_TYPE).get(0).asText());
+            Iterator<Map.Entry<String, JsonNode>> results = resultNode.fields();
+            while (results.hasNext()) {
+                for (JsonNode entityNode : results.next().getValue().get(ENTITY_LIST)) {
+                    filterInlinedChildren(entityNode, expandTypes, readerUserId, !skipRemoveNonPublicFields);
+                }
+            }
         }
 
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);

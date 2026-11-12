@@ -625,6 +625,126 @@ public class RegistryHelperTest {
 	}
 
 	@Test
+	public void authorizeExpandReturnsNothingWhenNoTypeIsRequested() throws Exception {
+		mockDefinitionManager();
+
+		assertTrue(registryHelper.authorizeExpand(null, "Institute", null).isEmpty());
+		assertTrue(registryHelper.authorizeExpand(null, "Institute", " , ").isEmpty());
+	}
+
+	@Test
+	public void authorizeExpandRejectsATypeThatDoesNotReferenceTheEntity() throws Exception {
+		mockDefinitionManager();
+		studentReferencesInstitute();
+		exception.expect(IllegalArgumentException.class);
+
+		registryHelper.authorizeExpand(null, "Institute", "Teacher");
+	}
+
+	@Test
+	public void authorizeExpandAcceptsAReferencingTypeWhenCallerHasItsRole() throws Exception {
+		mockDefinitionManager();
+		studentReferencesInstitute();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
+		org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+				new org.springframework.security.authentication.TestingAuthenticationToken("user", "pw", "Admin"));
+		try {
+			Set<String> expand = registryHelper.authorizeExpand(null, "Institute", "Student");
+
+			assertEquals(Collections.singleton("Student"), expand);
+		} finally {
+			org.springframework.security.core.context.SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	public void authorizeExpandRejectsCallerWithoutTheReferencingTypesRole() throws Exception {
+		mockDefinitionManager();
+		studentReferencesInstitute();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
+		org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+				new org.springframework.security.authentication.TestingAuthenticationToken("user", "pw", "SomethingElse"));
+		exception.expect(dev.sunbirdrc.registry.exception.UnAuthorizedException.class);
+		try {
+			registryHelper.authorizeExpand(null, "Institute", "Student");
+		} finally {
+			org.springframework.security.core.context.SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	public void filterInlinedChildrenDropsChildrenTheCallerDoesNotOwn() throws Exception {
+		mockDefinitionManager();
+		studentHasOwnership();
+		ObjectNode institute = (ObjectNode) objectMapper.readTree(
+				"{\"Student\":[{\"name\":\"a\",\"osOwner\":[\"alice\"]},{\"name\":\"b\",\"osOwner\":[\"bob\"]}]}");
+
+		registryHelper.filterInlinedChildren(institute, Collections.singleton("Student"), "alice", false);
+
+		assertEquals(1, institute.get("Student").size());
+		assertEquals("a", institute.get("Student").get(0).get("name").asText());
+	}
+
+	@Test
+	public void filterInlinedChildrenKeepsEveryChildWhenTheTypeHasNoOwnership() throws Exception {
+		mockDefinitionManager();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
+		ObjectNode institute = (ObjectNode) objectMapper.readTree(
+				"{\"Student\":[{\"name\":\"a\",\"osOwner\":[\"alice\"]},{\"name\":\"b\",\"osOwner\":[\"bob\"]}]}");
+
+		registryHelper.filterInlinedChildren(institute, Collections.singleton("Student"), "carol", false);
+
+		assertEquals(2, institute.get("Student").size());
+	}
+
+	@Test
+	public void filterInlinedChildrenRemovesTheKeyWhenNoChildSurvives() throws Exception {
+		mockDefinitionManager();
+		studentHasOwnership();
+		ObjectNode institute = (ObjectNode) objectMapper.readTree(
+				"{\"name\":\"i\",\"Student\":[{\"name\":\"a\",\"osOwner\":[\"alice\"]}]}");
+
+		registryHelper.filterInlinedChildren(institute, Collections.singleton("Student"), "carol", false);
+
+		assertFalse(institute.has("Student"));
+		assertTrue(institute.has("name"));
+	}
+
+	@Test
+	public void filterInlinedChildrenKeepsAOneToOneChildAsAnObject() throws Exception {
+		mockDefinitionManager();
+		studentHasOwnership();
+		ObjectNode institute = (ObjectNode) objectMapper.readTree("{\"Student\":{\"name\":\"a\",\"osOwner\":[\"alice\"]}}");
+
+		registryHelper.filterInlinedChildren(institute, Collections.singleton("Student"), "alice", false);
+
+		assertTrue(institute.get("Student").isObject());
+	}
+
+	@Test
+	public void filterInlinedChildrenLeavesOtherPropertiesAndUnrequestedTypesAlone() throws Exception {
+		mockDefinitionManager();
+		studentHasOwnership();
+		ObjectNode institute = (ObjectNode) objectMapper.readTree(
+				"{\"Student\":[{\"name\":\"a\",\"osOwner\":[\"alice\"]}],\"Other\":[{\"osOwner\":[\"bob\"]}]}");
+
+		registryHelper.filterInlinedChildren(institute, Collections.singleton("Student"), "carol", false);
+
+		assertFalse(institute.has("Student"));
+		assertEquals(1, institute.get("Other").size());
+	}
+
+	private void studentReferencesInstitute() {
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration()
+				.setEntityReferences(Collections.singletonMap("instituteOsid", "Institute"));
+	}
+
+	private void studentHasOwnership() {
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration()
+				.setOwnershipAttributes(Collections.singletonList(new dev.sunbirdrc.pojos.OwnershipsAttributes()));
+	}
+
+	@Test
 	public void shouldReturnTrueIfEntityContainsManageRoles() throws IOException {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));

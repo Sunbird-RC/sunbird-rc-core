@@ -66,6 +66,24 @@ public class OSSchemaConfiguration {
     private List<OwnershipsAttributes> ownershipAttributes = new ArrayList<>();
 
     /**
+     * Holds field name -> target entity type name for fields that are real
+     * references to another top-level entity (resolved to a graph edge on write).
+     * */
+    private Map<String, String> entityReferences = new HashMap<>();
+
+    /**
+     * Subset of entityReferences field names whose referencing entity is deleted
+     * together with the referenced (target) entity.
+     * */
+    private List<String> cascadeDeleteReferences = new ArrayList<>();
+
+    /**
+     * Subset of entityReferences field names where a target may have at most one
+     * referencing entity through that field.
+     * */
+    private List<String> oneToOneReferences = new ArrayList<>();
+
+    /**
      *
      * Holds attestableFields info,
      * Where key is the property name eg. education, certification, ...

@@ -235,6 +235,8 @@ public class RegistryEntityController extends AbstractController {
             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.SEARCH, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (UnAuthorizedException unAuthorizedExpand) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !, {}", ExceptionUtils.getStackTrace(e));
             response.setResult("");
@@ -609,7 +611,8 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header, HttpServletRequest request,
-            @RequestHeader(required = false) String viewTemplateId) {
+            @RequestHeader(required = false) String viewTemplateId,
+            @RequestParam(value = "expand", required = false) String expand) {
         boolean requireLDResponse = false;
         boolean requireVCResponse = false;
         for (MediaType t : header.getAccept()) {
@@ -636,7 +639,8 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
             String readerUserId = getUserId(entityName, request);
-            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId, viewTemplateId);
+            Set<String> expandTypes = registryHelper.authorizeExpand(request, entityName, expand);
+            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId, viewTemplateId, expandTypes);
             if (requireLDResponse) {
                 addJsonLDSpec(node);
             } else if (requireVCResponse) {
@@ -651,6 +655,12 @@ public class RegistryEntityController extends AbstractController {
              createSchemaNotFoundResponse(re.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException badExpand) {
+            responseParams.setErrmsg(badExpand.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (UnAuthorizedException unAuthorizedExpand) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             logger.error("Read Api Exception occurred: {}", ExceptionUtils.getStackTrace(e));
             responseParams.setErrmsg(e.getMessage());
@@ -669,8 +679,14 @@ public class RegistryEntityController extends AbstractController {
 
     private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId,
                                        boolean requireLDResponse, String userId, String viewTemplateId) throws Exception {
+        return getEntityJsonNode(entityName, entityId, requireLDResponse, userId, viewTemplateId, Collections.emptySet());
+    }
+
+    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId,
+                                       boolean requireLDResponse, String userId, String viewTemplateId,
+                                       Set<String> expandTypes) throws Exception {
         JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false,
-                viewTemplateManager.getViewTemplateById(viewTemplateId), false);
+                viewTemplateManager.getViewTemplateById(viewTemplateId), false, expandTypes);
         Data<Object> data = new Data<>(resultNode);
         Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
         ITransformer<Object> responseTransformer = transformer.getInstance(config);

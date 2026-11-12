@@ -16,6 +16,7 @@ import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.CustomException;
+import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
@@ -31,6 +32,8 @@ import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -247,6 +250,7 @@ public class RegistryServiceImpl implements RegistryService {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
                 entityId = registryDao.addEntity(graph, rootNode);
+                resolveEntityReferences(dbProvider, graph, vertexLabel, entityId, rootNode.get(vertexLabel));
                 if (vertexLabel.equals(Schema)) {
                     String definitionName = rootNode.get(Schema).get(SchemaName).asText();
                     entityParenter.ensureKnownParenter(definitionName, graph, dbProvider, shard.getShardId());
@@ -290,6 +294,74 @@ public class RegistryServiceImpl implements RegistryService {
         return entityId;
     }
 
+
+    /**
+     * For each schema-declared entityReferences field present on entityNode, resolves the
+     * referenced target entity (must already exist) and forms a real graph edge from the
+     * entity's vertex to it. Throws RecordNotFoundException (before the caller commits) if
+     * a referenced target does not exist, so the whole write rolls back.
+     */
+    private void resolveEntityReferences(DatabaseProvider databaseProvider, Graph graph, String vertexLabel, String entityId, JsonNode entityNode) throws RecordNotFoundException, DuplicateRecordException {
+        Map<String, String> entityReferenceFields = definitionsManager.getEntityReferenceFields(vertexLabel);
+        if (entityReferenceFields.isEmpty() || entityNode == null) {
+            return;
+        }
+        VertexReader vertexReader = new VertexReader(databaseProvider, graph, ReadConfiguratorFactory.getOne(false), uuidPropertyName, definitionsManager, expandReferenceObj);
+        VertexWriter vertexWriter = new VertexWriter(graph, databaseProvider, uuidPropertyName);
+        Vertex newVertex = vertexReader.getVertex(vertexLabel, entityId);
+        List<String> oneToOneFields = definitionsManager.getOneToOneReferenceFields(vertexLabel);
+        for (Map.Entry<String, String> entry : entityReferenceFields.entrySet()) {
+            String field = entry.getKey();
+            String targetEntityType = entry.getValue();
+            JsonNode valueNode = entityNode.get(field);
+            if (valueNode == null) {
+                continue;
+            }
+            String edgeLabel = RefLabelHelper.getReferenceEdgeLabel(vertexLabel, field);
+            removeReferenceEdges(newVertex, edgeLabel);
+            if (valueNode.isNull() || !valueNode.isValueNode() || StringUtils.isBlank(valueNode.asText())) {
+                continue;
+            }
+            // The field's value is the PUBLIC osid, which may carry a "shardLabel-" prefix
+            // (e.g. "1-236ed4d1-..."); the vertex's own uuid property is the bare uuid, the
+            // same parsing every existing read/update path applies before a vertex lookup.
+            String referencedId = RecordIdentifier.parse(valueNode.asText()).getUuid();
+            Vertex targetVertex = vertexReader.getVertex(targetEntityType, referencedId);
+            // getVertex does not filter by type on every DatabaseProvider (e.g. Neo4j looks up
+            // by raw id only) — verify the returned vertex is actually of targetEntityType so a
+            // same-id, wrong-type vertex can't silently satisfy the reference.
+            if (targetVertex == null || !targetEntityType.equals(targetVertex.label())) {
+                throw new RecordNotFoundException("referenced " + targetEntityType + " '" + referencedId + "' does not exist");
+            }
+            if (oneToOneFields.contains(field) && hasOtherActiveReferencer(targetVertex, edgeLabel, newVertex)) {
+                throw new DuplicateRecordException(targetEntityType + " '" + referencedId + "' is already referenced through " + field);
+            }
+            Edge referenceEdge = vertexWriter.addEdge(edgeLabel, newVertex, targetVertex);
+            // The label prefix alone is not collision-proof (a field literally named "ref" can
+            // produce the same "ref_<uuidPropertyName>" shape as a plain containment edge) — this
+            // property is the actual, collision-proof signal cascade-delete checks.
+            referenceEdge.property(RefLabelHelper.REFERENCE_EDGE_MARKER, true);
+        }
+    }
+
+    private void removeReferenceEdges(Vertex vertex, String edgeLabel) {
+        List<Edge> stale = new ArrayList<>();
+        vertex.edges(Direction.OUT, edgeLabel).forEachRemaining(stale::add);
+        stale.forEach(Edge::remove);
+    }
+
+    private boolean hasOtherActiveReferencer(Vertex target, String edgeLabel, Vertex self) {
+        Iterator<Edge> incoming = target.edges(Direction.IN, edgeLabel);
+        while (incoming.hasNext()) {
+            Vertex referencer = incoming.next().outVertex();
+            boolean inactive = referencer.property(Constants.STATUS_KEYWORD).isPresent()
+                    && Constants.STATUS_INACTIVE.equals(referencer.property(Constants.STATUS_KEYWORD).value());
+            if (!inactive && !referencer.id().equals(self.id())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private void generateCredentials(JsonNode rootNode, JsonNode inputNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
         Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
@@ -382,6 +454,10 @@ public class RegistryServiceImpl implements RegistryService {
 
                 // The entity type is a child and so could be different from parent entity type.
                 doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
+
+                // Re-resolve/form edges for any entityReferences fields present in this update.
+                // Uses rootId (the root entity's own uuid) since entityType/id here may be a child node.
+                resolveEntityReferences(databaseProvider, graph, parentEntityType, rootId, mergedNode.get(parentEntityType));
 
                 if (entityType.equals(Schema)) {
                     schemaService.updateSchema(mergedNode);

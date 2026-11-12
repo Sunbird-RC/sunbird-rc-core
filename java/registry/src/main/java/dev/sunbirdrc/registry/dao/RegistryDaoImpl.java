@@ -7,6 +7,7 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
+import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -14,7 +15,10 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
@@ -139,22 +143,67 @@ public class RegistryDaoImpl implements IRegistryDao {
 
 
     public void deleteEntity(Vertex vertex) {
+        deleteEntity(vertex, new HashSet<>());
+    }
+
+    private void deleteEntity(Vertex vertex, Set<Object> visited) {
         if (null != vertex) {
+            if (!visited.add(vertex.id())) {
+                return;
+            }
+            cascadeReferencers(vertex).forEach(referencer -> deleteEntity(referencer, visited));
             vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
             logger.error("Can't mark delete - Null vertex passed");
         }
     }
+
     @Override
     public void hardDeleteEntity(Vertex vertex) {
+        hardDeleteEntity(vertex, new HashSet<>());
+    }
+
+    private void hardDeleteEntity(Vertex vertex, Set<Object> visited) {
         if (vertex != null) {
+            if (!visited.add(vertex.id())) {
+                return;
+            }
+            List<Vertex> referencers = cascadeReferencers(vertex);
             vertex.edges(Direction.OUT).forEachRemaining(d -> {
-                this.hardDeleteEntity(d.inVertex());
+                // Property check, not the label prefix: a schema field literally named "ref"
+                // can produce the same "ref_<uuidPropertyName>" label as a plain containment
+                // edge, so the label alone can't safely gate cascade-delete.
+                if (!d.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                    this.hardDeleteEntity(d.inVertex(), visited);
+                }
             });
+            referencers.forEach(referencer -> hardDeleteEntity(referencer, visited));
             vertex.remove();
         } else {
             logger.error("Can't delete - Null vertex passed");
         }
+    }
+
+    /**
+     * Entities that reference this vertex through a field its own schema lists in
+     * cascadeDeleteReferences. A referencer never deletes the entity it references: the
+     * outgoing reference edge is skipped above.
+     */
+    private List<Vertex> cascadeReferencers(Vertex target) {
+        List<Vertex> referencers = new ArrayList<>();
+        target.edges(Direction.IN).forEachRemaining(edge -> {
+            if (!edge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                return;
+            }
+            Vertex source = edge.outVertex();
+            for (String field : definitionsManager.getCascadeDeleteReferenceFields(source.label())) {
+                if (RefLabelHelper.getReferenceEdgeLabel(source.label(), field).equals(edge.label())) {
+                    referencers.add(source);
+                    break;
+                }
+            }
+        });
+        return referencers;
     }
 }

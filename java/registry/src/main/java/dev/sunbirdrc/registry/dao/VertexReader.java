@@ -11,6 +11,7 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -213,18 +215,41 @@ public class VertexReader {
      *
      * @param vertex
      * @param currLevel
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles
      */
-    private void loadOtherVertices(Vertex vertex, int currLevel) {
+    private void loadOtherVertices(Vertex vertex, int currLevel, Set<String> visitedUuids) {
         // NOTE: We can load selective vertices, but we don't know the labels
         // here.
         // So in the process, we will have loaded signature nodes as well here
+        //
+        // Entity-reference edges (marked with RefLabelHelper.REFERENCE_EDGE_MARKER) point at a
+        // separate top-level entity, not a child of this one, so this composition walk must not
+        // load their targets. The marker, not the "ref_" label prefix, is the collision-proof
+        // signal: a schema field literally named "ref" produces the same label shape.
+        Set<Object> referenceEdgeTargetIds = new HashSet<>();
+        Iterator<Edge> refEdges = vertex.edges(Direction.OUT);
+        while (refEdges.hasNext()) {
+            Edge refEdge = refEdges.next();
+            if (refEdge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                referenceEdgeTargetIds.add(refEdge.inVertex().id());
+            }
+        }
+
         Iterator<Vertex> otherVertices = vertex.vertices(Direction.OUT);
 
         int tempCurrLevel = currLevel;
         while (otherVertices.hasNext()) {
             Vertex currVertex = otherVertices.next();
+            if (referenceEdgeTargetIds.contains(currVertex.id())) {
+                continue;
+            }
             if(currVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
                     currVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)){
+                continue;
+            }
+            String currUuid = databaseProvider.getId(currVertex);
+            if (!visitedUuids.add(currUuid)) {
+                logger.debug("Already visited vertex {}, skipping to avoid cycle", currUuid);
                 continue;
             }
             VertexProperty internalTypeProp = currVertex.property(Constants.INTERNAL_TYPE_KEYWORD);
@@ -248,17 +273,91 @@ public class VertexReader {
                     // Not incrementing levels here, because it is we who
                     // inserted a blank array_node
                     // for data modelling.
-                    loadOtherVertices(currVertex, tempCurrLevel);
+                    loadOtherVertices(currVertex, tempCurrLevel, visitedUuids);
                 }
 
                 if (canLoadVertex(++tempCurrLevel, configurator.getDepth())) {
                     logger.debug("Going to load children of {}", currVertex.label());
-                    loadOtherVertices(currVertex, tempCurrLevel);
+                    loadOtherVertices(currVertex, tempCurrLevel, visitedUuids);
                     logger.debug("End load children of {}", currVertex.label());
                     tempCurrLevel = currLevel;
                 }
             }
         }
+    }
+
+    /**
+     * Inlines the entities that reference this vertex through an entityReferences field, for the
+     * entity types the caller asked for (ReadConfigurator#getExpandReferencers). A read of the
+     * target (e.g. Student) then embeds its referencers (e.g. Enrollment) under the referencer's
+     * type name — an array, or a single object for a oneToOneReferences field. Only incoming
+     * edges carrying RefLabelHelper.REFERENCE_EDGE_MARKER whose label matches a field the
+     * referencer's own schema declares are considered. Nothing is inlined unless requested.
+     *
+     * @param vertex the vertex being read
+     * @param node the ObjectNode already built for vertex, mutated in place
+     * @param currLevel current recursion depth, same counter constructObject's own expansion uses
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles —
+     *                     the SAME set instance used elsewhere in this read, not a fresh one
+     */
+    private void inlineReferencers(Vertex vertex, ObjectNode node, int currLevel, Set<String> visitedUuids) {
+        Set<String> expandTypes = configurator.getExpandReferencers();
+        if (expandTypes.isEmpty() || !canLoadVertex(currLevel, configurator.getDepth())) {
+            return;
+        }
+        Map<String, ArrayNode> byEntityType = new LinkedHashMap<>();
+        Set<String> oneToOneTypes = new HashSet<>();
+        Iterator<Edge> incoming = vertex.edges(Direction.IN);
+        while (incoming.hasNext()) {
+            Edge edge = incoming.next();
+            if (!edge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                continue;
+            }
+            Vertex referencer = edge.outVertex();
+            String referencerType = referencer.label();
+            String field = declaredReferenceField(referencerType, edge.label(), vertex.label());
+            if (field == null || !expandTypes.contains(referencerType)) {
+                continue;
+            }
+            if (referencer.property(Constants.STATUS_KEYWORD).isPresent()
+                    && referencer.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)) {
+                continue;
+            }
+            String referencerUuid = databaseProvider.getId(referencer);
+            if (!visitedUuids.add(referencerUuid)) {
+                logger.debug("Already visited vertex {}, skipping to avoid cycle", referencerUuid);
+                continue;
+            }
+            ObjectNode referencerNode = constructObject(referencer);
+            inlineReferencers(referencer, referencerNode, currLevel + 1, visitedUuids);
+            byEntityType.computeIfAbsent(referencerType, k -> JsonNodeFactory.instance.arrayNode())
+                    .add(referencerNode);
+            if (definitionsManager.getOneToOneReferenceFields(referencerType).contains(field)) {
+                oneToOneTypes.add(referencerType);
+            }
+        }
+        byEntityType.forEach((referencerType, referencers) -> {
+            if (node.has(referencerType)) {
+                logger.warn("Not inlining {} into {}: the entity already has a property of that name",
+                        referencerType, vertex.label());
+                return;
+            }
+            node.set(referencerType, oneToOneTypes.contains(referencerType) ? referencers.get(0) : referencers);
+        });
+    }
+
+    /**
+     * The entityReferences field of referencerType that produced edgeLabel towards targetType,
+     * or null when the edge is not a declared reference to targetType.
+     */
+    private String declaredReferenceField(String referencerType, String edgeLabel, String targetType) {
+        for (Map.Entry<String, String> reference : definitionsManager.getEntityReferenceFields(referencerType).entrySet()) {
+            if (reference.getValue().equals(targetType)
+                    && RefLabelHelper.getReferenceEdgeLabel(referencerType, reference.getKey()).equals(edgeLabel)) {
+                return reference.getKey();
+            }
+        }
+        return null;
     }
 
     private void printUuidNodeMap() {
@@ -267,9 +366,9 @@ public class VertexReader {
         });
     }
 
-    private ArrayNode expandChildObject(ObjectNode entityNode, int currentLevel) {
+    private ArrayNode expandChildObject(ObjectNode entityNode, int currentLevel, Set<String> visitedUuids) {
         if (currentLevel <= Constants.MAX_EXPAND_LEVEL) {
-            return expandChildObject(entityNode, null, currentLevel);
+            return expandChildObject(entityNode, null, currentLevel, visitedUuids);
         } else {
             logger.warn("Maximum expand level reached");
             return JsonNodeFactory.instance.arrayNode();
@@ -281,8 +380,9 @@ public class VertexReader {
      * content in the right paths
      *
      * @param entityNode
+     * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles
      */
-    private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs, int currentLevel) {
+    private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs, int currentLevel, Set<String> visitedUuids) {
         ArrayNode resultArr = JsonNodeFactory.instance.arrayNode();
         if (currentLevel <= Constants.MAX_EXPAND_LEVEL) {
             if (entityNode == null) {
@@ -320,10 +420,10 @@ public class VertexReader {
                                 logger.debug("Provision for expansion");
                             }
 
-                            if (!processedUUIDs.contains(uuidVal)) {
+                            if (!processedUUIDs.contains(uuidVal) && visitedUuids.add(uuidVal)) {
                                 processedUUIDs.add(uuidVal);
                                 ObjectNode tmp = uuidNodeMap.get(uuidVal);
-                                ArrayNode result = expandChildObject(tmp, processedUUIDs, currentLevel + 1);
+                                ArrayNode result = expandChildObject(tmp, processedUUIDs, currentLevel + 1, visitedUuids);
                                 entityNode.setAll(tmp);
                             }
                         } else {
@@ -342,7 +442,9 @@ public class VertexReader {
                                         uuidPropertyValue = ArrayHelper.unquoteString(node.asText());
                                     }
                                     ObjectNode ovalue = uuidNodeMap.getOrDefault(uuidPropertyValue, null);
-                                    expandChildObject(ovalue, currentLevel + 1);
+                                    if (visitedUuids.add(uuidPropertyValue)) {
+                                        expandChildObject(ovalue, currentLevel + 1, visitedUuids);
+                                    }
                                     if (ovalue != null) {
                                         resultArr.add(ovalue);
                                     } else {
@@ -353,7 +455,7 @@ public class VertexReader {
                         }
                     } else if (entry.isObject()) {
                         logger.debug("Field {} is an object. Expanding further.", entry);
-                        ArrayNode expandChildObject = expandChildObject((ObjectNode) entry, currentLevel + 1);
+                        ArrayNode expandChildObject = expandChildObject((ObjectNode) entry, currentLevel + 1, visitedUuids);
                         if (expandChildObject.size() == 0 && entityNode.get(field).size() == 0) {
                             entityNode.remove(field);
                         }
@@ -472,9 +574,14 @@ public class VertexReader {
             rootNode.remove(Constants.SIGNATURES_STR);
         }
 
+        Set<String> visitedUuids = new HashSet<>();
+        visitedUuids.add(databaseProvider.getId(rootVertex));
+
         if (configurator.getDepth() > 0) {
-            loadOtherVertices(rootVertex, currLevel);
+            loadOtherVertices(rootVertex, currLevel, visitedUuids);
         }
+
+        inlineReferencers(rootVertex, rootNode, currLevel, visitedUuids);
 
         printUuidNodeMap();
 
@@ -484,7 +591,7 @@ public class VertexReader {
         // For the entity Node, now go and replace the array values with actual
         // objects.
         // The properties could exist anywhere. Refer to the local arrMap.
-        expandChildObject(rootNode, 0);
+        expandChildObject(rootNode, 0, visitedUuids);
         if(expandReferenceObj)
             expandReferenceNodes(rootNode);
         entityNode.set(entityType, rootNode);

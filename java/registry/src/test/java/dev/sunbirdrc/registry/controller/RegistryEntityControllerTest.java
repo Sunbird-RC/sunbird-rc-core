@@ -90,7 +90,7 @@ public class RegistryEntityControllerTest {
         String response = "{\"Institute\": {\"instituteAffiliation\": [{\"osid\": \"456\", \"_osAttestedData\": {\"instituteName\": \"te\", \"affiliationNumber\": \"901\"}}]}}";
         JsonNodeFactory.instance.objectNode();
         JsonNode node = new ObjectMapper().readTree(response);
-        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
+        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false, java.util.Collections.emptySet()))
                 .thenReturn(node);
         Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com",null, node))
                 .thenReturn("");
@@ -116,7 +116,7 @@ public class RegistryEntityControllerTest {
         String response = "{\"Institute\": {\"instituteAffiliation\": [{\"osid\": \"456\"}]}}";
         JsonNodeFactory.instance.objectNode();
         JsonNode node = new ObjectMapper().readTree(response);
-        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
+        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false, java.util.Collections.emptySet()))
                 .thenReturn(node);
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -138,7 +138,7 @@ public class RegistryEntityControllerTest {
         String response = "{\"Institute\": {\"instituteAffiliation\": [{\"osid\": \"456\", \"_osAttestedData\": {\"instituteName\": \"te\", \"affiliationNumber\": \"901\"}}]}}";
         JsonNodeFactory.instance.objectNode();
         JsonNode node = new ObjectMapper().readTree(response);
-        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
+        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false, java.util.Collections.emptySet()))
                 .thenReturn(node);
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -160,7 +160,7 @@ public class RegistryEntityControllerTest {
         String response = "{\"Institute\": {\"instituteAffiliation\": [{\"osid\": \"457\", \"_osAttestedData\": {\"instituteName\": \"te\", \"affiliationNumber\": \"901\"}}]}}";
         JsonNodeFactory.instance.objectNode();
         JsonNode node = new ObjectMapper().readTree(response);
-        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
+        Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false, java.util.Collections.emptySet()))
                 .thenReturn(node);
         Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", null, node))
                 .thenThrow(new NullPointerException(""));
@@ -218,7 +218,7 @@ public class RegistryEntityControllerTest {
         when(registryHelper.authorize(anyString(), anyString(), any(HttpServletRequest.class))).thenReturn("userId");
         Data<Object> mockDataObject = mock(Data.class);
         JsonNode mockEntityNode = mock(JsonNode.class);
-        when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
+        when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean(), any())).thenReturn(mockEntityNode);
         when(registryHelper.revokeAnEntity(anyString(),anyString(), anyString(),any(JsonNode.class))).thenReturn(mock(JsonNode.class));
         Configuration mockConfig = mock(Configuration.class);
         doReturn(mockConfig).when(configurationHelper).getResponseConfiguration(anyBoolean());
@@ -244,7 +244,7 @@ public class RegistryEntityControllerTest {
         when(registryHelper.authorize(anyString(), anyString(), any(HttpServletRequest.class))).thenReturn("userId");
         Data<Object> mockDataObject = mock(Data.class);
         JsonNode mockEntityNode = mock(JsonNode.class);
-        when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
+        when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean(), any())).thenReturn(mockEntityNode);
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(mock(JsonNode.class));
         Configuration mockConfig = mock(Configuration.class);
         doReturn(mockConfig).when(configurationHelper).getResponseConfiguration(anyBoolean());
