@@ -8,9 +8,12 @@ import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.dao.ValueType;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +27,28 @@ public interface ISearchService {
     static Logger logger = LoggerFactory.getLogger(ISearchService.class);
 
     JsonNode search(JsonNode inputQueryNode, String userId) throws IOException;
-    
+
+    /**
+     * Entity types the caller asked to inline under each result (the optional "expand" field of
+     * the search body: an array of types or a comma separated string). Unvalidated.
+     */
+    static Set<String> getExpandTypes(JsonNode inputQueryNode) {
+        JsonNode expandNode = inputQueryNode == null ? null : inputQueryNode.get("expand");
+        Set<String> types = new LinkedHashSet<>();
+        if (expandNode == null || expandNode.isNull()) {
+            return types;
+        }
+        Iterable<JsonNode> values = expandNode.isArray() ? expandNode : Collections.singletonList(expandNode);
+        for (JsonNode value : values) {
+            for (String type : value.asText().split(",")) {
+                if (!type.trim().isEmpty()) {
+                    types.add(type.trim());
+                }
+            }
+        }
+        return types;
+    }
+
     /**
      * Building SearchQuery from given input search json
      * @param inputQueryNode          request search json

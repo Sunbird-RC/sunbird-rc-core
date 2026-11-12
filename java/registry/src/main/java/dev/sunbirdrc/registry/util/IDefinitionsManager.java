@@ -87,13 +87,29 @@ public interface IDefinitionsManager {
             return Collections.emptyMap();
         }
     }
-    default Map<String, String> getOwnedReferenceFields(String entity) {
+    default List<String> getCascadeDeleteReferenceFields(String entity) {
         Definition entityDefinition = getDefinitionMap().get(entity);
-        if (entityDefinition != null) {
-            return entityDefinition.getOsSchemaConfiguration().getOwnedReferences();
-        } else {
-            return Collections.emptyMap();
-        }
+        return entityDefinition != null
+                ? entityDefinition.getOsSchemaConfiguration().getCascadeDeleteReferences()
+                : Collections.emptyList();
+    }
+    default List<String> getOneToOneReferenceFields(String entity) {
+        Definition entityDefinition = getDefinitionMap().get(entity);
+        return entityDefinition != null
+                ? entityDefinition.getOsSchemaConfiguration().getOneToOneReferences()
+                : Collections.emptyList();
+    }
+    /**
+     * Entity types that declare at least one entityReferences field pointing at targetType.
+     */
+    default Set<String> getReferencingEntityTypes(String targetType) {
+        Set<String> referencing = new LinkedHashSet<>();
+        getDefinitionMap().forEach((entity, definition) -> {
+            if (definition.getOsSchemaConfiguration().getEntityReferences().containsValue(targetType)) {
+                referencing.add(entity);
+            }
+        });
+        return referencing;
     }
     default Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();

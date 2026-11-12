@@ -222,16 +222,15 @@ public class VertexReader {
         // here.
         // So in the process, we will have loaded signature nodes as well here
         //
-        // Reference edges (RefLabelHelper.REFERENCE_EDGE_PREFIX) are excluded: they are a
-        // distinct concern (entityReferences / ownedReferences), handled by
-        // inlineOwnedReferences, not this generic composition walk. Without this exclusion,
-        // this method claims an owned reference's target uuid into visitedUuids first, and
-        // inlineOwnedReferences's own cycle-guard then silently skips it as "already visited".
+        // Entity-reference edges (marked with RefLabelHelper.REFERENCE_EDGE_MARKER) point at a
+        // separate top-level entity, not a child of this one, so this composition walk must not
+        // load their targets. The marker, not the "ref_" label prefix, is the collision-proof
+        // signal: a schema field literally named "ref" produces the same label shape.
         Set<Object> referenceEdgeTargetIds = new HashSet<>();
         Iterator<Edge> refEdges = vertex.edges(Direction.OUT);
         while (refEdges.hasNext()) {
             Edge refEdge = refEdges.next();
-            if (refEdge.label().startsWith(RefLabelHelper.REFERENCE_EDGE_PREFIX)) {
+            if (refEdge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
                 referenceEdgeTargetIds.add(refEdge.inVertex().id());
             }
         }
@@ -288,14 +287,12 @@ public class VertexReader {
     }
 
     /**
-     * Inlines every entity that OWNS-REFERENCES this vertex (dev.sunbirdrc.registry.util
-     * .OSSchemaConfiguration#ownedReferences), grouped by the referencer's own entity type, so a
-     * read of the target (e.g. Student) embeds its owned children (e.g. Records, Attendance)
-     * directly — no second call needed. Scoped tightly to the edges that feature forms: an edge
-     * whose label starts with RefLabelHelper.REFERENCE_EDGE_PREFIX ("ref_") and carries NO
-     * RefLabelHelper.REFERENCE_EDGE_MARKER property. A MARKED "ref_" edge is the separate,
-     * non-owning entityReferences case (e.g. this vertex's own outgoing reference to another
-     * entity) and must stay invisible on read, exactly as before this method existed.
+     * Inlines the entities that reference this vertex through an entityReferences field, for the
+     * entity types the caller asked for (ReadConfigurator#getExpandReferencers). A read of the
+     * target (e.g. Student) then embeds its referencers (e.g. Enrollment) under the referencer's
+     * type name — an array, or a single object for a oneToOneReferences field. Only incoming
+     * edges carrying RefLabelHelper.REFERENCE_EDGE_MARKER whose label matches a field the
+     * referencer's own schema declares are considered. Nothing is inlined unless requested.
      *
      * @param vertex the vertex being read
      * @param node the ObjectNode already built for vertex, mutated in place
@@ -303,28 +300,23 @@ public class VertexReader {
      * @param visitedUuids uuids already visited in this top-level read, to guard against graph cycles —
      *                     the SAME set instance used elsewhere in this read, not a fresh one
      */
-    private void inlineOwnedReferences(Vertex vertex, ObjectNode node, int currLevel, Set<String> visitedUuids) {
-        if (!canLoadVertex(currLevel, configurator.getDepth())) {
-            return;
-        }
-        Set<Object> qualifyingIds = new HashSet<>();
-        Iterator<Edge> edges = vertex.edges(Direction.OUT);
-        while (edges.hasNext()) {
-            Edge edge = edges.next();
-            boolean hasPrefix = edge.label().startsWith(RefLabelHelper.REFERENCE_EDGE_PREFIX);
-            boolean hasMarker = edge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent();
-            if (hasPrefix && !hasMarker) {
-                qualifyingIds.add(edge.inVertex().id());
-            }
-        }
-        if (qualifyingIds.isEmpty()) {
+    private void inlineReferencers(Vertex vertex, ObjectNode node, int currLevel, Set<String> visitedUuids) {
+        Set<String> expandTypes = configurator.getExpandReferencers();
+        if (expandTypes.isEmpty() || !canLoadVertex(currLevel, configurator.getDepth())) {
             return;
         }
         Map<String, ArrayNode> byEntityType = new LinkedHashMap<>();
-        Iterator<Vertex> otherVertices = vertex.vertices(Direction.OUT);
-        while (otherVertices.hasNext()) {
-            Vertex referencer = otherVertices.next();
-            if (!qualifyingIds.contains(referencer.id())) {
+        Set<String> oneToOneTypes = new HashSet<>();
+        Iterator<Edge> incoming = vertex.edges(Direction.IN);
+        while (incoming.hasNext()) {
+            Edge edge = incoming.next();
+            if (!edge.property(RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent()) {
+                continue;
+            }
+            Vertex referencer = edge.outVertex();
+            String referencerType = referencer.label();
+            String field = declaredReferenceField(referencerType, edge.label(), vertex.label());
+            if (field == null || !expandTypes.contains(referencerType)) {
                 continue;
             }
             if (referencer.property(Constants.STATUS_KEYWORD).isPresent()
@@ -337,11 +329,35 @@ public class VertexReader {
                 continue;
             }
             ObjectNode referencerNode = constructObject(referencer);
-            inlineOwnedReferences(referencer, referencerNode, currLevel + 1, visitedUuids);
-            byEntityType.computeIfAbsent(referencer.label(), k -> JsonNodeFactory.instance.arrayNode())
+            inlineReferencers(referencer, referencerNode, currLevel + 1, visitedUuids);
+            byEntityType.computeIfAbsent(referencerType, k -> JsonNodeFactory.instance.arrayNode())
                     .add(referencerNode);
+            if (definitionsManager.getOneToOneReferenceFields(referencerType).contains(field)) {
+                oneToOneTypes.add(referencerType);
+            }
         }
-        byEntityType.forEach(node::set);
+        byEntityType.forEach((referencerType, referencers) -> {
+            if (node.has(referencerType)) {
+                logger.warn("Not inlining {} into {}: the entity already has a property of that name",
+                        referencerType, vertex.label());
+                return;
+            }
+            node.set(referencerType, oneToOneTypes.contains(referencerType) ? referencers.get(0) : referencers);
+        });
+    }
+
+    /**
+     * The entityReferences field of referencerType that produced edgeLabel towards targetType,
+     * or null when the edge is not a declared reference to targetType.
+     */
+    private String declaredReferenceField(String referencerType, String edgeLabel, String targetType) {
+        for (Map.Entry<String, String> reference : definitionsManager.getEntityReferenceFields(referencerType).entrySet()) {
+            if (reference.getValue().equals(targetType)
+                    && RefLabelHelper.getReferenceEdgeLabel(referencerType, reference.getKey()).equals(edgeLabel)) {
+                return reference.getKey();
+            }
+        }
+        return null;
     }
 
     private void printUuidNodeMap() {
@@ -565,7 +581,7 @@ public class VertexReader {
             loadOtherVertices(rootVertex, currLevel, visitedUuids);
         }
 
-        inlineOwnedReferences(rootVertex, rootNode, currLevel, visitedUuids);
+        inlineReferencers(rootVertex, rootNode, currLevel, visitedUuids);
 
         printUuidNodeMap();
 

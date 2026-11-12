@@ -71,7 +71,17 @@ public class OSSchemaConfiguration {
      * */
     private Map<String, String> entityReferences = new HashMap<>();
 
-    private Map<String, String> ownedReferences = new HashMap<>();
+    /**
+     * Subset of entityReferences field names whose referencing entity is deleted
+     * together with the referenced (target) entity.
+     * */
+    private List<String> cascadeDeleteReferences = new ArrayList<>();
+
+    /**
+     * Subset of entityReferences field names where a target may have at most one
+     * referencing entity through that field.
+     * */
+    private List<String> oneToOneReferences = new ArrayList<>();
 
     /**
      *

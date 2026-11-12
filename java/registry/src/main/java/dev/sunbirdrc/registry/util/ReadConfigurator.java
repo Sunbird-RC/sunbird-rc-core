@@ -1,5 +1,8 @@
 package dev.sunbirdrc.registry.util;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * ReadConfigurator controls the data visible to the end user.
  */
@@ -39,6 +42,20 @@ public class ReadConfigurator {
      * False, by default
      */
     private boolean includeRootIdentifiers = false;
+
+    /**
+     * Entity types whose referencing entities (entityReferences) are inlined under the
+     * entity being read. Empty, by default: nothing is inlined unless the caller asks.
+     */
+    private Set<String> expandReferencers = Collections.emptySet();
+
+    public Set<String> getExpandReferencers() {
+        return expandReferencers;
+    }
+
+    public void setExpandReferencers(Set<String> expandReferencers) {
+        this.expandReferencers = expandReferencers == null ? Collections.emptySet() : expandReferencers;
+    }
 
     public boolean isIncludeTypeAttributes() {
         return includeTypeAttributes;

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -38,6 +39,14 @@ public class SearchDaoImpl implements SearchDao {
     }
 
     public JsonNode search(Graph graphFromStore, SearchQuery searchQuery, boolean expandInternal) {
+        return search(graphFromStore, searchQuery, expandInternal, Collections.emptySet());
+    }
+
+    /**
+     * @param expandReferencers entity types whose referencing entities are inlined under each
+     *                          result (entityReferences); an inline needs the internal expansion
+     */
+    public JsonNode search(Graph graphFromStore, SearchQuery searchQuery, boolean expandInternal, Set<String> expandReferencers) {
 
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal().clone();
         List<Filter> filterList = searchQuery.getFilters();
@@ -48,11 +57,14 @@ public class SearchDaoImpl implements SearchDao {
 
             GraphTraversal<Vertex, Vertex> parentTraversal = resultGraphTraversal.asAdmin();
 
+            // dedup: a path filter across a one-to-many edge walks back to the same parent once per
+            // matching child, which would repeat it in the page and inflate the count below.
             resultGraphTraversal = getFilteredResultTraversal(resultGraphTraversal, filterList)
-                    .or(hasNot(Constants.STATUS_KEYWORD), has(Constants.STATUS_KEYWORD, Constants.STATUS_ACTIVE));
+                    .or(hasNot(Constants.STATUS_KEYWORD), has(Constants.STATUS_KEYWORD, Constants.STATUS_ACTIVE))
+                    .dedup();
             GraphTraversal<Vertex, Vertex> resultGraphTraversalCount = resultGraphTraversal.asAdmin().clone();
             resultGraphTraversal.range(offset, offset + searchQuery.getLimit());
-            JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal, expandInternal);
+            JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal, expandInternal, expandReferencers);
             ObjectNode response = JsonNodeFactory.instance.objectNode();
             response.set(ENTITY_LIST, result);
             long count = resultGraphTraversalCount.count().next();
@@ -174,7 +186,7 @@ public class SearchDaoImpl implements SearchDao {
 		return valueList;
 	}
 
-	private JsonNode getResult(Graph graph, GraphTraversal resultTraversal, GraphTraversal parentTraversal, boolean expandInternal) {
+	private JsonNode getResult(Graph graph, GraphTraversal resultTraversal, GraphTraversal parentTraversal, boolean expandInternal, Set<String> expandReferencers) {
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		if (resultTraversal != null) {
             //parentTraversal.map(resultTraversal);
@@ -186,6 +198,7 @@ public class SearchDaoImpl implements SearchDao {
 					ReadConfigurator configurator = new ReadConfigurator();
 					configurator.setIncludeSignatures(false);
 					configurator.setIncludeTypeAttributes(false);
+					configurator.setExpandReferencers(expandReferencers);
 
 					JsonNode answer = null;
 					try {

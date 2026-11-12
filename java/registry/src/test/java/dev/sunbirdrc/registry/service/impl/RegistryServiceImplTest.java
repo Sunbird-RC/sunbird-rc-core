@@ -199,6 +199,127 @@ public class RegistryServiceImplTest {
 
 
 	@Test
+	public void addEntityFormsMarkedReferenceEdgeToTarget() throws Exception {
+		prepareReferenceWrites();
+		String targetId = addReferenceEntity("RefTarget", null);
+		String childId = addReferenceEntity("RefChild", targetId);
+
+		java.util.List<org.apache.tinkerpop.gremlin.structure.Edge> edges = referenceEdges("RefChild", childId);
+
+		assertEquals(1, edges.size());
+		assertEquals(targetId, edges.get(0).inVertex().value("osid"));
+		assertTrue(edges.get(0).property(dev.sunbirdrc.registry.util.RefLabelHelper.REFERENCE_EDGE_MARKER).isPresent());
+	}
+
+	@Test
+	public void addEntityRejectsReferenceToMissingTarget() throws Exception {
+		prepareReferenceWrites();
+		expectedEx.expect(dev.sunbirdrc.registry.exception.RecordNotFoundException.class);
+
+		addReferenceEntity("RefChild", "00000000-0000-0000-0000-000000000000");
+	}
+
+	@Test
+	public void addEntityRejectsReferenceToTargetOfTheWrongType() throws Exception {
+		prepareReferenceWrites();
+		String targetId = addReferenceEntity("RefTarget", null);
+		String childId = addReferenceEntity("RefChild", targetId);
+		expectedEx.expect(dev.sunbirdrc.registry.exception.RecordNotFoundException.class);
+
+		// childId exists, but it is a RefChild, not the RefTarget the field is declared to reference
+		addReferenceEntity("RefChild", childId);
+	}
+
+	@Test
+	public void updateRepointsReferenceWithoutStackingEdges() throws Exception {
+		prepareReferenceWrites();
+		String firstTarget = addReferenceEntity("RefTarget", null);
+		String secondTarget = addReferenceEntity("RefTarget", null);
+		String childId = addReferenceEntity("RefChild", firstTarget);
+
+		updateReference("RefChild", childId, secondTarget);
+		java.util.List<org.apache.tinkerpop.gremlin.structure.Edge> repointed = referenceEdges("RefChild", childId);
+		// the same value again must replace the edge, not add another one
+		updateReference("RefChild", childId, secondTarget);
+		java.util.List<org.apache.tinkerpop.gremlin.structure.Edge> unchanged = referenceEdges("RefChild", childId);
+
+		assertEquals(1, repointed.size());
+		assertEquals(secondTarget, repointed.get(0).inVertex().value("osid"));
+		assertEquals(1, unchanged.size());
+		assertEquals(secondTarget, unchanged.get(0).inVertex().value("osid"));
+	}
+
+	@Test
+	public void updateClearingTheReferenceDropsTheEdge() throws Exception {
+		prepareReferenceWrites();
+		String targetId = addReferenceEntity("RefTarget", null);
+		String childId = addReferenceEntity("RefChild", targetId);
+
+		updateReference("RefChild", childId, "");
+
+		assertTrue(referenceEdges("RefChild", childId).isEmpty());
+	}
+
+	@Test
+	public void oneToOneReferenceRejectsASecondActiveReferencer() throws Exception {
+		prepareReferenceWrites();
+		String targetId = addReferenceEntity("RefTarget", null);
+		addReferenceEntity("RefSingle", targetId);
+		expectedEx.expect(dev.sunbirdrc.registry.exception.DuplicateRecordException.class);
+
+		addReferenceEntity("RefSingle", targetId);
+	}
+
+	private void prepareReferenceWrites() throws Exception {
+		String target = referenceSchema("RefTarget", "{}");
+		String child = referenceSchema("RefChild", "{\"entityReferences\":{\"targetOsid\":\"RefTarget\"},\"cascadeDeleteReferences\":[\"targetOsid\"]}");
+		String single = referenceSchema("RefSingle", "{\"entityReferences\":{\"targetOsid\":\"RefTarget\"},\"oneToOneReferences\":[\"targetOsid\"]}");
+		for (String schema : new String[]{target, child, single}) {
+			definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+		}
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.NativeSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+	}
+
+	private String referenceSchema(String title, String osConfig) {
+		return "{\"$schema\":\"http://json-schema.org/draft-07/schema\",\"type\":\"object\","
+				+ "\"properties\":{\"" + title + "\":{\"$ref\":\"#/definitions/" + title + "\"}},"
+				+ "\"required\":[\"" + title + "\"],\"title\":\"" + title + "\","
+				+ "\"definitions\":{\"" + title + "\":{\"$id\":\"#/properties/" + title + "\",\"type\":\"object\","
+				+ "\"properties\":{\"name\":{\"type\":\"string\"},\"targetOsid\":{\"type\":\"string\"}}}},"
+				+ "\"_osConfig\":" + osConfig + "}";
+	}
+
+	private String addReferenceEntity(String entityType, String targetOsid) throws Exception {
+		ObjectNode body = JsonNodeFactory.instance.objectNode().put("name", entityType + "-" + java.util.UUID.randomUUID());
+		if (targetOsid != null) {
+			body.put("targetOsid", targetOsid);
+		}
+		return registryService.addEntity(shard, "", JsonNodeFactory.instance.objectNode().set(entityType, body), true);
+	}
+
+	private void updateReference(String entityType, String osid, String targetOsid) throws Exception {
+		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true);
+		JsonNode entityNode = vertexReader.read(entityType, osid);
+		((ObjectNode) entityNode.get(entityType)).put("targetOsid", targetOsid);
+		registryService.updateEntity(shard, "", osid, String.valueOf(entityNode), false);
+	}
+
+	private java.util.List<org.apache.tinkerpop.gremlin.structure.Edge> referenceEdges(String entityType, String osid) {
+		java.util.List<org.apache.tinkerpop.gremlin.structure.Edge> edges = new java.util.ArrayList<>();
+		graph.traversal().V().has("osid", osid)
+				.outE(dev.sunbirdrc.registry.util.RefLabelHelper.getReferenceEdgeLabel(entityType, "targetOsid"))
+				.forEachRemaining(edges::add);
+		return edges;
+	}
+
+	@Test
 	public void test_health_check_up_scenario() throws Exception {
 		when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, true));
 		mockDatabaseProvider = mock(DatabaseProvider.class);

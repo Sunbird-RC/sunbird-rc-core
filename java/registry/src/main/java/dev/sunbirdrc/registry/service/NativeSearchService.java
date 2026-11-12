@@ -129,7 +129,9 @@ public class NativeSearchService implements ISearchService {
 				try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
 					Graph graph = osGraph.getGraphStore();
 					try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
-						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery, expandInternal);
+						// Inlining referencers needs the internal expansion, so an explicit expand asks for it.
+						Set<String> expandTypes = ISearchService.getExpandTypes(inputQueryNode);
+						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery, expandInternal || !expandTypes.isEmpty(), expandTypes);
 						if (!shard.getShardLabel().isEmpty()) {
 							// Replace uuidPropertyValue with shard details
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();

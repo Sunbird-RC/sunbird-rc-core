@@ -66,6 +66,37 @@ public class DefinitionsManagerTest {
     }
 
     @Test
+    public void testShouldReturnReferencingEntityTypesForATarget() {
+        definitionsManager.getDefinition("TrainingCertificate").getOsSchemaConfiguration()
+                .setEntityReferences(Collections.singletonMap("studentOsid", "Student"));
+
+        assertEquals(Collections.singleton("TrainingCertificate"), definitionsManager.getReferencingEntityTypes("Student"));
+        assertTrue(definitionsManager.getReferencingEntityTypes("Institute").isEmpty());
+    }
+
+    @Test
+    public void testShouldReturnEntityReferenceCascadeAndOneToOneFields() {
+        OSSchemaConfiguration config = definitionsManager.getDefinition("TrainingCertificate").getOsSchemaConfiguration();
+        assertTrue(definitionsManager.getCascadeDeleteReferenceFields("TrainingCertificate").isEmpty());
+        assertTrue(definitionsManager.getOneToOneReferenceFields("TrainingCertificate").isEmpty());
+
+        config.setEntityReferences(Collections.singletonMap("studentOsid", "Student"));
+        config.setCascadeDeleteReferences(Collections.singletonList("studentOsid"));
+        config.setOneToOneReferences(Collections.singletonList("studentOsid"));
+
+        assertEquals("Student", definitionsManager.getEntityReferenceFields("TrainingCertificate").get("studentOsid"));
+        assertEquals(Collections.singletonList("studentOsid"), definitionsManager.getCascadeDeleteReferenceFields("TrainingCertificate"));
+        assertEquals(Collections.singletonList("studentOsid"), definitionsManager.getOneToOneReferenceFields("TrainingCertificate"));
+    }
+
+    @Test
+    public void testReferenceAccessorsShouldBeEmptyForUnknownEntity() {
+        assertTrue(definitionsManager.getEntityReferenceFields("UnknownEntity").isEmpty());
+        assertTrue(definitionsManager.getCascadeDeleteReferenceFields("UnknownEntity").isEmpty());
+        assertTrue(definitionsManager.getOneToOneReferenceFields("UnknownEntity").isEmpty());
+    }
+
+    @Test
     public void testShouldReturnTrueForValidEntityName() {
         String entity = "TrainingCertificate";
         assertTrue(definitionsManager.isValidEntityName(entity));
