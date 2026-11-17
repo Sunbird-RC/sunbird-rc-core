@@ -355,10 +355,15 @@ public class VertexReader {
                     } else if (entry.isObject()) {
                         logger.debug("Field {} is an object. Expanding further.", entry);
                         ArrayNode expandChildObject = expandChildObject((ObjectNode) entry, currentLevel + 1);
-                        if (expandChildObject.size() == 0 && entityNode.get(field).size() == 0) {
+                        // The second get(field) has to be re-read: the branch above may
+                        // have removed the field, and dereferencing it then turns an
+                        // empty expansion into a NullPointerException for the whole read.
+                        JsonNode currentValue = entityNode.get(field);
+                        if (expandChildObject.size() == 0 && currentValue != null && currentValue.size() == 0) {
                             entityNode.remove(field);
+                            currentValue = null;
                         }
-                        if (expandChildObject != null && entityNode.get(field).size() == 1) {
+                        if (currentValue != null && currentValue.size() == 1) {
                             entityNode.set(field, expandChildObject);
                         }
                     }
