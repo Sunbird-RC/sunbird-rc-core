@@ -96,9 +96,81 @@ public class JdbcGraph implements Graph {
     /**
      * Initialize the database schema - load existing tables and their columns from database metadata.
      */
+
+    /** Name of the one sequence that hands out vertex ids for every V_* table. */
+    private static final String VERTEX_ID_SEQUENCE = "sunbirdrc_vertex_id_seq";
+
+    /**
+     * TinkerPop requires vertex ids to be unique across the whole graph, but a
+     * BIGSERIAL column is only unique within its own table. With per-table ids the
+     * three children of one entity can all be id 201, and any traversal that
+     * collects them in a Set keyed by id keeps exactly one of them.
+     */
+    private void ensureVertexIdSequence(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE SEQUENCE IF NOT EXISTS \"" + VERTEX_ID_SEQUENCE + "\"");
+        }
+    }
+
+    /**
+     * Point existing vertex tables at the shared sequence and move it past every id
+     * already in use, so ids handed out from now on collide with nothing. Rows
+     * written before this ran keep their original ids.
+     */
+
+    private boolean usesSharedVertexIdSequence(Connection conn, String tableName) throws SQLException {
+        String sql = "SELECT column_default FROM information_schema.columns " +
+                "WHERE table_schema = 'public' AND table_name = ? AND column_name = 'ID'";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                String current = rs.next() ? rs.getString(1) : null;
+                return current != null && current.contains(VERTEX_ID_SEQUENCE);
+            }
+        }
+    }
+
+    private void adoptVertexIdSequence(Connection conn) {
+        long highest = 0;
+        for (String tableName : existingVertexTables) {
+            try (Statement stmt = conn.createStatement()) {
+                // Only alter what needs it. Every DDL bumps YugabyteDB's catalog
+                // version, and a burst of them at startup makes the registry's own
+                // bootstrap DDL fail with "Catalog Version Mismatch". A table this
+                // build created already has the right default, so a fresh database
+                // issues no ALTER at all.
+                if (!usesSharedVertexIdSequence(conn, tableName)) {
+                    stmt.execute("ALTER TABLE \"" + tableName + "\" ALTER COLUMN \"ID\" " +
+                            "SET DEFAULT nextval('" + VERTEX_ID_SEQUENCE + "')");
+                    logger.info("Table {} now takes its vertex ids from {}", tableName, VERTEX_ID_SEQUENCE);
+                }
+                try (ResultSet rs = stmt.executeQuery("SELECT COALESCE(MAX(\"ID\"), 0) FROM \"" + tableName + "\"")) {
+                    if (rs.next()) {
+                        highest = Math.max(highest, rs.getLong(1));
+                    }
+                }
+            } catch (SQLException e) {
+                logger.error("Failed to adopt the shared vertex id sequence for table: " + tableName, e);
+            }
+        }
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT last_value FROM \"" + VERTEX_ID_SEQUENCE + "\"")) {
+            long current = rs.next() ? rs.getLong(1) : 0;
+            if (highest >= current) {
+                stmt.execute("SELECT setval('" + VERTEX_ID_SEQUENCE + "', " + (highest + 1) + ", false)");
+                logger.info("Advanced {} past existing vertex ids to {}", VERTEX_ID_SEQUENCE, highest + 1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to advance the shared vertex id sequence", e);
+        }
+    }
+
     private void initializeSchema() {
         try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData metaData = conn.getMetaData();
+
+            ensureVertexIdSequence(conn);
 
             // Load existing V_* and E_* tables into registry
             try (ResultSet tables = metaData.getTables(null, "public", "%", new String[]{"TABLE"})) {
@@ -115,6 +187,8 @@ public class JdbcGraph implements Graph {
                     }
                 }
             }
+
+            adoptVertexIdSequence(conn);
 
             logger.info("JdbcGraph schema initialized. Found {} vertex tables and {} edge tables",
                     existingVertexTables.size(), existingEdgeTables.size());
@@ -208,9 +282,10 @@ public class JdbcGraph implements Graph {
                 return;
             }
 
-            // SQLG-style: Create table with BIGSERIAL primary key named "ID"
+            // One sequence for every vertex table: TinkerPop requires vertex ids to be
+            // unique across the graph, and BIGSERIAL only makes them unique per table.
             String sql = "CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (" +
-                    "\"ID\" BIGSERIAL PRIMARY KEY)";
+                    "\"ID\" BIGINT PRIMARY KEY DEFAULT nextval('" + VERTEX_ID_SEQUENCE + "'))";
 
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
