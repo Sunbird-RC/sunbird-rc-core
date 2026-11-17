@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
+import dev.sunbirdrc.registry.sink.jdbc.JdbcGraph;
 import dev.sunbirdrc.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
@@ -392,6 +393,23 @@ public class VertexReader {
                     itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, uuidPropertyValue);
                 } else {
                     itrV = graph.traversal().clone().V().has(uuidPropertyName, uuidPropertyValue);
+                }
+                break;
+            case YUGABYTE:
+                // Use JdbcGraph's direct methods for efficient per-entity table queries
+                if (graph instanceof JdbcGraph) {
+                    JdbcGraph jdbcGraph = (JdbcGraph) graph;
+                    logger.debug("YUGABYTE lookup: entityType={}, uuidPropertyName={}, uuidPropertyValue={}",
+                                 entityType, uuidPropertyName, uuidPropertyValue);
+                    itrV = jdbcGraph.getVerticesByProperty(entityType, uuidPropertyName, uuidPropertyValue);
+                } else {
+                    // Fallback to traversal API
+                    logger.debug("YUGABYTE fallback to traversal API: entityType={}, uuidPropertyValue={}", entityType, uuidPropertyValue);
+                    if (null != entityType) {
+                        itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, uuidPropertyValue);
+                    } else {
+                        itrV = graph.traversal().clone().V().has(uuidPropertyName, uuidPropertyValue);
+                    }
                 }
                 break;
             default:

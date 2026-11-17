@@ -39,6 +39,9 @@ public class DBProviderFactory {
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
 				provider = new SqlgProvider(connectionInfo, uuidPropertyName);
 				provider.initializeGlobalGraphConfiguration();
+			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.YUGABYTE.getName())) {
+				provider = new YugabyteJdbcProvider(connectionInfo, uuidPropertyName);
+				provider.initializeGlobalGraphConfiguration();
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
 				provider = new TinkerGraphProvider(environment);
 				provider.initializeGlobalGraphConfiguration();
