@@ -138,6 +138,8 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
     });
 
     it('mirrors the status allocation into the IETF status.status_list claim', async () => {
+      process.env.CREDENTIAL_SERVICE_BASE_URL =
+        'https://credentials.example.com';
       const status = {
         id: 'did:rcw:list-1#5',
         type: 'RevocationList2020Status',
@@ -150,11 +152,18 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
         {}
       );
 
+      // The uri is the HTTPS token endpoint for the list — a Token Status
+      // List verifier cannot parse the list's did:rcw:... id, which
+      // resolves to the W3C RevocationList2020 credential.
       expect(payloadOf().status).toEqual({
-        status_list: { idx: 5, uri: 'did:rcw:list-1' },
+        status_list: {
+          idx: 5,
+          uri: 'https://credentials.example.com/credentials/status-list/did:rcw:list-1/token',
+        },
       });
       // Plaintext like credentialStatus: never selectively disclosable.
       expect(signSdJwt.mock.calls[0][2]).not.toContain('status');
+      delete process.env.CREDENTIAL_SERVICE_BASE_URL;
     });
 
     it('omits the status claim when no status entry is embedded', async () => {

@@ -1,11 +1,20 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { IdentityUtilsService } from './identity.utils.service';
+import { statusListTokenUri } from './status-list-uri';
 import { RevocationListImpl } from '../../revocation-list/revocation-list.impl';
 import { CredentialPayload, DIDDocument, IssuerType, Proof } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
 
 const LIST_LENGTH = Number(process.env.STATUS_LIST_LENGTH) || 100000;
+// How long a verifier may cache a status list token before re-fetching
+// (surfaced as the token's `ttl` claim and the response's Cache-Control
+// max-age). A revocation reaches verifiers within this window.
+const STATUS_LIST_TTL = Number(process.env.STATUS_LIST_TTL) || 300;
+// A fetched token stays valid for 24h (`exp` = `iat` + 24h) so an old
+// token cannot be replayed forever; verifiers are still expected to
+// re-fetch after `ttl`.
+const STATUS_LIST_TOKEN_EXP_SECONDS = 24 * 60 * 60;
 
 // StatusList / RevocationList2020 handling, wired into issue / verify / revoke.
 // This finally makes the previously-dead bitstring code active:
@@ -206,5 +215,39 @@ export class StatusListService {
     const listVc = await this.prisma.verifiableCredentials.findUnique({ where: { id } });
     if (!listVc) return null;
     return listVc.signed;
+  }
+
+  // IETF Token Status List view of the same DB bitstring that backs the
+  // W3C RevocationList2020 credential: an issuer-signed statuslist+jwt,
+  // generated on each request so it always reflects current revocations.
+  // The signing key is the list issuer's, so the signature resolves from
+  // the issuer's DID. Returns null when the list does not exist.
+  async getStatusListToken(
+    id: string
+  ): Promise<{ token: string; ttl: number } | null> {
+    const listVc = await this.prisma.verifiableCredentials.findUnique({
+      where: { id },
+    });
+    if (!listVc) return null;
+    const encodedList = (listVc.subject as any)?.encodedList;
+    if (!encodedList) return null;
+    const decoded = await this.rl.decodeList({ encodedList });
+    const issuer = listVc.issuer as string;
+    const iat = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: issuer,
+      sub: statusListTokenUri(id),
+      iat,
+      exp: iat + STATUS_LIST_TOKEN_EXP_SECONDS,
+      ttl: STATUS_LIST_TTL,
+      status_list: {
+        bits: 1,
+        lst: decoded.encodeStatusList(),
+      },
+    };
+    const token = await this.identityUtilsService.signJwt(issuer, payload, {
+      typ: 'statuslist+jwt',
+    });
+    return { token, ttl: STATUS_LIST_TTL };
   }
 }

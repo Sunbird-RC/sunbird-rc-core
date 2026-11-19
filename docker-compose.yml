@@ -287,6 +287,7 @@ services:
       - ENABLE_AUTH=${ENABLE_AUTH}
       - QR_TYPE=${QR_TYPE}
       - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-false}
+      - STATUS_LIST_TTL=${STATUS_LIST_TTL-300}
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]

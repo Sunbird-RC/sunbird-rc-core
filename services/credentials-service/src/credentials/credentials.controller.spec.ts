@@ -30,6 +30,7 @@ describe('CredentialsController', () => {
             verifyCredential: jest.fn(),
             getRevocationList: jest.fn(),
             getStatusListCredential: jest.fn(),
+            getStatusListToken: jest.fn(),
           },
         },
       ],
@@ -208,6 +209,29 @@ describe('CredentialsController', () => {
       const result = await controller.getStatusListCredential('list-1');
       expect(result).toBe(expectedResult);
       expect(service.getStatusListCredential).toHaveBeenCalledWith('list-1');
+    });
+  });
+
+  describe('getStatusListToken', () => {
+    it('should send the token as application/statuslist+jwt with Cache-Control max-age = ttl', async () => {
+      jest
+        .spyOn(service, 'getStatusListToken')
+        .mockResolvedValue({ token: 'header.payload.signature', ttl: 300 } as any);
+      const res: any = {
+        header: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnValue('sent'),
+      };
+
+      const result = await controller.getStatusListToken('list-1', res);
+
+      expect(service.getStatusListToken).toHaveBeenCalledWith('list-1');
+      expect(res.header).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/statuslist+jwt'
+      );
+      expect(res.header).toHaveBeenCalledWith('Cache-Control', 'max-age=300');
+      expect(res.send).toHaveBeenCalledWith('header.payload.signature');
+      expect(result).toBe('sent');
     });
   });
 
