@@ -135,6 +135,19 @@ export class CredentialsController {
     return this.credentialsService.getStatusListCredential(id);
   }
 
+  @Get('status-list/:id/token')
+  @ApiResponse({
+    description:
+      'Returns the IETF Token Status List for the given status list as an issuer-signed statuslist+jwt, generated on each request',
+  })
+  async getStatusListToken(@Param('id') id: string, @Res() res: Response) {
+    const { token, ttl } = await this.credentialsService.getStatusListToken(id);
+    res
+      .header('Content-Type', 'application/statuslist+jwt')
+      .header('Cache-Control', `max-age=${ttl}`);
+    return res.send(token);
+  }
+
   @Get('revocation-list')
   @ApiResponse({
     type: Array<RevocationListDTO>,
