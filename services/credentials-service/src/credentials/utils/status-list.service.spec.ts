@@ -352,6 +352,23 @@ describe('StatusListService — getStatusListToken (issue → revoke → fetch t
     });
   });
 
+  it('uses CREDENTIAL_SERVICE_PUBLIC_URL for the token sub when set', async () => {
+    process.env.CREDENTIAL_SERVICE_PUBLIC_URL =
+      'https://public.example.com';
+    try {
+      const { service } = await makeService();
+      const result = await service.getStatusListToken(listId);
+      expect(result).not.toBeNull();
+      // sub must match the status.status_list.uri in issued credentials:
+      // the public URL, not the base URL configured for this suite.
+      expect(payloadOf(result.token).sub).toBe(
+        `https://public.example.com/credentials/status-list/${listId}/token`
+      );
+    } finally {
+      delete process.env.CREDENTIAL_SERVICE_PUBLIC_URL;
+    }
+  });
+
   it('returns null for an unknown status list', async () => {
     const { service } = await makeService();
     expect(await service.getStatusListToken('did:rcw:unknown')).toBeNull();

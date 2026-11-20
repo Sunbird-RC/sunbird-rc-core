@@ -7,6 +7,15 @@
 // cannot itself be the claim's uri: it is not an HTTPS URL and resolves to
 // the W3C RevocationList2020 credential, which Token Status List verifiers
 // cannot parse — hence this HTTPS token endpoint.
+//
+// The base URL must be reachable by external verifiers, so it prefers
+// CREDENTIAL_SERVICE_PUBLIC_URL — the service's public HTTPS base URL.
+// CREDENTIAL_SERVICE_BASE_URL is only a fallback: in the Docker deployment
+// it is the in-network address (http://credential:3000), which verifiers
+// outside the deployment cannot resolve or reach.
 export function statusListTokenUri(statusListCredential: string): string {
-  return `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/status-list/${statusListCredential}/token`;
+  const baseUrl =
+    process.env.CREDENTIAL_SERVICE_PUBLIC_URL ||
+    process.env.CREDENTIAL_SERVICE_BASE_URL;
+  return `${baseUrl}/credentials/status-list/${statusListCredential}/token`;
 }

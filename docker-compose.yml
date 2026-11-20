@@ -283,6 +283,11 @@ services:
       - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
       - SCHEMA_BASE_URL=${SCHEMA_BASE_URL}
       - CREDENTIAL_SERVICE_BASE_URL=${CREDENTIAL_SERVICE_BASE_URL}
+      # Public HTTPS base URL external verifiers use to fetch the SD-JWT
+      # status list token (status.status_list.uri). Falls back to
+      # CREDENTIAL_SERVICE_BASE_URL when unset — but that is the internal
+      # http://credential:3000 address, unreachable from outside.
+      - CREDENTIAL_SERVICE_PUBLIC_URL=${CREDENTIAL_SERVICE_PUBLIC_URL}
       - JWKS_URI=${JWKS_URI}
       - ENABLE_AUTH=${ENABLE_AUTH}
       - QR_TYPE=${QR_TYPE}

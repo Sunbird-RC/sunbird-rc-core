@@ -166,6 +166,34 @@ describe('CredentialFormatService — jwt_vc_json envelope', () => {
       delete process.env.CREDENTIAL_SERVICE_BASE_URL;
     });
 
+    it('prefers CREDENTIAL_SERVICE_PUBLIC_URL over the internal base URL for the status_list uri', async () => {
+      // Deployment shape: BASE_URL is the Docker-internal address, which
+      // external verifiers cannot reach — the uri must use the public URL.
+      process.env.CREDENTIAL_SERVICE_BASE_URL = 'http://credential:3000';
+      process.env.CREDENTIAL_SERVICE_PUBLIC_URL =
+        'https://credentials.example.com';
+      const status = {
+        id: 'did:rcw:list-1#5',
+        type: 'RevocationList2020Status',
+        revocationListIndex: '5',
+        revocationListCredential: 'did:rcw:list-1',
+      };
+      await (service as any).signSdJwtVc(
+        credential({ credentialStatus: status }),
+        { id: 'did:rcw:issuer-1' },
+        {}
+      );
+
+      expect(payloadOf().status).toEqual({
+        status_list: {
+          idx: 5,
+          uri: 'https://credentials.example.com/credentials/status-list/did:rcw:list-1/token',
+        },
+      });
+      delete process.env.CREDENTIAL_SERVICE_BASE_URL;
+      delete process.env.CREDENTIAL_SERVICE_PUBLIC_URL;
+    });
+
     it('omits the status claim when no status entry is embedded', async () => {
       await signSd({});
 
