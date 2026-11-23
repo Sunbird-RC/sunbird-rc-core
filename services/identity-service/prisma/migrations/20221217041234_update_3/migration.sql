@@ -5,5 +5,8 @@
 
 */
 -- AlterTable
-ALTER TABLE "Identity" DROP COLUMN "privateKey",
-ADD COLUMN     "privateKey" JSONB NOT NULL;
+-- Split into two statements: a single ALTER TABLE that drops and re-adds the same
+-- column is rejected by PostgreSQL-compatible engines that apply subcommands
+-- separately (e.g. YugabyteDB: "The column already exists: privateKey").
+ALTER TABLE "Identity" DROP COLUMN "privateKey";
+ALTER TABLE "Identity" ADD COLUMN     "privateKey" JSONB NOT NULL;
