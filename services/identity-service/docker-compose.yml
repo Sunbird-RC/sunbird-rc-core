@@ -21,11 +21,11 @@ services:
     ports:
       - '8200:8200'
   db:
-    image: postgres:latest
+    image: postgres:14
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - data:/var/lib/postgresql/data
     healthcheck:
