@@ -51,23 +51,41 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
 	@sudo rm -rf db-data-2 es-data-2 || echo "no permission to delete"
-#	make -C services/identity-service test
-#	make -C services/credential-schema test
-#	make -C services/credentials-service test
+
+# V2 Node services: unit + DB/Vault-backed tests in each service's docker-compose-test.yml
+test-services:
+	make -C services/identity-service test
+	make -C services/credential-schema test
+	make -C services/credentials-service test
 
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
 
-release: test
-	for image in $(IMAGES); \
+# Fails on fixable CRITICAL vulnerabilities in the built images. Accepted exceptions
+# go in .trivyignore (see docs/conformance/EXCEPTIONS.md). CI overrides TRIVY to a pinned image.
+TRIVY ?= trivy
+scan-images:
+	@rc=0; for image in $(IMAGES); \
+	do \
+	  echo "Scanning $$image:latest"; \
+	  $(TRIVY) image --scanners vuln --severity CRITICAL --ignore-unfixed --ignorefile .trivyignore --exit-code 1 $$image:latest || rc=1; \
+	done; exit $$rc
+
+# PUSH_LATEST=false pushes only :$(RELEASE_VERSION), so a patch release from an
+# older branch cannot overwrite :latest. manual.yml sets it from its tag_latest input.
+PUSH_LATEST ?= true
+push-images:
+	set -e; for image in $(IMAGES); \
     	do \
     	  echo $$image; \
     	  docker tag $$image:latest $$image:$(RELEASE_VERSION);\
-    	  docker push $$image:latest;\
+    	  if [ "$(PUSH_LATEST)" = "true" ]; then docker push $$image:latest; fi;\
     	  docker push $$image:$(RELEASE_VERSION);\
       	done
-	@cd tools/cli/ && npm publish
+
+# registry-cli (formerly tools/cli) moved to github.com/Sunbird-RC/registry-cli in c521b666 and is released from there
+release: test test-services scan-images push-images
 
 compose-init:
 	bash setup_vault.sh docker-compose.yml vault

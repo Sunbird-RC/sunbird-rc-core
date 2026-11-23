@@ -1,0 +1,17 @@
+# Accepted vulnerability exceptions for the release image scan (make scan-images).
+# One CVE/GHSA ID per line. Every entry needs a matching row in
+# docs/conformance/EXCEPTIONS.md (affected image, reason, owner, review date).
+
+# Owner: Kartheek. Review by 2027-01-31; each entry stops being ignored after its exp date.
+# @fastify/middie 8.x: needs a major upgrade across the Node services
+CVE-2026-6270 exp:2027-01-31
+# spring-web 5.3: HttpInvoker is not used; fixed only in Spring 6
+CVE-2016-1000027 exp:2027-01-31
+# spring-webmvc 5.3: needs the Spring Boot 3 migration
+CVE-2026-47884 exp:2027-01-31
+# spring-security-web 5.x: needs the Spring Boot 3 migration
+CVE-2026-22732 exp:2027-01-31
+# netty 3.x (transitive): find which dependency pulls it in and exclude it
+CVE-2019-20444 exp:2027-01-31
+# neo4j 3.2.3 via neo4j-gremlin: the shell server is not configured (to confirm)
+CVE-2021-34371 exp:2027-01-31
