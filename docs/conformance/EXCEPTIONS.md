@@ -3,29 +3,26 @@
 Everything listed here is a known gap in the release gates in [README.md](README.md).
 Each entry says what is not covered, why, and what removes it. Remove the entry when it's resolved.
 
-Last reviewed: 2026-11-23.
+Last reviewed: 2026-11-24.
 
 ## Security
 
-### Fixable CRITICAL dependency vulnerabilities (release blocker)
+### Fixable CRITICAL vulnerabilities (accepted temporarily)
 
-A Trivy filesystem scan of the repository on 2026-11-23 found 19 fixable CRITICAL CVEs in 11 packages.
+The release image scan (`make scan-images`) blocks on any fixable CRITICAL vulnerability that is not
+listed in [`.trivyignore`](../../.trivyignore). To land the gate without blocking releases, every
+CRITICAL finding from the image scan on 2026-11-23 is accepted temporarily, and the fixes are deferred
+to follow-up work.
 
-- To be fixed (upgrade, not ignored), 13 CVEs: `handlebars`, `proxy-addr`, `form-data`,
-  `org.apache.tomcat.embed:tomcat-embed-core`, `io.netty:netty-handler`. Until these are upgraded,
-  `make scan-images` (the release image scan) is expected to fail.
-- Accepted temporarily, 6 CVEs: listed in `.trivyignore` and below. Each entry has an `exp:` date;
-  after it, Trivy reports the CVE again and the release scan fails.
-- A finding is only accepted by adding its ID to `.trivyignore` and adding a row here:
+**[`.trivyignore`](../../.trivyignore) is the single list of accepted CVEs.** For each one it gives
+the package, installed and fixed versions, affected images, the reason, the owner and the expiry date.
 
-| ID | Package | Image | Reason accepted | Owner | Review by |
-|---|---|---|---|---|---|
-| CVE-2026-6270 | `@fastify/middie` 8.3.0 (fixed in 9.3.2) | identity-service, credential-schema, credentials-service, oid4vc-service | Major upgrade through the NestJS Fastify adapter; needs its own PR and full test run | Kartheek | 2027-01-31 |
-| CVE-2016-1000027 | `spring-web` 5.3.39 (fixed in 6.0.0) | sunbird-rc-core, claim-ms, id-gen-service, encryption-service | Affects `HttpInvoker`, which the repo does not use; fix requires Spring Boot 3 / Java 17 | Kartheek | 2027-01-31 |
-| CVE-2026-47884 | `spring-webmvc` 5.3.39 (fixed in 7.0.9) | sunbird-rc-core, claim-ms, id-gen-service, encryption-service | No fix in 5.3.x; needs the Spring Boot 3 / Java 17 migration | Kartheek | 2027-01-31 |
-| CVE-2026-22732 | `spring-security-web` 5.7.13 / 5.8.16 (fixed in 6.5.9) | sunbird-rc-core, claim-ms | Needs the Spring Boot 3 / Java 17 migration | Kartheek | 2027-01-31 |
-| CVE-2019-20444 | `io.netty:netty` 3.9.9 / 3.10.6 (fixed in 4.0.0) | sunbird-rc-core, claim-ms | Transitive (not declared in any `pom.xml`); find the source and exclude it | Kartheek | 2027-01-31 |
-| CVE-2021-34371 | `org.neo4j:neo4j` 3.2.3 (fixed in 3.5.0) | sunbird-rc-core, claim-ms | Transitive via `neo4j-gremlin` (`java/registry/pom.xml:425`); the CVE is in the Neo4j shell server, which is not configured (to confirm) | Kartheek | 2027-01-31 |
+- Owner: Kartheek. Expiry: 2027-01-31. After that date the CVEs are reported again and the release
+  scan fails.
+- Any new CRITICAL finding still blocks the release until it is fixed or added to `.trivyignore`.
+- `form-data` 2.3.3 (CVE-2025-7783) and tomcat-embed-core 9.0.116 (CVE-2026-41293, CVE-2026-43512,
+  CVE-2026-43515) were reported by a filesystem scan of the repository but are not in any released
+  image, so they are not in `.trivyignore`. They should still be fixed in the follow-up.
 
 ## Tests not gated
 
