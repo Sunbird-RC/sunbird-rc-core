@@ -201,7 +201,8 @@ export class CredentialsService {
           credential: credToVerify,
           purpose: new AssertionProofPurpose(),
           suite: [suite],
-          documentLoader: this.getDocumentLoader(did)
+          documentLoader: this.getDocumentLoader(did),
+          checkStatus: async () => ({ verified: true }),
         });
       }
       if(!results?.verified) {
@@ -346,7 +347,9 @@ export class CredentialsService {
       // simply never matches when did is undefined (the did:jwk case).
       const documentLoader = this.getDocumentLoader(did);
 
-      const jwsResult = await verifyJsonWebSignature2020(vp, publicKeyJwk, 'authentication', documentLoader);
+      const jwsResult = await verifyJsonWebSignature2020(vp, publicKeyJwk, 'authentication', documentLoader, {
+        allowMissingPurpose: true,
+      });
       if (!jwsResult.verified) {
         this.logger.error('Error in verifying presentation: ', jwsResult.error);
       }

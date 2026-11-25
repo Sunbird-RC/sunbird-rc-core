@@ -452,7 +452,12 @@ describe('Oid4vciService', () => {
 
       const res = await service.credential('Bearer tok', { proof: { jwt: proofJwt } });
 
-      expect(res).toEqual({ credential: { id: 'vc-1' }, c_nonce: expect.any(String), format: 'ldp_vc' });
+      expect(res).toEqual({
+        credential: { id: 'vc-1' },
+        credentials: [{ credential: { id: 'vc-1' } }],
+        c_nonce: expect.any(String),
+        format: 'ldp_vc',
+      });
       const issueArg = credentials.issue.mock.calls[0][0];
       expect(issueArg.credential['@context']).toEqual(
         expect.arrayContaining(['https://www.w3.org/2018/credentials/v1']),

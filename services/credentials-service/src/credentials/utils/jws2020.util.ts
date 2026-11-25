@@ -31,12 +31,14 @@ export async function verifyJsonWebSignature2020(
   publicKeyJwk: crypto.JsonWebKey,
   expectedPurpose: string,
   documentLoader?: (url: string) => Promise<any>,
+  { allowMissingPurpose = false }: { allowMissingPurpose?: boolean } = {},
 ): Promise<Jws2020VerifyResult> {
   const proof = document?.proof;
   if (!proof || proof.type !== 'JsonWebSignature2020') {
     return { verified: false, error: 'not a JsonWebSignature2020 proof' };
   }
-  if (proof.proofPurpose !== expectedPurpose) {
+  const purposeOk = proof.proofPurpose === undefined ? allowMissingPurpose : proof.proofPurpose === expectedPurpose;
+  if (!purposeOk) {
     return {
       verified: false,
       error: `expected proofPurpose '${expectedPurpose}', got '${proof.proofPurpose}'`,
