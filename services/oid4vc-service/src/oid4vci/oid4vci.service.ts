@@ -398,7 +398,8 @@ export class Oid4vciService {
     if (!session) throw new BadRequestException('Offer session expired');
 
     // Verify holder proof-of-possession.
-    const proofJwt = body?.proof?.jwt;
+    // Draft wallets send `proof.jwt`; OID4VCI 1.0 sends `proofs.jwt[]` (only the first proof is used).
+    const proofJwt = body?.proof?.jwt ?? body?.proofs?.jwt?.[0];
     if (!proofJwt) throw new BadRequestException('Missing proof.jwt');
     // Nonce inside the proof must be a live, single-use c_nonce.
     const proofClaims = this.decodeJwtClaims(proofJwt);
@@ -437,7 +438,8 @@ export class Oid4vciService {
       popResult.holderJwk,
       popResult.holderKid,
     );
-    return { credential, c_nonce: await this.issueNonce(), format: session.format };
+    // `credentials[]` is the OID4VCI 1.0 shape; `credential` is kept for draft wallets.
+    return { credential, credentials: [{ credential }], c_nonce: await this.issueNonce(), format: session.format };
   }
 
   async deferred(authHeader: string | undefined, body: Record<string, any>) {
@@ -455,7 +457,7 @@ export class Oid4vciService {
     }
     const credential = await this.issueForSession(session, txn.holderDid, txn.holderJwk, txn.holderKid);
     await this.store.del(`oid4vc:deferred:${txId}`);
-    return { credential, format: session.format };
+    return { credential, credentials: [{ credential }], format: session.format };
   }
 
   async notification(authHeader: string | undefined, body: Record<string, any>) {

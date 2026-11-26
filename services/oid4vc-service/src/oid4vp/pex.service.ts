@@ -176,15 +176,24 @@ export class PexService {
     return segments;
   }
 
-  // filter subset: const (equality), enum (membership), pattern (regex).
-  // Unknown keyword → fails closed (treated as non-matching), not silently
-  // ignored.
-  // ponytail: const/enum/pattern only — add via a real JSON-schema validator
+  // filter subset: type (string|number|integer|boolean), const (equality),
+  // enum (membership), pattern (regex). Unknown keyword or type → fails
+  // closed (treated as non-matching), not silently ignored. `type` is
+  // required by wallets, which reject a filter without one.
   // (ajv) if a producer's definition ever needs allOf/minimum/format/etc.
   private matchesFilter(filter: any, value: any): boolean {
     if (!filter) return true;
     const keys = Object.keys(filter);
-    if (keys.some((k) => !['const', 'enum', 'pattern'].includes(k))) return false;
+    if (keys.some((k) => !['type', 'const', 'enum', 'pattern'].includes(k))) return false;
+    if ('type' in filter) {
+      const typeOk: Record<string, boolean> = {
+        string: typeof value === 'string',
+        number: typeof value === 'number',
+        integer: Number.isInteger(value),
+        boolean: typeof value === 'boolean',
+      };
+      if (!typeOk[filter.type]) return false;
+    }
     if ('const' in filter && value !== filter.const) return false;
     if ('enum' in filter && !filter.enum.includes(value)) return false;
     if ('pattern' in filter && !new RegExp(filter.pattern).test(String(value))) return false;
