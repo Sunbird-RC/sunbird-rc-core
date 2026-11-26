@@ -503,7 +503,8 @@ export class CredentialsService {
     const credDID: ReadonlyArray<DIDDocument> =
       await this.identityUtilsService.generateDID(
         [],
-        issueRequest.method
+        issueRequest.method,
+        false
       );
     this.logger.debug('generated DID');
     try {

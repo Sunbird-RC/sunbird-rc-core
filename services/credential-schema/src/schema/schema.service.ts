@@ -188,6 +188,7 @@ export class SchemaService {
                 },
               ],
               method: 'schema',
+              withKey: false,
             },
           ],
         };

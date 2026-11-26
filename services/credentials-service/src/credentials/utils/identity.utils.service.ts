@@ -160,9 +160,11 @@ export class IdentityUtilsService {
     }
   }
 
+  // withKey=false: identifier-only DID (credential, status list, revocation list); no key pair is created.
   async generateDID(
     alsoKnownAs: ReadonlyArray<String>,
-    method: string = 'rcw'
+    method: string = 'rcw',
+    withKey: boolean = true
   ): Promise<ReadonlyArray<DIDDocument>> {
     try {
       const didGenRes: AxiosResponse = await this.httpService.axiosRef.post(
@@ -178,6 +180,7 @@ export class IdentityUtilsService {
                 },
               ],
               method,
+              withKey,
             },
           ],
         }

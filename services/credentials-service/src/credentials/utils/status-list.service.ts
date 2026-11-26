@@ -121,7 +121,7 @@ export class StatusListService {
   private async createNewList(issuer: string) {
     let credDID: ReadonlyArray<DIDDocument>;
     try {
-      credDID = await this.identityUtilsService.generateDID(['status list']);
+      credDID = await this.identityUtilsService.generateDID(['status list'], undefined, false);
     } catch (err) {
       this.logger.error('Error generating DID for status list', err);
       throw new InternalServerErrorException('Error generating DID for status list');

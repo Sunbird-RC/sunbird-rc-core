@@ -49,10 +49,13 @@ describe('SchemaService', () => {
     const did = await utilsService.generateDID(didBody);
     const credSchemaPayload = generateCredentialSchemaTestBody();
     credSchemaPayload.schema.author = did.id;
+    const generateDID = jest.spyOn(utilsService, 'generateDID');
     const vcCredSchema = await service.createCredentialSchema(
       credSchemaPayload,
     );
     expect(vcCredSchema).toBeDefined();
+    expect(generateDID.mock.calls[0][0].content[0]).toMatchObject({ method: 'schema', withKey: false });
+    expect((await generateDID.mock.results[0].value).verificationMethod).toBeUndefined();
     // expect(vcCredSchema.schema.proof).toBeTruthy();
     const getVCCredSchema: GetCredentialSchemaDTO = await service.getCredentialSchemaByIdAndVersion({
       id_version: {

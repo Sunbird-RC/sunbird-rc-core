@@ -52,6 +52,10 @@ export class JwtSignerService {
     if (!identity) throw new NotFoundException('Signer DID not found!');
 
     const didDoc = this.parseDidDoc(identity);
+    // A DID created with withKey=false is an identifier only; never add a signing key to it.
+    if (!didDoc.verificationMethod?.length) {
+      throw new BadRequestException(`DID '${signerDID}' has no signing key; it was created with withKey=false`);
+    }
     const existing = (didDoc.verificationMethod || []).find(
       (vm: any) => vm?.publicKeyJwk?.crv === 'P-256',
     );

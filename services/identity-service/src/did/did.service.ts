@@ -110,6 +110,8 @@ export class DidService {
     // Create a UUID for the DID using uuidv4
     const didUri: string = this.generateDidUri(doc?.method, doc?.id, doc?.webDidBaseUrl);
 
+    if (doc?.withKey === false) return this.saveDidDocument(didUri, doc);
+
     // Create private/public key pair
     let authnKeys;
     let privateKeys: object;
@@ -166,9 +168,21 @@ export class DidService {
       throw new InternalServerErrorException('Error generating key pair: ' + err.message);
     }
 
-    const keyId = authnKeys?.id;
+    const document = await this.saveDidDocument(didUri, doc, authnKeys);
 
-    // Create a DID Document
+    try {
+      await this.vault.writePvtKey(privateKeys, didUri);
+    } catch (err) {
+      Logger.error(err);
+      throw new InternalServerErrorException('Error writing private key to vault');
+    }
+
+    return document;
+  }
+
+  // Writes the DID document; without a key it is an identifier only and cannot sign.
+  private async saveDidDocument(didUri: string, doc: GenerateDidDTO, authnKeys?: any): Promise<DIDDocument> {
+    const keyId = authnKeys?.id;
     const document: DIDDocument = {
       '@context': [
         "https://www.w3.org/ns/did/v1"
@@ -176,11 +190,11 @@ export class DidService {
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
       service: doc.services,
-      verificationMethod: [
-        authnKeys,
-      ],
-      authentication: [keyId],
-      assertionMethod: [keyId]
+      ...(authnKeys ? {
+        verificationMethod: [authnKeys],
+        authentication: [keyId],
+        assertionMethod: [keyId]
+      } : {})
     };
 
     try {
@@ -194,14 +208,6 @@ export class DidService {
       Logger.error(`Error writing DID to database ${err}`);
       throw new InternalServerErrorException('Error writing DID to database');
     }
-
-    try {
-      await this.vault.writePvtKey(privateKeys, didUri);
-    } catch (err) {
-      Logger.error(err);
-      throw new InternalServerErrorException('Error writing private key to vault');
-    }
-
     return document;
   }
 

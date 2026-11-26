@@ -53,7 +53,7 @@ export class RevocationListService {
     // generate did for the revocation list
     let credDID: ReadonlyArray<DIDDocument>;
     try {
-      credDID = await this.identityService.generateDID(['verifiable credential']);
+      credDID = await this.identityService.generateDID(['verifiable credential'], undefined, false);
     } catch (err) {
       Logger.error('Error generating DID for revocation list', err);
       throw new InternalServerErrorException(
