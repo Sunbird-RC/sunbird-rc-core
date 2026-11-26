@@ -430,10 +430,9 @@ export class CredentialsService {
     this.logger.debug('validated schema');
     // generate the DID for credential
     const credDID: ReadonlyArray<DIDDocument> =
-      await this.identityUtilsService.generateDID(
+      await this.identityUtilsService.generateIdentifier(
         [],
-        issueRequest.method,
-        false
+        issueRequest.method
       );
     this.logger.debug('generated DID');
     try {

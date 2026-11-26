@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class IdentityUtilsService {
@@ -158,6 +159,20 @@ export class IdentityUtilsService {
       this.logger.error('Error resolving DID: ', err);
       throw new InternalServerErrorException('Error resolving DID');
     }
+  }
+
+  // Identifier for a credential, status list or revocation list. These never sign, so they get no keys.
+  // By default the DID is minted here with no DID document; RESOLVABLE_CREDENTIAL_IDS=true stores a keyless
+  // document in identity-service so the DID resolves. did:web ids need identity-service's base URL, so they always go there.
+  async generateIdentifier(
+    alsoKnownAs: ReadonlyArray<String>,
+    method: string = 'rcw'
+  ): Promise<ReadonlyArray<DIDDocument>> {
+    const didMethod = method?.trim() || 'rcw';
+    if (process.env.RESOLVABLE_CREDENTIAL_IDS === 'true' || didMethod === 'web') {
+      return this.generateDID(alsoKnownAs, didMethod, false);
+    }
+    return [{ id: `did:${didMethod}:${uuid()}` } as DIDDocument];
   }
 
   // withKey=false: identifier-only DID (credential, status list, revocation list); no key pair is created.
