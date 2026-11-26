@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 const { DIDDocument } = require('did-resolver');
@@ -64,9 +64,12 @@ export default class VcService {
 
     if (!did) throw new NotFoundException('Signer DID not found!');
 
+    const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
+    const verificationMethod = didDoc.verificationMethod?.[0];
+    if (!verificationMethod) {
+      throw new BadRequestException(`DID '${signerDID}' has no signing key; it was created with withKey=false`);
+    }
     try {
-      const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
-      const verificationMethod = didDoc.verificationMethod[0];
       const suite = await this.getSuite(verificationMethod, this.signTypeForKey[verificationMethod?.type], true);
       const signatures = verificationMethod.type === "RsaVerificationKey2018" ? jsigs2: jsigs;
       const signedVC = await signatures.sign({...toSign}, {
