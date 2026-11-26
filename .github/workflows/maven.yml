@@ -4,10 +4,12 @@
 name: Java CI with Maven
 
 on:
+  # Same branches as ci.yml, so PRs to release branches (e.g. v2.1.1) run the Java tests too
   push:
-    branches: [ main ]
+    branches: [ main, 'v*', 'release-*' ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, 'v*', 'release-*' ]
+  workflow_call:
 
 jobs:
   build:

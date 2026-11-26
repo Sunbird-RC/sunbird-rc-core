@@ -1,0 +1,154 @@
+# Tests and dependency scanning for the V2 Node services (services/*).
+# The Java registry is covered by maven.yml. Release gating: manual.yml calls this
+# workflow and maven.yml and only publishes images if both pass.
+# Scope and known exceptions: docs/conformance/README.md, docs/conformance/EXCEPTIONS.md
+
+name: V2 services CI
+
+on:
+  push:
+    branches: [ main, 'v*', 'release-*' ]
+    paths:
+      - 'services/**'
+      - 'Makefile'
+      - '.trivyignore'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main, 'v*', 'release-*' ]
+    paths:
+      - 'services/**'
+      - 'Makefile'
+      - '.trivyignore'
+      - '.github/workflows/ci.yml'
+  workflow_call:
+
+# A new push to the same PR cancels the older run. Release runs (workflow_call) are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.63.0@sha256:6fb0646988fcd2fdf7bf123f7174945ebc2c9c72d1fa1567c8d7daeeb70f8037
+
+jobs:
+  node-unit:
+    name: Build and unit test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: identity-service
+            install: yarn install --frozen-lockfile
+            test: yarn test --ci
+          - service: oid4vc-service
+            install: npm ci
+            test: npm test -- --ci
+          # credential-schema and credentials-service specs need Postgres and a live
+          # identity-service, so their tests run in node-integration; build only here.
+          - service: credential-schema
+            install: yarn install --frozen-lockfile
+          - service: credentials-service
+            install: yarn install --frozen-lockfile
+    defaults:
+      run:
+        working-directory: services/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch git dependencies over https
+        # identity-service/yarn.lock pins jsonld.js as git+ssh; runners have no SSH key
+        run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      - name: Install
+        run: ${{ matrix.install }}
+      # Call the locally installed CLIs directly: npx would download a package that
+      # isn't installed, which code scanning flags.
+      - name: Generate Prisma client
+        run: if [ -d prisma ]; then ./node_modules/.bin/prisma generate; fi
+      - name: Build
+        run: ./node_modules/.bin/nest build
+      - name: Unit tests
+        if: matrix.test
+        run: ${{ matrix.test }}
+
+  node-integration:
+    name: Integration tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    # These take 1-5 minutes. If a container hangs, --abort-on-container-exit never
+    # returns, so cap the job instead of running into the 6-hour default.
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [ identity-service, credential-schema, credentials-service ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install docker-compose
+        # the service Makefiles call the standalone docker-compose binary
+        run: |
+          sudo curl -sSL "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose version
+      - name: Run tests in docker-compose-test.yml
+        run: make -C services/${{ matrix.service }} test
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker ps -a
+          for c in $(docker ps -aq); do echo "=== $(docker inspect -f '{{.Name}}' "$c")"; docker logs --tail 200 "$c" 2>&1; done
+
+  dependency-scan:
+    # Report-only on every PR/push: all services currently carry fixable CRITICAL
+    # findings. The blocking gate is the image scan in manual.yml (make scan-images).
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    # Report-only, so a scanner problem (e.g. the Trivy DB download is rate-limited)
+    # must not fail this workflow. manual.yml calls it, and would otherwise block the release.
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Warn about .trivyignore entries expiring within 30 days
+        # Expired entries make the release image scan fail; this gives notice first.
+        # Runs before the scans so a scanner failure can't skip it.
+        # Runs here and in every release (manual.yml calls this workflow).
+        run: |
+          soon=$(date -u -d '+30 days' +%Y-%m-%d)
+          # "|| true": no entries left is fine (the step runs with pipefail)
+          { grep -oE '^[A-Za-z0-9-]+ exp:[0-9]{4}-[0-9]{2}-[0-9]{2}' .trivyignore || true; } | while read -r id exp; do
+            d=${exp#exp:}
+            if [[ ! "$d" > "$soon" ]]; then
+              echo "::warning file=.trivyignore::$id has expiry date $d; after that the release image scan fails on it"
+            fi
+          done
+      # --ignorefile /dev/null: this report should list every finding, including the
+      # ones accepted in .trivyignore for the release scan. Without it Trivy picks up
+      # .trivyignore from the working directory and hides them.
+      - name: Trivy filesystem scan (table)
+        run: >
+          docker run --rm -v "$PWD":/src -w /src -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE"
+          fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0
+          --ignorefile /dev/null services
+      - name: Trivy filesystem scan (SARIF)
+        run: >
+          docker run --rm -v "$PWD":/src -w /src -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE"
+          fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0
+          --ignorefile /dev/null --format sarif --output trivy-fs.sarif services
+      - name: Upload to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        # fork PRs get a read-only token and cannot upload
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-dependencies
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trivy-dependency-report
+          path: trivy-fs.sarif

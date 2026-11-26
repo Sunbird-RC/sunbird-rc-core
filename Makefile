@@ -51,23 +51,54 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose -f docker-compose-v1.yml down
 	@sudo rm -rf db-data-2 es-data-2 || echo "no permission to delete"
-#	make -C services/identity-service test
-#	make -C services/credential-schema test
-#	make -C services/credentials-service test
+
+# V2 Node services: unit + DB/Vault-backed tests in each service's docker-compose-test.yml
+test-services:
+	make -C services/identity-service test
+	make -C services/credential-schema test
+	make -C services/credentials-service test
 
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
 
-release: test
-	for image in $(IMAGES); \
-    	do \
-    	  echo $$image; \
-    	  docker tag $$image:latest $$image:$(RELEASE_VERSION);\
-    	  docker push $$image:latest;\
-    	  docker push $$image:$(RELEASE_VERSION);\
-      	done
-	@cd tools/cli/ && npm publish
+# Fails on fixable CRITICAL vulnerabilities in the built images. Accepted exceptions
+# go in .trivyignore (see docs/conformance/EXCEPTIONS.md). CI overrides TRIVY to a pinned image.
+# Scans the :latest images already on this machine, so run `make build` first
+# (manual.yml and `make release` do). It has no build prerequisite because `build`
+# always rebuilds, which would build every image twice in a release.
+TRIVY ?= trivy
+scan-images:
+	@rc=0; for image in $(IMAGES); \
+	do \
+	  echo "Scanning $$image:latest"; \
+	  $(TRIVY) image --scanners vuln --severity CRITICAL --ignore-unfixed --ignorefile .trivyignore --exit-code 1 $$image:latest || rc=1; \
+	done; exit $$rc
+
+# Pushes :$(RELEASE_VERSION), plus :latest only with PUSH_LATEST=true, so a patch release
+# from an older branch cannot overwrite :latest by default. Same default as manual.yml's
+# tag_latest input, which sets it.
+PUSH_LATEST ?= false
+# Tags every image before pushing any, so a missing image fails before anything is
+# published. A push that fails midway can be re-run; pushing the same tags again is safe.
+push-images:
+	set -e; for image in $(IMAGES); do \
+	  docker tag $$image:latest $$image:$(RELEASE_VERSION); \
+	done; \
+	for image in $(IMAGES); do \
+	  echo $$image; \
+	  if [ "$(PUSH_LATEST)" = "true" ]; then docker push $$image:latest; fi; \
+	  docker push $$image:$(RELEASE_VERSION); \
+	done
+
+# registry-cli (formerly tools/cli) moved to github.com/Sunbird-RC/registry-cli in c521b666 and is released from there
+# Steps run in order in the recipe (not as prerequisites), so `make -j release` cannot
+# push before the tests and scan have passed.
+release:
+	$(MAKE) test
+	$(MAKE) test-services
+	$(MAKE) scan-images
+	$(MAKE) push-images
 
 compose-init:
 	bash setup_vault.sh docker-compose.yml vault

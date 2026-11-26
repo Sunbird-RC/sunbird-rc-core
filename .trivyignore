@@ -1,0 +1,83 @@
+# Accepted vulnerability exceptions for the release image scan (make scan-images).
+# This file is the single list of accepted CVEs; docs/conformance/EXCEPTIONS.md only
+# summarises the policy. Format: one ID per line, with a comment above each group:
+#   package installed-version -> fixed-version (affected images): reason
+# Each entry stops being ignored after its exp: date, and the release scan fails again.
+# To accept a new finding, add it here with a comment, an owner and an exp: date.
+# When a fix lands, delete its lines.
+#
+# Owner of every entry below: Kartheek. Review by 2027-01-31.
+# Source: release image scan, fork dry run 45168579211 (2026-11-23).
+
+# --- Needs a major upgrade ---
+
+# @fastify/middie 8.3.0 -> 9.3.2 (identity-service, credential-schema, credentials-service, oid4vc-service):
+# major upgrade through the NestJS Fastify adapter; needs its own PR and a full test run
+CVE-2026-6270 exp:2027-01-31
+# spring-web 5.3.39 -> 6.0.0 (sunbird-rc-core, claim-ms, id-gen-service, encryption-service):
+# affects HttpInvoker, which the repo does not use; fix needs Spring Boot 3 / Java 17
+CVE-2016-1000027 exp:2027-01-31
+# spring-webmvc 5.3.39 -> 7.0.9 (sunbird-rc-core, claim-ms, id-gen-service, encryption-service):
+# no fix in 5.3.x; needs the Spring Boot 3 / Java 17 migration
+CVE-2026-47884 exp:2027-01-31
+# spring-security-web 5.7.13 / 5.8.16 -> 6.5.9 (sunbird-rc-core, claim-ms):
+# needs the Spring Boot 3 / Java 17 migration
+CVE-2026-22732 exp:2027-01-31
+# io.netty:netty 3.9.9 / 3.10.6 -> 4.0.0 (sunbird-rc-core, claim-ms):
+# transitive, not declared in any pom.xml; find which dependency pulls it in and exclude it
+CVE-2019-20444 exp:2027-01-31
+# org.neo4j:neo4j 3.2.3 -> 3.5.0 (sunbird-rc-core, claim-ms): transitive via neo4j-gremlin
+# (java/registry/pom.xml); the CVE is in the Neo4j shell server, which is not configured (to confirm)
+CVE-2021-34371 exp:2027-01-31
+# jackson-databind 2.9.4 -> 2.9.10.4+ (sunbird-rc-core): shaded inside gremlin-shaded-3.3.3.jar,
+# so it can't be upgraded on its own; needs the TinkerPop / neo4j-gremlin upgrade
+CVE-2018-7489 exp:2027-01-31
+CVE-2018-11307 exp:2027-01-31
+CVE-2018-14718 exp:2027-01-31
+CVE-2018-14719 exp:2027-01-31
+CVE-2018-14720 exp:2027-01-31
+CVE-2018-14721 exp:2027-01-31
+CVE-2018-19360 exp:2027-01-31
+CVE-2018-19361 exp:2027-01-31
+CVE-2018-19362 exp:2027-01-31
+CVE-2019-14379 exp:2027-01-31
+CVE-2019-14540 exp:2027-01-31
+CVE-2019-16335 exp:2027-01-31
+CVE-2019-16942 exp:2027-01-31
+CVE-2019-16943 exp:2027-01-31
+CVE-2019-17267 exp:2027-01-31
+CVE-2019-17531 exp:2027-01-31
+CVE-2019-20330 exp:2027-01-31
+CVE-2020-8840 exp:2027-01-31
+CVE-2020-9546 exp:2027-01-31
+CVE-2020-9547 exp:2027-01-31
+CVE-2020-9548 exp:2027-01-31
+# hazelcast-all 3.7.5 -> 3.12.13 / 5.7.0 (sunbird-rc-core): large version jump; needs its own PR and testing
+CVE-2022-36437 exp:2027-01-31
+CVE-2026-107726 exp:2027-01-31
+
+# --- Patch or minor upgrade, deferred to a follow-up PR ---
+
+# handlebars 4.7.9 -> 4.7.10 (credential-schema, credentials-service): re-run credential rendering tests
+CVE-2026-106445 exp:2027-01-31
+CVE-2026-106446 exp:2027-01-31
+# proxy-addr 2.0.7 -> 2.0.8, transitive (identity-service, credential-schema, credentials-service)
+CVE-2026-90711 exp:2027-01-31
+# tomcat-embed-core 9.0.118 -> 9.0.121 (sunbird-rc-core, claim-ms, id-gen-service, encryption-service):
+# set the Spring Boot tomcat.version property
+CVE-2026-55276 exp:2027-01-31
+CVE-2026-65182 exp:2027-01-31
+CVE-2026-65637 exp:2027-01-31
+CVE-2026-65905 exp:2027-01-31
+CVE-2026-68525 exp:2027-01-31
+# netty-handler 4.1.136.Final -> 4.1.137.Final (sunbird-rc-core)
+CVE-2026-75595 exp:2027-01-31
+
+# --- Base image ---
+
+# tar 6.2.0 -> 7.5.19, npm's bundled copy in node:20.11.0-alpine3.18
+# (identity-service, credential-schema, credentials-service, oid4vc-service): move to a newer Node base image
+CVE-2026-59873 exp:2027-01-31
+# musl 1.1.20-r3 -> 1.1.20-r5, Alpine 3.9 in frolvlad/alpine-java:jdk8-slim
+# (id-gen-service, encryption-service): move to a maintained JDK base image
+CVE-2019-14697 exp:2027-01-31

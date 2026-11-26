@@ -21,11 +21,15 @@ services:
     ports:
       - '8200:8200'
   db:
-    image: postgres:latest
+    # Pinned: postgres:latest moved to 19, and Postgres 18+ refuses the
+    # /var/lib/postgresql/data mount below, so the container exits.
+    # 14 matches docker-compose.override.yml and docker-compose-v1.yml.
+    # 14 is end of life (2026-11-12); upgrade all services together, separately.
+    image: postgres:14
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - data:/var/lib/postgresql/data
     healthcheck:
@@ -46,7 +50,7 @@ services:
     ports: 
       - 3332:3332
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres"
       VAULT_ADDR: "http://vault:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh

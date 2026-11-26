@@ -1,5 +1,7 @@
 FROM node:20.11.0-alpine3.18 AS install
-RUN apk add openssl curl
+RUN apk add openssl curl git openssh-client
+# yarn.lock pins jsonld.js as a git+ssh dependency; fetch it over https (same as Dockerfile)
+RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
