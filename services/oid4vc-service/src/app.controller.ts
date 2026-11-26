@@ -1,9 +1,30 @@
-import { Controller, Get, Param, Header, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Header,
+  NotFoundException,
+  Param,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FastifyReply } from 'fastify';
+import * as QRCode from 'qrcode';
 import { loadConfig } from './config/configuration';
 import { KeycloakService } from './auth/keycloak.service';
 import { SchemaClient } from './clients/schema.client';
 import { Oid4vciService } from './oid4vci/oid4vci.service';
+
+/**
+ * Largest payload the QR endpoint will encode.
+ *
+ * Chosen from the format's own ceiling rather than arbitrarily: 4296 alphanumeric
+ * characters is the maximum a version-40 QR symbol can carry at the lowest error
+ * correction level, so anything beyond this could not be rendered anyway. The
+ * largest legitimate caller is a credential-offer URI of a few hundred bytes.
+ */
+const MAX_QR_PAYLOAD = 4096;
 
 @ApiTags('Health')
 @Controller()
@@ -28,6 +49,32 @@ export class AppController {
       service: 'oid4vc-service',
       keycloak: await this.keycloak.healthInfo(),
     };
+  }
+
+  /**
+   * Renders any string as a QR PNG, so consoles need no client-side QR library.
+   *
+   * This lives here because it previously lived in the demo app, whose source was
+   * deleted while its container kept serving `/qr` from an image that can no
+   * longer be rebuilt — and the verifier console renders every QR through it. The
+   * `qrcode` dependency was already present, so this adds nothing to the tree.
+   */
+  @ApiOperation({ summary: 'Render a string as a QR code PNG' })
+  @Get('qr')
+  async qr(@Query('data') data: string, @Res() res: FastifyReply) {
+    if (!data) throw new BadRequestException('data query parameter is required');
+    // Bounded input: QR encoding is superlinear in payload size.
+    if (data.length > MAX_QR_PAYLOAD) {
+      throw new BadRequestException(`data exceeds ${MAX_QR_PAYLOAD} characters`);
+    }
+    try {
+      const png = await QRCode.toBuffer(data, { width: 240, margin: 1 });
+      // no-store: an offer URI is single-use, so a cached image is at best
+      // useless and at worst confusing when it renders a spent offer.
+      res.header('content-type', 'image/png').header('cache-control', 'no-store').send(png);
+    } catch (err: any) {
+      throw new BadRequestException(`Could not encode QR: ${err?.message ?? err}`);
+    }
   }
 
   // Serves a schema's inline W3C VC Render Method SVG template

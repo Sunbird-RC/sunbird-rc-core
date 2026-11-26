@@ -23,9 +23,9 @@ describe('Oid4vciController', () => {
       const expected = { qr_data: 'openid-credential-offer://' };
       oid4vci.createOffer.mockReturnValue(expected);
 
-      const result = controller.createOffer(body);
+      const result = controller.createOffer(body, 'Bearer t');
       expect(result).toBe(expected);
-      expect(oid4vci.createOffer).toHaveBeenCalledWith(body);
+      expect(oid4vci.createOffer).toHaveBeenCalledWith(body, 'Bearer t');
     });
   });
 

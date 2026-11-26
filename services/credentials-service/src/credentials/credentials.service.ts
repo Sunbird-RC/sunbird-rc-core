@@ -102,6 +102,7 @@ export class CredentialsService {
       const res = cred.signed;
       delete res['options'];
       res['id'] = cred.id;
+      res['subject'] = cred.subject;
       return res as W3CCredential;
     }) as ReadonlyArray<W3CCredential>;
   }
@@ -116,6 +117,7 @@ export class CredentialsService {
       where: { id: id },
       select: {
         signed: true,
+        subject: true,
       },
     });
     if (!credential) {
@@ -126,6 +128,7 @@ export class CredentialsService {
     const res = credential.signed;
     delete res['options'];
     res['id'] = id;
+    res['subject'] = credential.subject;
     let template = null;
 
     switch (output.toUpperCase()) {
