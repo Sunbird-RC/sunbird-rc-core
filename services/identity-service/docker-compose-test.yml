@@ -21,6 +21,9 @@ services:
       test:
 
   db-test:
+    # Pinned to the same version as docker-compose.yml (see the note there),
+    # so tests run on the Postgres version used for local development.
+    # 14 is end of life (2026-11-12); upgrade all services together, separately.
     image: postgres:14
     restart: always
     environment:
