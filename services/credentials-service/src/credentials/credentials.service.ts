@@ -693,6 +693,12 @@ export class CredentialsService {
     return signed;
   }
 
+  async getStatusListToken(id: string) {
+    const result = await this.statusListService.getStatusListToken(id);
+    if (!result) throw new NotFoundException('Status list credential not found');
+    return result;
+  }
+
   async getRevocationList(
     issuerId: string,
     page = 1,

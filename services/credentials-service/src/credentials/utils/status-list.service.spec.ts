@@ -1,3 +1,5 @@
+import { inflateSync } from 'zlib';
+import { RevocationListImpl } from '../../revocation-list/revocation-list.impl';
 import { StatusListService } from './status-list.service';
 
 // allocateIndex() tests use a real-ish CAS loop with mocked prisma — unchanged.
@@ -234,5 +236,141 @@ describe('StatusListService — getStatusListCredential', () => {
     };
     const service = new StatusListService(prisma as any, {} as any, {} as any);
     expect(await service.getStatusListCredential('nonexistent')).toBeNull();
+  });
+});
+
+describe('StatusListService — getStatusListToken (issue → revoke → fetch token)', () => {
+  const issuer = 'did:rcw:issuer-1';
+  const listId = 'did:rcw:list-1';
+
+  // IETF reading of a status list: bit `idx` is byte `idx >> 3`, bit
+  // `idx & 7`, LSB-first, of the DEFLATE-inflated `lst`.
+  const ietfBitAt = (lst: string, idx: number): number => {
+    const bytes = inflateSync(Buffer.from(lst, 'base64url'));
+    return (bytes[idx >> 3] >> (idx & 7)) & 1;
+  };
+  const payloadOf = (token: string) =>
+    JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+
+  const makeService = async () => {
+    const rl = new RevocationListImpl();
+    // The list row as persisted when the list was created: bitstring with
+    // nothing revoked yet.
+    const fresh = rl.createList({ length: 16 });
+    const row: any = {
+      id: listId,
+      issuer,
+      subject: {
+        id: listId,
+        type: 'RevocationList2020',
+        encodedList: await fresh.encode(),
+      },
+      signed: { id: listId },
+    };
+    const prisma: any = {
+      revocationLists: {
+        findUnique: jest.fn().mockResolvedValue({
+          issuer,
+          lastCredentialIdx: 5,
+          latestRevocationListId: listId,
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      verifiableCredentials: {
+        findUnique: jest.fn(async ({ where }: any) =>
+          where.id === listId ? row : null
+        ),
+        update: jest.fn(async ({ data }: any) => {
+          row.subject = data.subject;
+          row.proof = data.proof;
+          row.signed = data.signed;
+          return row;
+        }),
+      },
+    };
+    const signJwt = jest.fn(
+      async (_did: any, payload: any) =>
+        `header.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.signature`
+    );
+    const identity: any = {
+      signJwt,
+      signVC: jest
+        .fn()
+        .mockResolvedValue({
+          proof: { type: 'Ed25519Signature2020', proofValue: 'zProof' },
+        }),
+    };
+    const service = new StatusListService(prisma, rl, identity);
+    return { service, signJwt };
+  };
+
+  beforeAll(() => {
+    process.env.CREDENTIAL_SERVICE_BASE_URL = 'https://credentials.example.com';
+  });
+  afterAll(() => {
+    delete process.env.CREDENTIAL_SERVICE_BASE_URL;
+  });
+
+  it('serves a token whose bit idx is set only after the credential is revoked', async () => {
+    const { service, signJwt } = await makeService();
+
+    // Issue: allocate the index and build the credential's status entry.
+    const allocation = await service.allocateIndex(issuer);
+    expect(allocation).toEqual({ statusListCredential: listId, index: 5 });
+    const status = service.buildCredentialStatus(
+      allocation.statusListCredential,
+      allocation.index
+    );
+    expect(status.revocationListIndex).toBe('5');
+
+    // Fetch the token before revocation: bit 5 is clear.
+    const before = await service.getStatusListToken(listId);
+    expect(before).not.toBeNull();
+    expect(ietfBitAt(payloadOf(before.token).status_list.lst, 5)).toBe(0);
+
+    // Revoke the credential.
+    await service.setRevoked(listId, allocation.index, issuer);
+
+    // Fetch again — the token is generated per request, so bit 5 is set.
+    const after = await service.getStatusListToken(listId);
+    const payload = payloadOf(after.token);
+    expect(payload.status_list.bits).toBe(1);
+    expect(ietfBitAt(payload.status_list.lst, 5)).toBe(1);
+    expect(ietfBitAt(payload.status_list.lst, 4)).toBe(0);
+    expect(ietfBitAt(payload.status_list.lst, 6)).toBe(0);
+
+    // Token claims per the maintainer's spec.
+    expect(payload.iss).toBe(issuer);
+    expect(payload.sub).toBe(
+      `https://credentials.example.com/credentials/status-list/${listId}/token`
+    );
+    expect(payload.ttl).toBe(300);
+    expect(payload.exp - payload.iat).toBe(24 * 60 * 60);
+    expect(after.ttl).toBe(300);
+    expect(signJwt).toHaveBeenCalledWith(issuer, expect.any(Object), {
+      typ: 'statuslist+jwt',
+    });
+  });
+
+  it('uses CREDENTIAL_SERVICE_PUBLIC_URL for the token sub when set', async () => {
+    process.env.CREDENTIAL_SERVICE_PUBLIC_URL =
+      'https://public.example.com';
+    try {
+      const { service } = await makeService();
+      const result = await service.getStatusListToken(listId);
+      expect(result).not.toBeNull();
+      // sub must match the status.status_list.uri in issued credentials:
+      // the public URL, not the base URL configured for this suite.
+      expect(payloadOf(result.token).sub).toBe(
+        `https://public.example.com/credentials/status-list/${listId}/token`
+      );
+    } finally {
+      delete process.env.CREDENTIAL_SERVICE_PUBLIC_URL;
+    }
+  });
+
+  it('returns null for an unknown status list', async () => {
+    const { service } = await makeService();
+    expect(await service.getStatusListToken('did:rcw:unknown')).toBeNull();
   });
 });
