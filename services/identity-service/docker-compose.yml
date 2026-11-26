@@ -50,7 +50,7 @@ services:
     ports: 
       - 3332:3332
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres"
       VAULT_ADDR: "http://vault:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh

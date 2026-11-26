@@ -66,10 +66,12 @@ jobs:
         run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
       - name: Install
         run: ${{ matrix.install }}
+      # Call the locally installed CLIs directly: npx would download a package that
+      # isn't installed, which code scanning flags.
       - name: Generate Prisma client
-        run: if [ -d prisma ]; then npx prisma generate; fi
+        run: if [ -d prisma ]; then ./node_modules/.bin/prisma generate; fi
       - name: Build
-        run: npx nest build
+        run: ./node_modules/.bin/nest build
       - name: Unit tests
         if: matrix.test
         run: ${{ matrix.test }}
@@ -77,6 +79,9 @@ jobs:
   node-integration:
     name: Integration tests (${{ matrix.service }})
     runs-on: ubuntu-latest
+    # These take 1-5 minutes. If a container hangs, --abort-on-container-exit never
+    # returns, so cap the job instead of running into the 6-hour default.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -102,20 +107,40 @@ jobs:
     # findings. The blocking gate is the image scan in manual.yml (make scan-images).
     name: Dependency vulnerability scan
     runs-on: ubuntu-latest
+    # Report-only, so a scanner problem (e.g. the Trivy DB download is rate-limited)
+    # must not fail this workflow. manual.yml calls it, and would otherwise block the release.
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
+      - name: Warn about .trivyignore entries expiring within 30 days
+        # Expired entries make the release image scan fail; this gives notice first.
+        # Runs before the scans so a scanner failure can't skip it.
+        # Runs here and in every release (manual.yml calls this workflow).
+        run: |
+          soon=$(date -u -d '+30 days' +%Y-%m-%d)
+          # "|| true": no entries left is fine (the step runs with pipefail)
+          { grep -oE '^[A-Za-z0-9-]+ exp:[0-9]{4}-[0-9]{2}-[0-9]{2}' .trivyignore || true; } | while read -r id exp; do
+            d=${exp#exp:}
+            if [[ ! "$d" > "$soon" ]]; then
+              echo "::warning file=.trivyignore::$id has expiry date $d; after that the release image scan fails on it"
+            fi
+          done
+      # --ignorefile /dev/null: this report should list every finding, including the
+      # ones accepted in .trivyignore for the release scan. Without it Trivy picks up
+      # .trivyignore from the working directory and hides them.
       - name: Trivy filesystem scan (table)
         run: >
           docker run --rm -v "$PWD":/src -w /src -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE"
-          fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0 services
+          fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0
+          --ignorefile /dev/null services
       - name: Trivy filesystem scan (SARIF)
         run: >
           docker run --rm -v "$PWD":/src -w /src -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE"
           fs --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0
-          --format sarif --output trivy-fs.sarif services
+          --ignorefile /dev/null --format sarif --output trivy-fs.sarif services
       - name: Upload to code scanning
         uses: github/codeql-action/upload-sarif@v3
         # fork PRs get a read-only token and cannot upload

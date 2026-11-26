@@ -41,7 +41,7 @@ the package, installed and fixed versions, affected images, the reason, the owne
 | Scenario | Status |
 |---|---|
 | OpenID4VCI Authorization Code flow, PKCE, `tx_code` | Not implemented (SBCOSS-1208) |
-| OpenID4VP Presentation Exchange (`presentation_definition` / `presentation_submission`) | Not implemented in oid4vc-service; only DCQL |
+| OpenID4VP Presentation Exchange (`presentation_definition` / `presentation_submission`) | Implemented in oid4vc-service as a DIF Presentation Exchange v2.0 subset (`input_descriptors` field path/filter and format, `submission_requirements` all/pick). Not yet checked against a conformance suite |
 | VC Data Model 2.0, Data Integrity EdDSA/ECDSA cryptosuites | Not implemented (SBCOSS-1209) |
 | Bitstring Status List verification, three-state result | SBCOSS-1206 |
 | Credential suspension / reinstatement | SBCOSS-1207 |

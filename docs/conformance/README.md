@@ -8,11 +8,11 @@ Known gaps and accepted exceptions are in [EXCEPTIONS.md](EXCEPTIONS.md).
 
 | Check | Where | Runs on | Blocks |
 |---|---|---|---|
-| Registry (Java) Karate e2e, V1 stack | `.github/workflows/maven.yml` (`make test`) | PR/push to `main`, release | PR, release |
+| Registry (Java) Karate e2e, V1 stack | `.github/workflows/maven.yml` (`make test`) | PR/push to `main`, `v*`, `release-*`; release | PR, release |
 | Node build + unit tests: identity-service, oid4vc-service | `.github/workflows/ci.yml` `node-unit` | PR/push to `main`, `v*`, `release-*`; release | PR, release |
 | Node build: credential-schema, credentials-service | `ci.yml` `node-unit` | same | PR, release |
 | Integration tests (Postgres + Vault + identity-service): identity-service, credential-schema, credentials-service | `ci.yml` `node-integration` (`make -C services/<svc> test`) | same | PR, release |
-| Dependency vulnerability scan (Trivy, `services/`) | `ci.yml` `dependency-scan` | same | No (report only; results in the Security tab and as an artifact) |
+| Dependency vulnerability scan (Trivy, `services/`) | `ci.yml` `dependency-scan` | same | No (report only, including CVEs accepted in `.trivyignore`; results in the Security tab and as an artifact; warns 30 days before a `.trivyignore` entry expires) |
 | CodeQL (Java, JavaScript) | `.github/workflows/codeql-analysis.yml` | PR/push, weekly | No |
 | Image vulnerability scan of every published image (Trivy, fixable CRITICAL) | `manual.yml` → `make scan-images` | release | Release |
 
@@ -28,7 +28,7 @@ sequence: `test`, `test-services`, `scan-images`, `push-images`.
 | `dry_run` | `false` | Runs all tests, builds and scans every image, but skips registry login and push. Use it to prove a release before publishing. |
 | `tag_latest` | `false` | Also pushes `:latest`. Tick it only when releasing the newest release line, so a patch release from an older branch can't overwrite `:latest`. |
 
-Local `make release` keeps pushing `:latest` unless run with `PUSH_LATEST=false`.
+Local `make release` pushes only `:<version>` by default, like `manual.yml`. Add `PUSH_LATEST=true` to also push `:latest`.
 
 ### Getting changes to `main`
 
@@ -55,7 +55,7 @@ make build scan-images      # build every image, then scan it (needs trivy)
 | W3C Data Integrity EdDSA / ECDSA cryptosuite suites | Not integrated | SBCOSS-1209 |
 | W3C Bitstring Status List suite | Not integrated | SBCOSS-1206. The suite covers issue/verify only; revocation negatives must be RC's own tests |
 | OIDF OpenID4VCI conformance | Not integrated | SBCOSS-1208 (Authorization Code + PKCE, `tx_code`) |
-| OIDF OpenID4VP conformance | Not integrated | No `presentation_definition` support (see EXCEPTIONS) |
+| OIDF OpenID4VP conformance | Not integrated | Planned for the next PR; RC first has to trust the suite's test issuer keys |
 | SD-JWT reference vectors (RFC 9901) | Not integrated | No blocker; next step |
 
 When a suite is integrated it is added to the table above with the job that runs it.
