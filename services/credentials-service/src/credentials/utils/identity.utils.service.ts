@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class IdentityUtilsService {
@@ -172,7 +172,7 @@ export class IdentityUtilsService {
     if (process.env.RESOLVABLE_CREDENTIAL_IDS === 'true' || didMethod === 'web') {
       return this.generateDID(alsoKnownAs, didMethod, false);
     }
-    return [{ id: `did:${didMethod}:${uuid()}` } as DIDDocument];
+    return [{ id: `did:${didMethod}:${randomUUID()}` } as DIDDocument];
   }
 
   // withKey=false: identifier-only DID (credential, status list, revocation list); no key pair is created.
