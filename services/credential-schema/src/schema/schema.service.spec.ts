@@ -50,6 +50,7 @@ describe('SchemaService', () => {
     const credSchemaPayload = generateCredentialSchemaTestBody();
     credSchemaPayload.schema.author = did.id;
     const generateDID = jest.spyOn(utilsService, 'generateDID');
+    generateDID.mockClear(); // count only the calls createCredentialSchema makes
     const vcCredSchema = await service.createCredentialSchema(
       credSchemaPayload,
     );
@@ -71,6 +72,7 @@ describe('SchemaService', () => {
     process.env.RESOLVABLE_SCHEMA_IDS = 'true';
     try {
       const generateDID = jest.spyOn(utilsService, 'generateDID');
+      generateDID.mockClear(); // count only the calls createCredentialSchema makes
       const vcCredSchema = await service.createCredentialSchema(generateCredentialSchemaTestBody());
       expect(generateDID.mock.calls[0][0].content[0]).toMatchObject({ method: 'schema', withKey: false });
       const schemaDid = await generateDID.mock.results[0].value;

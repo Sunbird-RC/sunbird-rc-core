@@ -147,5 +147,36 @@ describe('IdentityUtilsService', () => {
       axiosRef.post.mockRejectedValue(new Error('error'));
       await expect(service.generateDID([])).rejects.toThrow('Error generating DID');
     });
+
+    it('asks for a key pair by default', async () => {
+      axiosRef.post.mockResolvedValue({ data: [{ id: 'did:rcw:new-1' }] });
+      await service.generateDID(['issuer']);
+      expect(axiosRef.post.mock.calls[0][1].content[0]).toMatchObject({ method: 'rcw', withKey: true });
+    });
+  });
+
+  describe('generateIdentifier', () => {
+    const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
+    afterEach(() => delete process.env.RESOLVABLE_CREDENTIAL_IDS);
+
+    it.each([[undefined, 'rcw'], ['', 'rcw'], [' custom ', 'custom']])('mints did:<method>:<uuid> locally for method %p', async (method, expected) => {
+      const [doc] = await service.generateIdentifier([], method as any);
+      expect(doc.id).toMatch(new RegExp(`^did:${expected}:${UUID}$`));
+      expect(axiosRef.post).not.toHaveBeenCalled();
+    });
+
+    it('asks identity-service for a keyless DID when RESOLVABLE_CREDENTIAL_IDS=true', async () => {
+      process.env.RESOLVABLE_CREDENTIAL_IDS = 'true';
+      axiosRef.post.mockResolvedValue({ data: [{ id: 'did:rcw:new-1' }] });
+      const result = await service.generateIdentifier(['status list']);
+      expect(result).toEqual([{ id: 'did:rcw:new-1' }]);
+      expect(axiosRef.post.mock.calls[0][1].content[0]).toMatchObject({ alsoKnownAs: ['status list'], method: 'rcw', withKey: false });
+    });
+
+    it('always creates did:web ids in identity-service, without a key', async () => {
+      axiosRef.post.mockResolvedValue({ data: [{ id: 'did:web:example.com:1' }] });
+      await service.generateIdentifier([], 'web');
+      expect(axiosRef.post.mock.calls[0][1].content[0]).toMatchObject({ method: 'web', withKey: false });
+    });
   });
 });

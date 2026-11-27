@@ -14,7 +14,7 @@ describe('RevocationListService', () => {
   });
 
   const makeMockIdentity = () => ({
-    generateDID: jest.fn().mockResolvedValue([{ id: 'did:rcw:rl-list-1' }]),
+    generateIdentifier: jest.fn().mockResolvedValue([{ id: 'did:rcw:rl-list-1' }]),
     signVC: jest.fn().mockResolvedValue({ proof: { type: 'Ed25519Signature2020', proofValue: 'sig' } }),
   });
 
@@ -44,7 +44,7 @@ describe('RevocationListService', () => {
       const service = new RevocationListService(prisma as any, rlImpl as any, identity as any);
       const result = await service.createNewRevocationList(issuer);
 
-      expect(identity.generateDID).toHaveBeenCalledWith(['verifiable credential']);
+      expect(identity.generateIdentifier).toHaveBeenCalledWith(['verifiable credential']);
       expect(rlImpl.createList).toHaveBeenCalledWith({ length: 100000 });
       expect(identity.signVC).toHaveBeenCalled();
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('RevocationListService', () => {
 
     it('throws when DID generation fails', async () => {
       const identity = makeMockIdentity();
-      identity.generateDID.mockRejectedValue(new Error('did gen fail'));
+      identity.generateIdentifier.mockRejectedValue(new Error('did gen fail'));
       const prisma = makeMockPrisma();
       const rlImpl = makeMockRLImpl();
 
