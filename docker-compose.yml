@@ -261,6 +261,7 @@ services:
       - IDENTITY_BASE_URL=${IDENTITY_BASE_URL}
       - JWKS_URI=${JWKS_URI}
       - ENABLE_AUTH=${ENABLE_AUTH}
+      - RESOLVABLE_SCHEMA_IDS=${RESOLVABLE_SCHEMA_IDS-false}
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3333/health || exit 1" ]
@@ -287,6 +288,7 @@ services:
       - ENABLE_AUTH=${ENABLE_AUTH}
       - QR_TYPE=${QR_TYPE}
       - STATUS_LIST_ENABLED=${STATUS_LIST_ENABLED-false}
+      - RESOLVABLE_CREDENTIAL_IDS=${RESOLVABLE_CREDENTIAL_IDS-false}
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]

@@ -115,6 +115,16 @@ describe('VcService', () => {
       await expect(service.sign(didDoc.id, signPayload)).rejects.toThrow(InternalServerErrorException);
     });
 
+    it('throws BadRequestException when the signer DID was created without a key', async () => {
+      const keyless = await didService.generateDID({ alsoKnownAs: [], services: [], method: 'test', withKey: false });
+      await expect(service.sign(keyless.id, signPayload)).rejects.toThrow('has no signing key');
+    });
+
+    it('throws InternalServerErrorException when the stored DID document is corrupt', async () => {
+      jest.spyOn(prisma.identity, 'findUnique').mockResolvedValueOnce({ id: 'did:test:corrupt', didDoc: '{not json' } as any);
+      await expect(service.sign('did:test:corrupt', signPayload)).rejects.toThrow('Error signing the document');
+    });
+
     it('throws NotFoundException when the signer DID does not exist', async () => {
       await expect(service.sign('did:does-not-exist', signPayload)).rejects.toThrow(NotFoundException);
     });

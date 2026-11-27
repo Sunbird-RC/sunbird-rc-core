@@ -1,4 +1,4 @@
-import { NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
 import * as jose from 'jose';
 import { JwtSignerService } from './jwt.service';
 import { PrismaService } from '../utils/prisma.service';
@@ -13,7 +13,10 @@ describe('JwtSignerService', () => {
   let didService: { resolveDID: jest.Mock };
   let service: JwtSignerService;
 
-  function baseDidDoc(verificationMethod: any[] = []) {
+  // An issuer DID always has its #key-0 from /did/generate.
+  const issuerKey0 = { id: `${signerDID}#key-0`, type: 'Ed25519VerificationKey2020', controller: signerDID, publicKeyMultibase: 'z6Mk-test' };
+
+  function baseDidDoc(verificationMethod: any[] = [issuerKey0]) {
     return { id: signerDID, verificationMethod, assertionMethod: [], authentication: [] };
   }
 
@@ -100,6 +103,13 @@ describe('JwtSignerService', () => {
       await expect(service.ensureES256Key(signerDID)).rejects.toThrow(InternalServerErrorException);
     });
 
+    it('refuses to add a key to a DID without verification methods', async () => {
+      prisma.identity.findUnique.mockResolvedValue({ id: signerDID, didDoc: JSON.stringify({ id: signerDID }) });
+      await expect(service.ensureES256Key(signerDID)).rejects.toThrow(BadRequestException);
+      expect(prisma.identity.update).not.toHaveBeenCalled();
+      expect(vault.mergePvtKey).not.toHaveBeenCalled();
+    });
+
     it('creates and persists a new ES256 key when none exists', async () => {
       prisma.identity.findUnique.mockResolvedValue({ id: signerDID, didDoc: JSON.stringify(baseDidDoc()) });
       prisma.identity.update.mockResolvedValue({});
@@ -113,8 +123,8 @@ describe('JwtSignerService', () => {
       const updateArg = prisma.identity.update.mock.calls[0][0];
       expect(updateArg.where).toEqual({ id: signerDID });
       const updatedDoc = JSON.parse(updateArg.data.didDoc);
-      expect(updatedDoc.verificationMethod).toHaveLength(1);
-      expect(updatedDoc.verificationMethod[0]).toMatchObject({
+      expect(updatedDoc.verificationMethod).toHaveLength(2);
+      expect(updatedDoc.verificationMethod[1]).toMatchObject({
         id: result.kid,
         type: 'JsonWebKey2020',
         controller: signerDID,
