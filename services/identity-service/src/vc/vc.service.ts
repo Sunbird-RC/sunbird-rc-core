@@ -64,10 +64,16 @@ export default class VcService {
 
     if (!did) throw new NotFoundException('Signer DID not found!');
 
-    const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
+    let didDoc: DIDDocument;
+    try {
+      didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
+    } catch (err) {
+      Logger.error('Error signing the document:', err);
+      throw new InternalServerErrorException(`Error signing the document`);
+    }
     const verificationMethod = didDoc.verificationMethod?.[0];
     if (!verificationMethod) {
-      throw new BadRequestException(`DID '${signerDID}' has no signing key; it was created with withKey=false`);
+      throw new BadRequestException(`DID '${signerDID}' has no signing key (no verification method)`);
     }
     try {
       const suite = await this.getSuite(verificationMethod, this.signTypeForKey[verificationMethod?.type], true);

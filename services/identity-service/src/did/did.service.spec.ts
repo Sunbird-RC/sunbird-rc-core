@@ -54,6 +54,14 @@ describe('DidService', () => {
     expect(write).not.toHaveBeenCalled();
   });
 
+  it('treats withKey sent as the string "false" the same as false', async () => {
+    const write = jest.spyOn(VaultService.prototype, 'writePvtKey');
+    (doc as any).withKey = 'false';
+    const result = await service.generateDID(doc);
+    expect(result.verificationMethod).toBeUndefined();
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it('should generate a DID with a custom method', async () => {
     const result = await service.generateDID(doc);
     expect(result).toBeDefined();
