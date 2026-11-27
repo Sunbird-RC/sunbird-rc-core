@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class IdentityUtilsService {
@@ -160,9 +161,25 @@ export class IdentityUtilsService {
     }
   }
 
-  async generateDID(
+  // Identifier for a credential, status list or revocation list. These never sign, so they get no keys.
+  // By default the DID is minted here with no DID document; RESOLVABLE_CREDENTIAL_IDS=true stores a keyless
+  // document in identity-service so the DID resolves. did:web ids need identity-service's base URL, so they always go there.
+  async generateIdentifier(
     alsoKnownAs: ReadonlyArray<String>,
     method: string = 'rcw'
+  ): Promise<ReadonlyArray<DIDDocument>> {
+    const didMethod = method?.trim() || 'rcw';
+    if (process.env.RESOLVABLE_CREDENTIAL_IDS === 'true' || didMethod === 'web') {
+      return this.generateDID(alsoKnownAs, didMethod, false);
+    }
+    return [{ id: `did:${didMethod}:${randomUUID()}` } as DIDDocument];
+  }
+
+  // withKey=false: identifier-only DID (credential, status list, revocation list); no key pair is created.
+  async generateDID(
+    alsoKnownAs: ReadonlyArray<String>,
+    method: string = 'rcw',
+    withKey: boolean = true
   ): Promise<ReadonlyArray<DIDDocument>> {
     try {
       const didGenRes: AxiosResponse = await this.httpService.axiosRef.post(
@@ -178,6 +195,7 @@ export class IdentityUtilsService {
                 },
               ],
               method,
+              withKey,
             },
           ],
         }

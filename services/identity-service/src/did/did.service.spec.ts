@@ -47,6 +47,26 @@ describe('DidService', () => {
     expect(service).toBeDefined();
   });
 
+  it('generates no key pair and writes nothing to Vault when withKey is false', async () => {
+    const write = jest.spyOn(VaultService.prototype, 'writePvtKey');
+    doc.withKey = false;
+    const result = await service.generateDID(doc);
+    expect(result.id.split(':')[1]).toEqual('C4GT');
+    expect(result.alsoKnownAs).toEqual(doc.alsoKnownAs);
+    expect(result.verificationMethod).toBeUndefined();
+    expect(result.authentication).toBeUndefined();
+    expect(result.assertionMethod).toBeUndefined();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('treats withKey sent as the string "false" the same as false', async () => {
+    const write = jest.spyOn(VaultService.prototype, 'writePvtKey');
+    (doc as any).withKey = 'false';
+    const result = await service.generateDID(doc);
+    expect(result.verificationMethod).toBeUndefined();
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it('should generate a DID with a custom method', async () => {
     const result = await service.generateDID(doc);
     expect(result).toBeDefined();

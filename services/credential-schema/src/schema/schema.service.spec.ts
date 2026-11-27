@@ -38,10 +38,13 @@ describe('SchemaService', () => {
     const did = await utilsService.generateDID(didBody);
     const credSchemaPayload = generateCredentialSchemaTestBody();
     credSchemaPayload.schema.author = did.id;
+    const generateDID = jest.spyOn(utilsService, 'generateDID');
     const vcCredSchema = await service.createCredentialSchema(
       credSchemaPayload,
     );
     expect(vcCredSchema).toBeDefined();
+    expect(vcCredSchema.schema.id).toMatch(/^did:schema:[0-9a-f-]{36}$/);
+    expect(generateDID).not.toHaveBeenCalled();
     // expect(vcCredSchema.schema.proof).toBeTruthy();
     const getVCCredSchema: GetCredentialSchemaDTO = await service.getCredentialSchemaByIdAndVersion({
       id_version: {
@@ -51,6 +54,20 @@ describe('SchemaService', () => {
     });
     expect(getVCCredSchema).toBeTruthy();
     expect(getVCCredSchema.schema.version).toBe(vcCredSchema.schema.version);
+  });
+
+  it('stores a keyless DID document for the schema when RESOLVABLE_SCHEMA_IDS=true', async () => {
+    process.env.RESOLVABLE_SCHEMA_IDS = 'true';
+    try {
+      const generateDID = jest.spyOn(utilsService, 'generateDID');
+      const vcCredSchema = await service.createCredentialSchema(generateCredentialSchemaTestBody());
+      expect(generateDID.mock.calls[0][0].content[0]).toMatchObject({ method: 'schema', withKey: false });
+      const schemaDid = await generateDID.mock.results[0].value;
+      expect(vcCredSchema.schema.id).toEqual(schemaDid.id);
+      expect(schemaDid.verificationMethod).toBeUndefined();
+    } finally {
+      delete process.env.RESOLVABLE_SCHEMA_IDS;
+    }
   });
 
   it('should try adding a schema without a version', async () => {

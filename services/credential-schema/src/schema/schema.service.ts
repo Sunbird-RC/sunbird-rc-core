@@ -11,6 +11,7 @@ import {
   SchemaStatus,
   VerifiableCredentialSchema,
 } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
@@ -175,7 +176,11 @@ export class SchemaService {
     // verify the Credential Schema
     if (validate(data)) {
       let did;
-      if (generateDID) {
+      // A schema DID never signs, so it gets no keys. By default it is minted here with no DID document;
+      // RESOLVABLE_SCHEMA_IDS=true stores a keyless document in identity-service so the DID resolves.
+      if (generateDID && process.env.RESOLVABLE_SCHEMA_IDS !== 'true') {
+        did = { id: `did:schema:${randomUUID()}` };
+      } else if (generateDID) {
         const didBody = {
           content: [
             {
@@ -187,6 +192,7 @@ export class SchemaService {
                 },
               ],
               method: 'schema',
+              withKey: false,
             },
           ],
         };

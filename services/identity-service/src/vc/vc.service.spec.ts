@@ -48,6 +48,16 @@ describe('DidService', () => {
     expect(verified).toBeTruthy();
     expect(verified).toEqual(true);
   });
+  it('refuses to sign with a DID created without a key', async () => {
+    const keyless = await didService.generateDID({ alsoKnownAs: [], services: [], method: 'test', withKey: false });
+    await expect(service.sign(keyless.id, signPayload)).rejects.toThrow('has no signing key');
+  });
+
+  it('returns InternalServerErrorException when the stored DID document is corrupt', async () => {
+    jest.spyOn((service as any).primsa.identity, 'findUnique').mockResolvedValueOnce({ id: 'did:test:corrupt', didDoc: '{not json' });
+    await expect(service.sign('did:test:corrupt', signPayload)).rejects.toThrow('Error signing the document');
+  });
+
   it('should fail to verify a signed payload', async () => {
     const signedPayload = await service.sign(signingDID, signPayload);
     signedPayload.name = "Hello changed";
