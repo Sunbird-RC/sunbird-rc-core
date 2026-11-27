@@ -110,7 +110,7 @@ export class DidService {
     // Create a UUID for the DID using uuidv4
     const didUri: string = this.generateDidUri(doc?.method, doc?.id, doc?.webDidBaseUrl);
 
-    if (doc?.withKey === false) return this.saveDidDocument(didUri, doc);
+    if (String(doc?.withKey) === 'false') return this.saveDidDocument(didUri, doc);
 
     // Create private/public key pair
     let authnKeys;
