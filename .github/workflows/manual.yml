@@ -27,7 +27,6 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  DOCKER_NAMESPACE: sunbird-rc
   # tag push -> tag name; manual run -> input
   VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
   TAG_LATEST: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_latest || false }}
@@ -69,6 +68,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # repo owner, lowercased: Sunbird-RC -> ghcr.io/sunbird-rc, a fork -> ghcr.io/<fork owner>
+      - name: Set image namespace
+        run: echo "DOCKER_NAMESPACE=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
